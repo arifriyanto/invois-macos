@@ -110,12 +110,34 @@ ipcMain.handle("vault:pick", async () => {
   if (res.canceled || !res.filePaths[0]) return { canceled: true };
 
   const dir = res.filePaths[0];
-  const bookmark = res.bookmarks?.[0]; // undefined outside MAS
+
+  // Electron's contract (see electron#16664):
+  //   []      → not a MAS build, or securityScopedBookmarks was false
+  //   ['']    → MAS build, but macOS FAILED to mint the bookmark  ← real failure
+  //   ['Ym..'] → success (base64 bookmark)
+  const raw = res.bookmarks?.[0];
+  let bookmark;
+  let error = null;
+  if (raw === undefined) {
+    error = isMas()
+      ? "macOS returned no bookmark at all (unexpected in a MAS build)"
+      : null; // fine: not sandboxed, we don't need one
+  } else if (raw === "") {
+    error = "macOS refused to create a bookmark (check entitlements: files.bookmarks.app-scope + files.user-selected.read-write)";
+  } else {
+    bookmark = raw;
+  }
+
   vaultConfig = { dir, bookmark };
   await writeConfig(vaultConfig);
 
-  const err = beginAccess(bookmark);
-  return { canceled: false, dir, hasBookmark: Boolean(bookmark), error: err };
+  const accessErr = beginAccess(bookmark);
+  return {
+    canceled: false,
+    dir,
+    hasBookmark: Boolean(bookmark),
+    error: error ?? accessErr,
+  };
 });
 
 ipcMain.handle("vault:write", async () => {
