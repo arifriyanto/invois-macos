@@ -1,0 +1,20 @@
+{
+  "name": "invois-macos",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Invois — Electron build (macOS). Currently a spike proving security-scoped bookmarks work under the Mac App Store sandbox.",
+  "main": "electron/main.js",
+  "author": "Arif Riyanto",
+  "license": "UNLICENSED",
+  "scripts": {
+    "start": "electron .",
+    "pack:mac": "electron-builder --mac dir",
+    "pack:mas-dev": "electron-builder --mac mas-dev",
+    "pack:mas": "electron-builder --mac mas",
+    "size": "du -sh dist/*/Invois.app 2>/dev/null || echo 'nothing built yet — run a pack:* script first'"
+  },
+  "devDependencies": {
+    "electron": "latest",
+    "electron-builder": "latest"
+  }
+}

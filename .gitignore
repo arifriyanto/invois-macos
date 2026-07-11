@@ -1,0 +1,9 @@
+node_modules/
+dist/
+
+# Signing material — NEVER commit these
+build/*.provisionprofile
+*.p12
+*.cer
+
+.DS_Store

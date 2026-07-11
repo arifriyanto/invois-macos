@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <!-- Mac App Store builds MUST be sandboxed. -->
+  <key>com.apple.security.app-sandbox</key>
+  <true/>
+
+  <!-- Lets the app read/write folders the user explicitly picks in an open panel.
+       Without this, even the initial pick grants nothing useful. -->
+  <key>com.apple.security.files.user-selected.read-write</key>
+  <true/>
+
+  <!-- THE ONE THAT MATTERS FOR THIS SPIKE: allows creating and resolving
+       app-scoped security bookmarks, i.e. keeping folder access ACROSS relaunches. -->
+  <key>com.apple.security.files.bookmarks.app-scope</key>
+  <true/>
+
+  <!-- Needed later for StoreKit / updates. Harmless now. -->
+  <key>com.apple.security.network.client</key>
+  <true/>
+</dict>
+</plist>

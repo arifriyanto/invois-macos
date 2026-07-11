@@ -1,0 +1,44 @@
+# electron-builder — Invois (Electron spike)
+#
+# Two macOS targets matter here:
+#   mas      → the real App Store build (needs distribution certs + profile)
+#   mas-dev  → a SANDBOXED build signed with a DEVELOPMENT cert + profile.
+#              This is the one you run locally to test sandbox behaviour
+#              WITHOUT going through App Store review. Tauri has no equivalent —
+#              that's why this spike is possible at all.
+
+appId: app.invois
+productName: Invois
+copyright: © 2026 Arif Riyanto
+
+directories:
+  output: dist
+  buildResources: build
+
+files:
+  - electron/**
+  - renderer/**
+  - package.json
+
+mac:
+  category: public.app-category.business
+  # A plain (non-store) build — handy to compare size against the MAS one.
+  target:
+    - dir
+
+# --- App Store build (distribution) ---
+mas:
+  entitlements: build/entitlements.mas.plist
+  entitlementsInherit: build/entitlements.mas.inherit.plist
+  hardenedRuntime: false # MAS builds must NOT use hardened runtime
+  # Put the App Store provisioning profile here before running `pack:mas`:
+  provisioningProfile: build/embedded.provisionprofile
+
+# --- Sandboxed DEV build (what you test with) ---
+masDev:
+  type: development
+  entitlements: build/entitlements.mas.plist
+  entitlementsInherit: build/entitlements.mas.inherit.plist
+  hardenedRuntime: false
+  # Put the DEVELOPMENT provisioning profile here before running `pack:mas-dev`:
+  provisioningProfile: build/dev.provisionprofile
