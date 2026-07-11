@@ -16,6 +16,11 @@
   <key>com.apple.security.files.bookmarks.app-scope</key>
   <true/>
 
+  <!-- The export folder falls back to ~/Downloads when the user hasn't set one.
+       Under the sandbox that write is refused without this. -->
+  <key>com.apple.security.files.downloads.read-write</key>
+  <true/>
+
   <!-- Needed later for StoreKit / updates. Harmless now. -->
   <key>com.apple.security.network.client</key>
   <true/>

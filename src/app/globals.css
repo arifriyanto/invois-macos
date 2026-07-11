@@ -1,0 +1,389 @@
+/* source(none) disables Tailwind's automatic project-wide content detection,
+   which otherwise scans build artifacts (src-tauri/target, out/, .next) that
+   embed stale compiled CSS — re-emitting the shadcn chart's `[stroke='#ccc']`
+   utilities that break Turbopack's CSS parser. We then point it at src/ only. */
+@import "tailwindcss" source(none);
+@import "tw-animate-css";
+@source "../";
+
+@custom-variant dark (&:is(.dark *));
+
+@keyframes collapsible-down {
+  from { height: 0; }
+  to { height: var(--radix-collapsible-content-height); }
+}
+@keyframes collapsible-up {
+  from { height: var(--radix-collapsible-content-height); }
+  to { height: 0; }
+}
+@keyframes cook-steam {
+  0%   { transform: translateY(4px) scale(0.8); opacity: 0; }
+  25%  { opacity: 0.6; }
+  100% { transform: translateY(-13px) scale(1.15); opacity: 0; }
+}
+@keyframes cook-bob {
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  50%      { transform: translateY(-2px) rotate(-2deg); }
+}
+@keyframes bp-ping {
+  0%   { transform: scale(0.8); opacity: 0.7; }
+  100% { transform: scale(2.4); opacity: 0; }
+}
+@keyframes bp-glow {
+  0%   { box-shadow: 0 0 0 0 rgba(124, 92, 255, 0.5); }
+  55%  { box-shadow: 0 0 0 6px rgba(124, 92, 255, 0); }
+  100% { box-shadow: 0 0 0 3px rgba(124, 92, 255, 0); }
+}
+@keyframes cta-glow {
+  0%   { box-shadow: 0 0 0 0 color-mix(in srgb, var(--primary) 45%, transparent); }
+  55%  { box-shadow: 0 0 0 6px rgba(0, 0, 0, 0); }
+  100% { box-shadow: 0 0 0 3px rgba(0, 0, 0, 0); }
+}
+/* First-run beacon: a pulsing dot with an expanding ripple, used to draw the
+   eye to the next empty field during the first-invoice walkthrough. */
+@keyframes beacon-beat {
+  0%, 100% { transform: scale(1); }
+  50%      { transform: scale(1.18); }
+}
+@keyframes beacon-ripple {
+  0%   { transform: scale(1); opacity: 0.5; }
+  100% { transform: scale(2.6); opacity: 0; }
+}
+@keyframes beacon-glow-pulse {
+  0%, 100% { box-shadow: 0 0 0 1.5px rgba(245, 158, 11, 0.9), 0 0 8px 2px rgba(245, 158, 11, 0.4); }
+  50%      { box-shadow: 0 0 0 1.5px rgba(245, 158, 11, 1), 0 0 14px 5px rgba(245, 158, 11, 0.6); }
+}
+
+:root {
+  --radius: 0.625rem;
+
+  /* Surfaces are white (shadcn convention); page bg is a separate gray. */
+  --background: #ffffff;
+  --foreground: #1a1a2e;
+  --card: #ffffff;
+  --card-foreground: #1a1a2e;
+  --popover: #ffffff;
+  --popover-foreground: #1a1a2e;
+  --primary: #1a1a2e;
+  --primary-foreground: #ffffff;
+  --secondary: #f1f1f4;
+  --secondary-foreground: #1a1a2e;
+  --muted: #f5f5f7;
+  /* Darkened for AA on lighter surfaces (sidebar/accent) — was #6e6e80 (~4.2:1). */
+  --muted-foreground: #63636f;
+  --accent: #f1f1f4;
+  --accent-foreground: #1a1a2e;
+  /* Darkened so white text passes AA (was #e5484d, 3.9:1). */
+  --destructive: #d32f2f;
+  --border: #e2e2e6;
+  /* Form-field outline — a touch darker than --border for clearer contrast. */
+  --input: #c6c8d2;
+  --ring: #1a1a2e;
+
+  --app-bg: #f4f4f7;
+
+  /* Chart palette (shadcn charts / Recharts). --chart-1 follows the accent so
+     the income/clients charts adapt to the selected palette; 2–5 are semantic
+     categorical defaults (paid green, overdue red, etc. stay meaningful). */
+  --chart-1: var(--primary);
+  --chart-2: #10b981;
+  --chart-3: #f59e0b;
+  --chart-4: #6366f1;
+  --chart-5: #ef4444;
+
+  /* Sidebar (the invoice-form panel) + item cards */
+  --sidebar: #ececf1;
+  --item: #f5f6ff;
+  --item-border: #e5e7fb;
+
+  /* Pro (premium) accent — can be overridden per-palette. Default: amber→pink→violet */
+  --pro-grad: linear-gradient(120deg, #f5a623 0%, #ec4899 45%, #7c5cff 100%);
+  --pro-accent: #7c5cff;
+
+  /* Raised primary button (darker edge + bottom shadow), derived from --primary */
+  --btn-edge-border: color-mix(in srgb, var(--primary) 91%, #000);
+  --btn-edge-shadow: color-mix(in srgb, var(--primary) 84%, #000);
+}
+
+@theme inline {
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-sidebar: var(--sidebar);
+  --color-item: var(--item);
+  --color-item-border: var(--item-border);
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+
+  /* App UI font: Apple's system font (San Francisco) on Mac for a native feel,
+     falling back to Inter on the web / non-Apple builds. Invoice TEMPLATES keep
+     Inter explicitly (see templates.css) so exported PDFs stay portable and
+     license-safe — SF must not be embedded in files shared off-Apple. */
+  --font-sans: -apple-system, BlinkMacSystemFont, var(--font-inter), system-ui, sans-serif;
+  --font-serif: var(--font-dm-serif), Georgia, serif;
+}
+
+/* Toast (sonner): fixed navy background + white text — independent of the
+   accent palette (which changes --primary). High specificity so it beats
+   sonner's theme default (--normal-bg on [data-theme=light]). */
+[data-sonner-toaster] [data-sonner-toast][data-styled="true"] {
+  background: #1a1a2e !important;
+  color: #ffffff !important;
+  border-color: color-mix(in srgb, #ffffff 14%, #1a1a2e) !important;
+}
+[data-sonner-toaster] [data-sonner-toast][data-styled="true"] [data-description] {
+  color: color-mix(in srgb, #ffffff 68%, transparent);
+}
+
+@layer base {
+  * {
+    border-color: var(--border);
+  }
+  /* Stop iOS Safari from auto-inflating text. Without this, the scaled-down
+     794px invoice preview gets its fonts boosted for "readability", which
+     breaks the proportions on mobile (text looks oversized, columns squish). */
+  html {
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+  }
+  body {
+    background: var(--sidebar);
+    color: var(--foreground);
+    font-family: var(--font-sans);
+    overflow: hidden;
+  }
+  /* Desktop locks body scroll (panes scroll internally); mobile scrolls the page. */
+  @media (max-width: 1023.98px) {
+    body { overflow: auto; }
+  }
+  button:not(:disabled) { cursor: pointer; }
+
+  /* Native feel: don't let UI chrome text be selectable (a web-app tell).
+     Re-enable selection only where it makes sense: form fields and the
+     document-like invoice preview. */
+  body {
+    -webkit-user-select: none;
+    user-select: none;
+    cursor: default;
+  }
+  input,
+  textarea,
+  [contenteditable="true"],
+  .paper,
+  .paper * {
+    -webkit-user-select: text;
+    user-select: text;
+    cursor: auto;
+  }
+  .scrollbar-thin::-webkit-scrollbar { width: 4px; }
+  .scrollbar-thin::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+  .scrollbar-hide::-webkit-scrollbar { display: none; }
+  .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
+
+  /* Scrollbar thumb only shows while the mouse is over the scroll area */
+  .scrollbar-hover::-webkit-scrollbar { width: 10px; }
+  .scrollbar-hover::-webkit-scrollbar-track { background: transparent; }
+  .scrollbar-hover::-webkit-scrollbar-thumb {
+    background-color: transparent;
+    border: 3px solid transparent;
+    border-radius: 8px;
+    background-clip: padding-box;
+  }
+  .scrollbar-hover:hover::-webkit-scrollbar-thumb { background-color: rgba(0, 0, 0, 0.22); }
+  .scrollbar-hover:hover::-webkit-scrollbar-thumb:hover { background-color: rgba(0, 0, 0, 0.38); }
+
+  /* Soft rounded thin thumb, always visible (custom look, no hover toggle). */
+  .scrollbar-soft::-webkit-scrollbar { width: 8px; }
+  .scrollbar-soft::-webkit-scrollbar-track { background: transparent; }
+  .scrollbar-soft::-webkit-scrollbar-thumb {
+    background-color: rgba(0, 0, 0, 0.2);
+    border: 2px solid transparent;
+    border-radius: 8px;
+    background-clip: padding-box;
+  }
+  .scrollbar-soft::-webkit-scrollbar-thumb:hover { background-color: rgba(0, 0, 0, 0.35); }
+
+  /* Hide number-input spinners (opt-in via .no-spinner) */
+  .no-spinner::-webkit-outer-spin-button,
+  .no-spinner::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+  .no-spinner { -moz-appearance: textfield; appearance: textfield; }
+
+  /* Premium template pill: gradient outline + PRO badge.
+     The double-background trick paints card fill on padding-box and the
+     amber→violet gradient on border-box, giving a true gradient outline. */
+  .pro-pill {
+    position: relative;
+    border: 1.5px solid transparent;
+    border-radius: 9999px;
+    color: var(--foreground);
+    background:
+      linear-gradient(var(--card), var(--card)) padding-box,
+      var(--pro-grad) border-box;
+    transition: box-shadow 0.15s ease, transform 0.05s ease;
+  }
+  .pro-pill:hover { box-shadow: 0 2px 10px -2px color-mix(in srgb, var(--pro-accent) 45%, transparent); }
+  .pro-pill:active { transform: translateY(0.5px); }
+  .pro-pill.is-active {
+    color: #fff;
+    background: var(--pro-grad) padding-box, var(--pro-grad) border-box;
+    box-shadow: 0 2px 12px -2px color-mix(in srgb, var(--pro-accent) 55%, transparent);
+  }
+  .pro-badge {
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: 0.6px;
+    line-height: 1;
+    padding: 2px 5px;
+    border-radius: 4px;
+    color: #fff;
+    background: var(--pro-grad);
+  }
+  .pro-pill.is-active .pro-badge {
+    background: rgba(255, 255, 255, 0.22);
+  }
+
+  /* "Cooking something" gimmick for the Pro coming-soon dialog */
+  .cook { position: relative; width: 64px; height: 74px; display: flex; align-items: flex-end; justify-content: center; }
+  .cook-pot { animation: cook-bob 2.4s ease-in-out infinite; transform-origin: 50% 90%; }
+  .cook-steam {
+    position: absolute;
+    width: 5px; height: 14px;
+    border-radius: 999px;
+    background: var(--muted-foreground);
+    opacity: 0;
+    animation: cook-steam 1.9s ease-in-out infinite;
+  }
+  .cook-steam.s1 { left: 23px; bottom: 44px; animation-delay: 0s; }
+  .cook-steam.s2 { left: 31px; bottom: 48px; animation-delay: 0.45s; }
+  .cook-steam.s3 { left: 39px; bottom: 44px; animation-delay: 0.9s; }
+  /* First-run CTA: pulsing ring around the dot on the Business Profile trigger */
+  .bp-ping { position: relative; }
+  .bp-ping::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: 9999px;
+    background: currentColor;
+    animation: bp-ping 1.6s ease-out infinite;
+  }
+  /* Radiating ripple around the "Complete Business Profile" trigger —
+     one wave that emanates, fades, then rests, so the motion reads clearly. */
+  .bp-glow { animation: bp-glow 2.2s ease-out infinite; }
+  /* Palette-aware CTA glow (uses --primary) */
+  .cta-glow { animation: cta-glow 2.1s ease-out infinite; }
+  /* First-run field beacon: beating dot + expanding ripple, plus a soft amber
+     glow highlight (reads clearly even on the blue primary Save button). */
+  .beacon-dot  { animation: beacon-beat 1s ease-in-out infinite; }
+  .beacon-ring { animation: beacon-ripple 1s ease-out infinite; }
+  .beacon-glow {
+    box-shadow: 0 0 0 1.5px rgba(245, 158, 11, 0.95), 0 0 11px 3px rgba(245, 158, 11, 0.5);
+    animation: beacon-glow-pulse 2.4s ease-in-out infinite;
+  }
+  /* Palette-aware CTA card hover — stays distinct from the sidebar surface.
+     Sets its own background so it isn't overridden by the bg-card utility. */
+  .cta-card {
+    background: var(--card);
+    transition: background-color 0.15s ease, border-color 0.15s ease;
+  }
+  .cta-card:hover {
+    background: color-mix(in srgb, var(--primary) 4%, var(--card));
+    border-color: color-mix(in srgb, var(--primary) 42%, var(--border));
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .cook-pot, .cook-steam, .bp-glow, .cta-glow, .beacon-dot, .beacon-ring, .beacon-glow { animation: none; }
+    .cook-steam { opacity: 0.5; }
+    .bp-ping::after { animation: none; opacity: 0; }
+    .beacon-ring { opacity: 0; }
+  }
+
+  /* Pro status chip: inward emboss. Neutral black/white shadow on light palettes;
+     rebalanced for the dark (midnight) palette so the bottom highlight doesn't glare. */
+  .pro-emboss {
+    box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.18), inset 0 -1px 0 rgba(255, 255, 255, 0.7);
+  }
+  [data-palette="midnight"] .pro-emboss {
+    box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.45), inset 0 -1px 0 rgba(255, 255, 255, 0.1);
+  }
+
+  /* Window dragging. Tauri had a `data-tauri-drag-region` attribute; in Electron
+     it's pure CSS. Anything clickable inside a drag region must opt back out,
+     otherwise the drag swallows the click. */
+  .drag-region {
+    -webkit-app-region: drag;
+  }
+  .drag-region button,
+  .drag-region a,
+  .drag-region input,
+  .drag-region [role="button"] {
+    -webkit-app-region: no-drag;
+  }
+}
+
+/* ---------------------------------------------------------------------------
+   PDF export (Electron webContents.printToPDF)
+   ---------------------------------------------------------------------------
+   During an export, lib/print.tsx mounts the invoice as `#print-portal`, a
+   direct child of <body>, parked far below the viewport so it never shows on
+   screen. Chromium then re-lays the page out under these rules: every other body
+   child disappears and the sheet snaps back to the origin, so the PDF contains
+   the invoice and nothing else. Pagination is Chromium's — no manual slicing.
+   -------------------------------------------------------------------------- */
+@media print {
+  @page {
+    size: A4;
+    margin: 0;
+  }
+  html,
+  body {
+    margin: 0;
+    padding: 0;
+    background: #fff !important;
+  }
+  /* Keep template gradients/fills — print defaults would strip them. */
+  * {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+  body > *:not(#print-portal) {
+    display: none !important;
+  }
+  /* relative, not static: the DRAFT watermark is absolutely positioned against it. */
+  #print-portal #print-root {
+    position: relative !important;
+    top: 0 !important;
+    left: 0 !important;
+    width: 100% !important;
+  }
+  /* Don't split a line item / the totals block across a page break. */
+  .inv-item-row,
+  .inv-summary,
+  .inv-footer,
+  .inv-addresses {
+    break-inside: avoid;
+  }
+}

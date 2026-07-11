@@ -1,5 +1,17 @@
 node_modules/
+
+# Build output
+# (NOTE: .gitignore has no trailing comments — a "#" after a pattern becomes
+#  part of the pattern. Keep every comment on its own line.)
 dist/
+.next/
+out/
+next-env.d.ts
+
+# Secrets — NEVER commit these. .env.example (no real keys) is fine.
+.env
+.env.local
+.env*.local
 
 # Signing material — NEVER commit these
 build/*.provisionprofile

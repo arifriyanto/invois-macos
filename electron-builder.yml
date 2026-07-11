@@ -17,11 +17,17 @@ directories:
 
 files:
   - electron/**
-  - renderer/**
+  # The built Next.js static export. WITHOUT this the packaged app ships with no
+  # UI at all — `app://` would 404 on every request.
+  - out/**
+  # main.js points the About panel at this one, so it must ship too.
+  - build/icon.png
   - package.json
 
 mac:
   category: public.app-category.business
+  # Reused from the Tauri build (invois-app/src-tauri/icons/icon.icns).
+  icon: build/icon.icns
   # A plain (non-store) build — handy to compare size against the MAS one.
   target:
     - dir

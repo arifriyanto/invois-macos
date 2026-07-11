@@ -1,0 +1,86 @@
+/* Invois — palette library
+ *
+ * 12 ready-to-use color palettes, mapped to the app's existing tokens.
+ *
+ * How to use:
+ *   1. Import this file once in src/app/layout.tsx (after globals.css):
+ *        import "./palettes.css";
+ *   2. Set the palette on <html> in layout.tsx, e.g.:
+ *        <html lang="id" data-palette="corporate" ...>
+ *   3. Change data-palette anytime to switch the whole app's colors.
+ *
+ * Leave data-palette off (or remove it) to keep the original theme in globals.css.
+ * Palette 06 (midnight) is a dark theme — surfaces go dark, text goes light.
+ */
+
+[data-palette="cool-neutral"] {
+  --app-bg: #f4f5f7;
+  --background: #ffffff; --card: #ffffff; --popover: #ffffff;
+  --foreground: #1e293b; --card-foreground: #1e293b; --popover-foreground: #1e293b;
+  --primary: #334155; --primary-foreground: #ffffff;
+  --secondary: #eef1f5; --secondary-foreground: #334155;
+  --muted: #f4f5f7; --muted-foreground: #64748b;
+  --accent: #eef4ff; --accent-foreground: #1d4ed8;
+  --border: #e4e7ec; --input: #d9dde3; --ring: #3b82f6;
+  --sidebar: #e8eaef; --item: #f6f7fa; --item-border: #e6e9ef;
+}
+
+[data-palette="corporate"] {
+  --app-bg: #f2f5fb;
+  --background: #ffffff; --card: #ffffff; --popover: #ffffff;
+  --foreground: #16203a; --card-foreground: #16203a; --popover-foreground: #16203a;
+  --primary: #1d4ed8; --primary-foreground: #ffffff;
+  --secondary: #e6eefb; --secondary-foreground: #1e3a8a;
+  --muted: #f2f5fb; --muted-foreground: #5b6b86;
+  --accent: #eef3fd; --accent-foreground: #1e3a8a;
+  --border: #dde5f0; --input: #c3cbdd; --ring: #1d4ed8;
+  --sidebar: #e4ebf6; --item: #f3f7fd; --item-border: #dde7f3;
+}
+
+[data-palette="jewel"] {
+  --app-bg: #f6f4fb;
+  --background: #ffffff; --card: #ffffff; --popover: #ffffff;
+  --foreground: #241a33; --card-foreground: #241a33; --popover-foreground: #241a33;
+  --primary: #5b21b6; --primary-foreground: #ffffff;
+  --secondary: #efe9fb; --secondary-foreground: #5b21b6;
+  --muted: #f6f4fb; --muted-foreground: #756889;
+  --accent: #f3eefb; --accent-foreground: #5b21b6;
+  --border: #e7e2f0; --input: #ddd5ec; --ring: #5b21b6;
+  --sidebar: #ebe6f4; --item: #f6f3fc; --item-border: #e6dff1;
+}
+
+[data-palette="midnight"] {
+  --app-bg: #0f111a;
+  --background: #1c1f2b; --card: #1c1f2b; --popover: #1c1f2b;
+  --foreground: #e7e9f2; --card-foreground: #e7e9f2; --popover-foreground: #e7e9f2;
+  --primary: #6366f1; --primary-foreground: #ffffff;
+  --secondary: #262a3a; --secondary-foreground: #c7ccff;
+  --muted: #232634; --muted-foreground: #9aa0b5;
+  --accent: #232845; --accent-foreground: #c7ccff;
+  --border: #2a2e3d; --input: #313547; --ring: #818cf8;
+  --sidebar: #171a26; --item: #232736; --item-border: #2f3445;
+}
+
+[data-palette="ocean"] {
+  --app-bg: #f0f7fa;
+  --background: #ffffff; --card: #ffffff; --popover: #ffffff;
+  --foreground: #14282e; --card-foreground: #14282e; --popover-foreground: #14282e;
+  --primary: #0e7490; --primary-foreground: #ffffff;
+  --secondary: #def0f5; --secondary-foreground: #155e75;
+  --muted: #f0f7fa; --muted-foreground: #5b757e;
+  --accent: #e8f6fa; --accent-foreground: #155e75;
+  --border: #d9e8ee; --input: #cfe1e9; --ring: #0891b2;
+  --sidebar: #dce5e8; --item: #f1f6f8; --item-border: #d3dee2;
+}
+
+[data-palette="amber-cream"] {
+  --app-bg: #f2f1ea;
+  --background: #ffffff; --card: #ffffff; --popover: #ffffff;
+  --foreground: #1b1a16; --card-foreground: #1b1a16; --popover-foreground: #1b1a16;
+  --primary: #e0973f; --primary-foreground: #1b1a16;
+  --secondary: #f1ece1; --secondary-foreground: #8a5410;
+  --muted: #f2f1ea; --muted-foreground: #63615a;
+  --accent: #fbeede; --accent-foreground: #c2410c;
+  --border: #e7e4da; --input: #e1ded3; --ring: #e0973f;
+  --sidebar: #eae7dd; --item: #f7f4ec; --item-border: #e4e0d4;
+}

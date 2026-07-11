@@ -1,0 +1,18 @@
+# Build output & caches
+.next/
+out/
+dist/
+node_modules/
+
+# Tauri build artifacts
+src-tauri/target/
+src-tauri/gen/
+
+# Generated / vendored
+*.lock
+package-lock.json
+pnpm-lock.yaml
+
+# Assets
+src-tauri/icons/
+public/
