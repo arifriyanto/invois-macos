@@ -5,7 +5,6 @@ import { toast } from "sonner";
 import { trackEvent } from "@/lib/analytics";
 import { useStore } from "@/lib/store";
 import { useI18n } from "@/lib/i18n";
-import { useEditorActions } from "@/lib/editor-actions";
 import { usePrintToPdf } from "@/lib/print";
 import { exportInvoicePNG, uniqueFilePath, ensureExportDir } from "@/lib/export";
 
@@ -19,10 +18,11 @@ import { exportInvoicePNG, uniqueFilePath, ensureExportDir } from "@/lib/export"
 export function useInvoiceExport() {
   const { invoice, template, settings } = useStore();
   const { t, lang } = useI18n();
-  const actions = useEditorActions();
-  // Draft = not (saved & clean). Such exports get a "DRAFT" watermark and their
-  // number is still provisional (nothing is reserved in history yet).
-  const isDraft = actions ? !actions.canExport : false;
+  // NOTE: there is no "draft export". The toolbar blocks Export while the invoice
+  // is dirty, and an unsaved invoice is ALWAYS dirty (invoices-view.tsx: `dirty =
+  // !savedRec || …`) — so by the time an export runs, the invoice is saved and
+  // clean by construction. The old DRAFT watermark was therefore unreachable and
+  // was removed (11 Jul 2026). If you ever relax the save gate, bring it back.
   const renderToPdf = usePrintToPdf();
   const [busy, setBusy] = React.useState(false);
 
@@ -53,7 +53,6 @@ export function useInvoiceExport() {
           const path = await uniqueFilePath(dir, `${base()}.pdf`);
           const res = await renderToPdf({
             path,
-            draft: isDraft,
             title: invoice.number ? `Invoice ${invoice.number}` : "Invoice",
           });
           if (res.ok) {
@@ -64,9 +63,8 @@ export function useInvoiceExport() {
               /* open is best-effort */
             }
             const savedName = path.split("/").pop() ?? `${base()}.pdf`;
-            const okMsg = t("toast.pdfOk");
-            toast.success(isDraft ? `${okMsg} · ${t("exp.draftBadge")}` : okMsg, { description: savedName });
-            trackEvent("invoice_exported", { format: "pdf", template, engine: "vector", draft: isDraft });
+            toast.success(t("toast.pdfOk"), { description: savedName });
+            trackEvent("invoice_exported", { format: "pdf", template, engine: "vector" });
           } else {
             toast.error(res.error || t("toast.pdfFail"));
             trackEvent("export_failed", { format: "pdf", template, engine: "vector" });
@@ -80,11 +78,10 @@ export function useInvoiceExport() {
       // PNG: still a raster of the on-screen paper (html2canvas).
       setBusy(true);
       try {
-        const savedName = await exportInvoicePNG(p, `${base()}.png`, settings.exportDir, isDraft, true);
+        const savedName = await exportInvoicePNG(p, `${base()}.png`, settings.exportDir, true);
         const okMsg = t("toast.pngOk");
-        const title = savedFirst ? `${t("ed.saved")} · ${okMsg}` : isDraft ? `${okMsg} · ${t("exp.draftBadge")}` : okMsg;
-        toast.success(title, { description: savedName });
-        trackEvent("invoice_exported", { format: kind, template, currency: settings.currency, lang, draft: isDraft });
+        toast.success(savedFirst ? `${t("ed.saved")} · ${okMsg}` : okMsg, { description: savedName });
+        trackEvent("invoice_exported", { format: kind, template, currency: settings.currency, lang });
       } catch (e) {
         console.error(e);
         toast.error(t("toast.pdfFail"));
@@ -94,7 +91,7 @@ export function useInvoiceExport() {
       }
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [invoice.number, template, settings.currency, settings.exportDir, settings.bizName, lang, isDraft, renderToPdf]
+    [invoice.number, template, settings.currency, settings.exportDir, settings.bizName, lang, renderToPdf]
   );
 
   return {

@@ -24,11 +24,7 @@ import { resolveTemplate } from "@/lib/format";
 import { InvoiceTemplate } from "@/components/templates/invoice-template";
 
 export type PrintResult = { ok: boolean; path?: string; error?: string };
-type RenderFn = (req: {
-  path: string;
-  draft: boolean;
-  title?: string;
-}) => Promise<PrintResult>;
+type RenderFn = (req: { path: string; title?: string }) => Promise<PrintResult>;
 
 const Ctx = React.createContext<RenderFn | null>(null);
 export const usePrintToPdf = (): RenderFn | null => React.useContext(Ctx);
@@ -39,10 +35,10 @@ const PAGE_W = 794;
 const OFFSCREEN_Y = 100000;
 
 export function PrintProvider({ children }: { children: React.ReactNode }) {
-  const [draft, setDraft] = React.useState<boolean | null>(null); // null = idle
+  const [printing, setPrinting] = React.useState(false);
 
-  const renderToPdf = React.useCallback<RenderFn>(async ({ path, draft, title }) => {
-    setDraft(draft);
+  const renderToPdf = React.useCallback<RenderFn>(async ({ path, title }) => {
+    setPrinting(true);
     // Let the print sheet paint and the fonts settle before we print.
     await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(() => r(null))));
     try {
@@ -51,20 +47,16 @@ export function PrintProvider({ children }: { children: React.ReactNode }) {
       /* ignore */
     }
 
-    // Chromium stamps the document title into the PDF metadata, so borrow it
-    // for the duration of the print and put it back after.
-    const prevTitle = document.title;
-    if (title) document.title = title;
-
     let result: PrintResult;
     try {
-      await native.pdf.toFile(path);
+      // The title goes straight to the main process, which stamps the PDF's
+      // metadata (Producer/Creator/Author/Title = Invois) after printing.
+      await native.pdf.toFile(path, title);
       result = { ok: true, path };
     } catch (e) {
       result = { ok: false, error: String(e) };
     } finally {
-      document.title = prevTitle;
-      setDraft(null);
+      setPrinting(false);
     }
     return result;
   }, []);
@@ -72,14 +64,14 @@ export function PrintProvider({ children }: { children: React.ReactNode }) {
   return (
     <Ctx.Provider value={renderToPdf}>
       {children}
-      {draft !== null && <PrintPortal draft={draft} />}
+      {printing && <PrintPortal />}
     </Ctx.Provider>
   );
 }
 
 /** Mounts the print sheet as a direct child of <body> — the `@media print`
  *  rules key off that ("hide every body child except this one"). */
-function PrintPortal({ draft }: { draft: boolean }) {
+function PrintPortal() {
   const [host] = React.useState(() => {
     if (typeof document === "undefined") return null;
     const el = document.createElement("div");
@@ -94,10 +86,10 @@ function PrintPortal({ draft }: { draft: boolean }) {
     };
   }, [host]);
   if (!host) return null;
-  return createPortal(<PrintSheet draft={draft} />, host);
+  return createPortal(<PrintSheet />, host);
 }
 
-function PrintSheet({ draft }: { draft: boolean }) {
+function PrintSheet() {
   const { settings, invoice, template, isPro } = useStore();
   const { t, lang } = useI18n();
   const view = React.useMemo(() => buildView(settings, invoice, t, lang), [settings, invoice, t, lang]);
@@ -114,27 +106,6 @@ function PrintSheet({ draft }: { draft: boolean }) {
         style={{ position: "absolute", top: OFFSCREEN_Y, left: 0, width: PAGE_W, background: "#fff" }}
       >
         <InvoiceTemplate template={shownTemplate} view={view} />
-        {draft && (
-          <div
-            style={{
-              position: "absolute",
-              top: "50%",
-              left: "50%",
-              transform: "translate(-50%,-50%) rotate(-28deg)",
-              fontFamily: "'Sora',system-ui,sans-serif",
-              fontSize: 170,
-              fontWeight: 800,
-              letterSpacing: "0.08em",
-              textTransform: "uppercase",
-              color: "rgba(239,68,68,0.12)",
-              whiteSpace: "nowrap",
-              pointerEvents: "none",
-              zIndex: 2147483647,
-            }}
-          >
-            DRAFT
-          </div>
-        )}
       </div>
     </>
   );

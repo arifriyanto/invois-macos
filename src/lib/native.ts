@@ -32,7 +32,7 @@ interface Bridge {
     home(): Promise<string>;
   };
   shell: { openPath(p: string): Promise<string> };
-  pdf: { toFile(outPath: string): Promise<string> };
+  pdf: { toFile(outPath: string, title?: string): Promise<string> };
   window: {
     isFullscreen(): Promise<boolean>;
     onFullscreen(cb: (v: boolean) => void): Unsub;
@@ -96,9 +96,11 @@ export const opener = {
 
 /** Replaces the Rust `render_pdf_slice` command + pdf-lib page stitching.
  *  Chromium prints the current document (our @media print rules leave only the
- *  invoice) straight to an A4-paginated PDF. */
+ *  invoice) straight to an A4-paginated PDF. `title` lands in the PDF metadata,
+ *  which the main process stamps as ours (Chromium would otherwise sign the file
+ *  "Skia/PDF"). */
 export const pdf = {
-  toFile: (outPath: string) => need().pdf.toFile(outPath),
+  toFile: (outPath: string, title?: string) => need().pdf.toFile(outPath, title),
 };
 
 /** Replaces `@tauri-apps/api/window`. */

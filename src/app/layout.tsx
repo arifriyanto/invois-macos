@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Inter, DM_Serif_Display, Sora } from "next/font/google";
+import { Inter, DM_Serif_Display, Sora, Roboto_Mono } from "next/font/google";
 import { Toaster } from "@/components/ui/sonner";
 import "./globals.css";
 import "./palettes.css";
@@ -23,6 +23,16 @@ const sora = Sora({
   variable: "--font-sora",
   weight: ["500", "600", "700"],
 });
+// The Mono template's typeface. Self-hosted ON PURPOSE: it used to fall through
+// to `ui-monospace`, which on macOS is Apple's SF Mono — and Chromium then
+// EMBEDDED SF Mono into every exported PDF, which Apple's licence does not allow
+// for documents shared off-Apple. Roboto Mono is Apache-2.0 (free to embed) and
+// is the closest match to SF Mono's proportions, so the template barely shifts.
+const robotoMono = Roboto_Mono({
+  subsets: ["latin"],
+  variable: "--font-mono",
+  weight: ["400", "700"],
+});
 
 // Minimal metadata — this is the desktop build; the document is never crawled or
 // shared as a URL, so the web SEO metadata (OpenGraph, Twitter, robots, keywords,
@@ -39,7 +49,11 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" data-palette="corporate" className={`${inter.variable} ${dmSerif.variable} ${sora.variable}`}>
+    <html
+      lang="en"
+      data-palette="corporate"
+      className={`${inter.variable} ${dmSerif.variable} ${sora.variable} ${robotoMono.variable}`}
+    >
       <body>
         {children}
         <Toaster position="bottom-center" />

@@ -38,25 +38,35 @@ export function Logo({ view }: { view: InvoiceView }) {
   return view.logo ? <img src={view.logo} className="inv-logo" alt="logo" /> : null;
 }
 
+// ARIA roles below are NOT decoration and NOT only for screen readers.
+//
+// Chromium builds a PDF's tag tree (see generateTaggedPDF in electron/main.js)
+// from the accessibility tree. These are plain divs in a CSS grid, so without
+// roles the exported PDF is just text floating at coordinates — a viewer then
+// has to guess what dragging across cells means, and partial text selection
+// feels like it jumps around. With the roles, the PDF carries a real table
+// structure. Roles add no DOM nodes, so the grid layout is untouched.
 export function ItemsTable({ view, last }: { view: InvoiceView; last: string }) {
   const { items, currency, labels } = view;
   return (
     <>
-      <div className="inv-items-header">
-        <div>{labels.desc}</div>
-        <div>{labels.qty}</div>
-        <div className="col-right">{labels.price}</div>
-        <div className="col-right">{last}</div>
+      <div className="inv-items-header" role="row">
+        <div role="columnheader">{labels.desc}</div>
+        <div role="columnheader">{labels.qty}</div>
+        <div className="col-right" role="columnheader">{labels.price}</div>
+        <div className="col-right" role="columnheader">{last}</div>
       </div>
       {items.length === 0 ? (
-        <div style={{ padding: "16px 0", color: "#6f6f6f", fontSize: 13 }}>{labels.noItems}</div>
+        <div role="row" style={{ padding: "16px 0", color: "#6f6f6f", fontSize: 13 }}>
+          <div role="cell">{labels.noItems}</div>
+        </div>
       ) : (
         items.map((i) => (
-          <div className="inv-item-row" key={i.id}>
-            <div className="inv-item-desc">{i.desc}</div>
-            <div className="inv-item-qty">{i.qty}</div>
-            <div className="col-right">{formatCurrency(i.price, currency)}</div>
-            <div className="col-right">{formatCurrency(i.sub, currency)}</div>
+          <div className="inv-item-row" role="row" key={i.id}>
+            <div className="inv-item-desc" role="cell">{i.desc}</div>
+            <div className="inv-item-qty" role="cell">{i.qty}</div>
+            <div className="col-right" role="cell">{formatCurrency(i.price, currency)}</div>
+            <div className="col-right" role="cell">{formatCurrency(i.sub, currency)}</div>
           </div>
         ))
       )}
@@ -64,29 +74,31 @@ export function ItemsTable({ view, last }: { view: InvoiceView; last: string }) 
   );
 }
 
+// Same reasoning as ItemsTable: a label/value grid is a table, so say so — the
+// PDF tag tree (and text selection) follows.
 export function SummaryTable({ view }: { view: InvoiceView }) {
   const { totals, currency, labels } = view;
   return (
-    <div className="inv-summary-table">
-      <div className="inv-summary-row">
-        <span>{labels.subtotal}</span>
-        <span>{formatCurrency(totals.subtotal, currency)}</span>
+    <div className="inv-summary-table" role="table">
+      <div className="inv-summary-row" role="row">
+        <span role="rowheader">{labels.subtotal}</span>
+        <span role="cell">{formatCurrency(totals.subtotal, currency)}</span>
       </div>
       {view.showDiscount && (
-        <div className="inv-summary-row">
-          <span>{labels.discount}{view.discountPctLabel}</span>
-          <span>− {formatCurrency(totals.discount, currency)}</span>
+        <div className="inv-summary-row" role="row">
+          <span role="rowheader">{labels.discount}{view.discountPctLabel}</span>
+          <span role="cell">− {formatCurrency(totals.discount, currency)}</span>
         </div>
       )}
       {view.showTax && (
-        <div className="inv-summary-row">
-          <span>{labels.tax} ({view.taxRate}%)</span>
-          <span>{formatCurrency(totals.tax, currency)}</span>
+        <div className="inv-summary-row" role="row">
+          <span role="rowheader">{labels.tax} ({view.taxRate}%)</span>
+          <span role="cell">{formatCurrency(totals.tax, currency)}</span>
         </div>
       )}
-      <div className="inv-summary-row total">
-        <span>{labels.total}</span>
-        <span>{formatCurrency(totals.total, currency)}</span>
+      <div className="inv-summary-row total" role="row">
+        <span role="rowheader">{labels.total}</span>
+        <span role="cell">{formatCurrency(totals.total, currency)}</span>
       </div>
     </div>
   );

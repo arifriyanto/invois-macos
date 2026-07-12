@@ -1,9 +1,29 @@
 /* Invoice template styles — ported verbatim from the prototype.
    These are bespoke designs and intentionally NOT built with shadcn/Tailwind. */
 
-/* Invoices/preview are pinned to Inter (not the app UI font) so exported PDFs are
-   portable and license-safe regardless of what the UI uses. */
-.invoice-paper { width: 100%; max-width: 720px; background: #fff; border-radius: 10px; box-shadow: 0 8px 32px rgba(0,0,0,0.12); overflow: hidden; min-height: 900px; font-family: var(--font-inter, ui-sans-serif, system-ui, sans-serif); }
+/* ── FONT PINNING — read before touching ──────────────────────────────────────
+   Every template root pins Inter ITSELF. Do not move this onto a wrapper.
+
+   It used to live only on .invoice-paper, which wraps the PREVIEW. The print path
+   (lib/print.tsx) mounts <InvoiceTemplate> straight into #print-portal with no
+   such wrapper, so the templates inherited <body>'s font instead — that is
+   --font-sans, which leads with -apple-system. Result: every exported PDF
+   embedded a subset of Apple's SF (".SFNS-Regular"/".SFNS-Bold") and not one glyph
+   of Inter. Apple's licence does not allow shipping SF inside documents.
+   Caught 11 Jul 2026 by `npm run pdf:fonts`; run it after any font change.
+
+   Pinning on the roots makes each template self-contained: preview, print sheet
+   and the picker thumbnails all render the same, wherever they are mounted. */
+.tpl-minimal,
+.tpl-bold,
+.tpl-elegant,
+.tpl-retro,
+.tpl-aurora,
+.tpl-mono {
+  font-family: var(--font-inter, sans-serif);
+}
+
+.invoice-paper { width: 100%; max-width: 720px; background: #fff; border-radius: 10px; box-shadow: 0 8px 32px rgba(0,0,0,0.12); overflow: hidden; min-height: 900px; font-family: var(--font-inter, sans-serif); }
 
 /* Paginated A4 sheets (preview) */
 
@@ -28,7 +48,7 @@
   box-shadow: 0 8px 32px rgba(0,0,0,0.12);
   overflow: hidden;
   flex-shrink: 0;
-  font-family: var(--font-inter, ui-sans-serif, system-ui, sans-serif);
+  font-family: var(--font-inter, sans-serif);
 }
 .invoice-page-num {
   position: absolute;
@@ -39,7 +59,7 @@
   background: rgba(255,255,255,0.85);
   padding: 2px 8px;
   border-radius: 999px;
-  font-family: var(--font-inter, ui-sans-serif, system-ui, sans-serif);
+  font-family: var(--font-inter, sans-serif);
 }
 
   /* ── TEMPLATE: MINIMAL ── */
@@ -408,11 +428,11 @@
   .tpl-mono .inv-header { padding: 48px 48px 20px; display: flex; justify-content: space-between; align-items: flex-start; }
   .tpl-mono .inv-logo { max-height: 50px; max-width: 140px; object-fit: contain; margin-bottom: 12px; }
   .tpl-mono .inv-biz-name { font-size: 13px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; }
-  .tpl-mono .inv-biz-meta { font-family: var(--font-mono, ui-monospace, monospace); font-size: 11px; color: #888; line-height: 1.7; margin-top: 4px; }
+  .tpl-mono .inv-biz-meta { font-family: var(--font-mono, monospace); font-size: 11px; color: #888; line-height: 1.7; margin-top: 4px; }
   .tpl-mono .inv-header-right { text-align: right; }
   .tpl-mono .inv-title { font-size: 11px; font-weight: 700; letter-spacing: 5px; text-transform: uppercase; color: var(--inv-accent, #1a1a2e); margin-bottom: 8px; }
-  .tpl-mono .inv-number { font-family: var(--font-mono, ui-monospace, monospace); font-size: 16px; font-weight: 700; letter-spacing: -0.5px; }
-  .tpl-mono .inv-dates { font-family: var(--font-mono, ui-monospace, monospace); font-size: 11px; color: #888; margin-top: 6px; line-height: 1.8; }
+  .tpl-mono .inv-number { font-family: var(--font-mono, monospace); font-size: 16px; font-weight: 700; letter-spacing: -0.5px; }
+  .tpl-mono .inv-dates { font-family: var(--font-mono, monospace); font-size: 11px; color: #888; margin-top: 6px; line-height: 1.8; }
 
   .tpl-mono .inv-rule { height: 2px; background: #111; margin: 0 48px; }
 
@@ -420,7 +440,7 @@
   .tpl-mono .inv-from, .tpl-mono .inv-to { flex: 1; }
   .tpl-mono .inv-addr-label { font-size: 9px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; color: #aaa; margin-bottom: 8px; }
   .tpl-mono .inv-addr-name { font-size: 14px; font-weight: 700; margin-bottom: 2px; }
-  .tpl-mono .inv-addr-detail { font-family: var(--font-mono, ui-monospace, monospace); font-size: 11px; color: #666; line-height: 1.8; }
+  .tpl-mono .inv-addr-detail { font-family: var(--font-mono, monospace); font-size: 11px; color: #666; line-height: 1.8; }
 
   .tpl-mono .inv-items { padding: 0 48px 28px; }
   .tpl-mono .inv-items-header {
@@ -448,12 +468,12 @@
     align-items: center;
   }
   .tpl-mono .inv-item-qty,
-  .tpl-mono .inv-item-row .col-right { font-family: var(--font-mono, ui-monospace, monospace); }
+  .tpl-mono .inv-item-row .col-right { font-family: var(--font-mono, monospace); }
 
   .tpl-mono .inv-summary { padding: 0 48px 32px; display: flex; justify-content: flex-end; }
   .tpl-mono .inv-summary-table { width: 270px; }
   .tpl-mono .inv-summary-row { display: flex; justify-content: space-between; padding: 5px 0; font-size: 12px; color: #777; }
-  .tpl-mono .inv-summary-row > span:last-child { font-family: var(--font-mono, ui-monospace, monospace); }
+  .tpl-mono .inv-summary-row > span:last-child { font-family: var(--font-mono, monospace); }
   .tpl-mono .inv-summary-row.total {
     font-size: 15px;
     font-weight: 700;
@@ -465,7 +485,7 @@
 
   .tpl-mono .inv-footer { padding: 24px 48px 44px; display: flex; gap: 48px; border-top: 1px solid #eee; }
   .tpl-mono .inv-footer-label { font-size: 9px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; color: #aaa; margin-bottom: 6px; }
-  .tpl-mono .inv-footer-value { font-family: var(--font-mono, ui-monospace, monospace); font-size: 11px; color: #666; line-height: 1.8; }
+  .tpl-mono .inv-footer-value { font-family: var(--font-mono, monospace); font-size: 11px; color: #666; line-height: 1.8; }
 
   /* empty state */
   .inv-empty {

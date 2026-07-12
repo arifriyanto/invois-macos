@@ -97,11 +97,8 @@ async function saveFile(
   return filename;
 }
 
-/** Render the invoice into a canvas via html2canvas (shared by PDF & PNG). */
-async function renderInvoiceCanvas(
-  paper: HTMLElement,
-  opts: { draft?: boolean } = {}
-): Promise<HTMLCanvasElement> {
+/** Render the invoice into a canvas via html2canvas (the PNG path). */
+async function renderInvoiceCanvas(paper: HTMLElement): Promise<HTMLCanvasElement> {
   const { default: html2canvas } = await import("html2canvas");
 
   const wrapper = document.createElement("div");
@@ -152,30 +149,6 @@ async function renderInvoiceCanvas(
       .forEach((el) => {
         el.style.top = "-8px";
       });
-  }
-
-  // Draft watermark: a translucent diagonal "DRAFT" over the whole page, so an
-  // export of an unsaved invoice is visibly provisional. Added after the text
-  // nudges so the loop above doesn't touch it.
-  if (opts.draft) {
-    const wm = document.createElement("div");
-    wm.textContent = "DRAFT";
-    wm.style.cssText = [
-      "position:absolute",
-      "top:50%",
-      "left:50%",
-      "transform:translate(-50%,-50%) rotate(-28deg)",
-      "font-family:'Sora',system-ui,-apple-system,sans-serif",
-      "font-size:170px",
-      "font-weight:800",
-      "letter-spacing:0.08em",
-      "text-transform:uppercase",
-      "color:rgba(239,68,68,0.12)",
-      "white-space:nowrap",
-      "pointer-events:none",
-      "z-index:2147483647",
-    ].join(";");
-    clone.appendChild(wm);
   }
 
   try {
@@ -264,10 +237,9 @@ export async function exportInvoicePNG(
   paper: HTMLElement,
   filename: string,
   dir: string | null = null,
-  draft = false,
   openAfter = false
 ): Promise<string> {
-  const canvas = await renderInvoiceCanvas(paper, { draft });
+  const canvas = await renderInvoiceCanvas(paper);
   const blob = await new Promise<Blob>((resolve, reject) =>
     canvas.toBlob((b) => (b ? resolve(b) : reject(new Error("PNG encode failed"))), "image/png")
   );

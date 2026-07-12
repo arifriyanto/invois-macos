@@ -26,7 +26,7 @@ function Minimal({ view }: { view: InvoiceView }) {
       <div className="inv-addresses">
         <AddressColumns view={view} />
       </div>
-      <div className="inv-items">
+      <div className="inv-items" role="table">
         <ItemsTable view={view} last={L.amount} />
       </div>
       <div className="inv-summary">
@@ -71,7 +71,7 @@ function Bold({ view }: { view: InvoiceView }) {
       <div className="inv-addresses">
         <AddressColumns view={view} />
       </div>
-      <div className="inv-items">
+      <div className="inv-items" role="table">
         <ItemsTable view={view} last={L.amount} />
       </div>
       <div className="inv-summary">
@@ -118,7 +118,13 @@ function Elegant({ view }: { view: InvoiceView }) {
         <div className="inv-addresses">
           <AddressColumns view={view} />
         </div>
-        <ItemsTable view={view} last={L.amount} />
+        {/* Elegant was the one template calling ItemsTable bare. It now gets the
+            same .inv-items wrapper as the others — purely so role="table" has a
+            home (no .tpl-elegant .inv-items CSS rule exists, and .inv-body is a
+            plain block, so nothing moves). */}
+        <div className="inv-items" role="table">
+          <ItemsTable view={view} last={L.amount} />
+        </div>
         <div className="inv-summary">
           <SummaryTable view={view} />
         </div>
@@ -174,7 +180,7 @@ function Retro({ view }: { view: InvoiceView }) {
       <div className="inv-addresses">
         <AddressColumns view={view} />
       </div>
-      <div className="inv-items">
+      <div className="inv-items" role="table">
         <ItemsTable view={view} last={L.amount} />
       </div>
       <div className="inv-summary">
@@ -230,7 +236,7 @@ function Aurora({ view }: { view: InvoiceView }) {
       <div className="inv-addresses">
         <AddressColumns view={view} />
       </div>
-      <div className="inv-items">
+      <div className="inv-items" role="table">
         <ItemsTable view={view} last={L.amount} />
       </div>
       <div className="inv-summary">
@@ -276,7 +282,7 @@ function Mono({ view }: { view: InvoiceView }) {
       <div className="inv-addresses">
         <AddressColumns view={view} />
       </div>
-      <div className="inv-items">
+      <div className="inv-items" role="table">
         <ItemsTable view={view} last={L.amount} />
       </div>
       <div className="inv-summary">

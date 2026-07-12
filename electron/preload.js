@@ -40,8 +40,9 @@ contextBridge.exposeInMainWorld("invois", {
 
   pdf: {
     /** Prints the CURRENT document to `outPath`. The @media print rules decide
-     *  what lands on the page (only the invoice). Chromium paginates A4. */
-    toFile: (outPath) => ipcRenderer.invoke("pdf:toFile", outPath),
+     *  what lands on the page (only the invoice). Chromium paginates A4.
+     *  `title` goes into the PDF's metadata. */
+    toFile: (outPath, title) => ipcRenderer.invoke("pdf:toFile", outPath, title),
   },
 
   window: {

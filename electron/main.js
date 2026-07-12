@@ -168,17 +168,52 @@ ipcMain.handle("win:isFullscreen", () => mainWindow?.isFullScreen() ?? false);
 // Chromium prints the CURRENT document using our @media print rules (which hide
 // the app chrome and leave only the invoice). It paginates A4 for us — no page
 // slicing, no pdf-lib, no Rust. This is the biggest win of the move.
-ipcMain.handle("pdf:toFile", async (_e, outPath) => {
+ipcMain.handle("pdf:toFile", async (_e, outPath, title) => {
   if (!mainWindow) throw new Error("no window");
   const data = await mainWindow.webContents.printToPDF({
     pageSize: "A4",
     printBackground: true,
     margins: { marginType: "none" },
     preferCSSPageSize: true,
+    // Embed the document STRUCTURE (headings, table, rows, cells), not just text
+    // floating at coordinates. Without it a PDF viewer has to guess what a drag
+    // across cells means, and partial selection feels like it jumps around.
+    // Also makes the invoice readable by a screen reader. Costs a few KB.
+    generateTaggedPDF: true,
   });
-  await fs.writeFile(outPath, data);
+  await fs.writeFile(outPath, await stampMetadata(data, title));
   return outPath;
 });
+
+/**
+ * Re-sign the PDF as ours.
+ *
+ * printToPDF has no metadata options: Chromium writes the bytes through Skia, so
+ * the file arrives stamped `Producer: Skia/PDF`. The client who opens the invoice
+ * sees a graphics library's name in Get Info instead of the product's. pdf-lib
+ * rewrites just the info dictionary — the page content, the tags and the fonts
+ * are untouched.
+ *
+ * pdf-lib lives HERE, in the main process, not in the renderer: it never enters
+ * the app bundle the UI loads. Best-effort — a metadata failure must never cost
+ * the user their export, so we fall back to the original bytes.
+ */
+async function stampMetadata(bytes, title) {
+  try {
+    const { PDFDocument } = require("pdf-lib");
+    const doc = await PDFDocument.load(bytes);
+    doc.setProducer("Invois");
+    doc.setCreator("Invois");
+    doc.setAuthor("Invois");
+    if (title) doc.setTitle(title);
+    doc.setCreationDate(new Date());
+    doc.setModificationDate(new Date());
+    return Buffer.from(await doc.save());
+  } catch (e) {
+    console.error("[pdf] metadata stamp failed, writing unstamped file:", e);
+    return bytes;
+  }
+}
 
 // ---------------------------------------------------------------------------
 // Right-click menu.
