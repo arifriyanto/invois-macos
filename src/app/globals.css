@@ -153,7 +153,17 @@
      through to system-ui, i.e. SF Pro. Both are fixed; keep it that way. */
   --font-sans: -apple-system, BlinkMacSystemFont, var(--font-inter), system-ui, sans-serif;
   --font-serif: var(--font-dm-serif), Georgia, serif;
-  /* --font-mono comes from next/font (Roboto Mono, Apache-2.0) — see layout.tsx. */
+  /* NOTE: --font-mono is Tailwind's OWN theme name, driving the `font-mono`
+     utility used by app chrome (vault paths, invoice numbers). We do not touch it
+     — the app UI keeps SF Mono on screen. The Mono TEMPLATE's typeface is
+     --font-inv-mono (Roboto Mono, from next/font — see layout.tsx). Two names,
+     because they are two different concerns.
+
+     KNOWN LIMIT (accepted, 11 Jul 2026): a glyph none of our fonts cover — an
+     emoji, Han, Arabic — still falls back to a system face, which Chromium then
+     embeds. No CSS can prevent glyph fallback. Closing it properly means bundling
+     Noto Sans + Noto Color Emoji (several MB). Judged not worth it: invoices in
+     Indonesian/English do not carry those characters. */
 }
 
 /* Toast (sonner): fixed navy background + white text — independent of the

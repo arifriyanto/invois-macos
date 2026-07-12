@@ -23,14 +23,19 @@ const sora = Sora({
   variable: "--font-sora",
   weight: ["500", "600", "700"],
 });
-// The Mono template's typeface. Self-hosted ON PURPOSE: it used to fall through
+// The Mono TEMPLATE's typeface. Self-hosted on purpose: it used to fall through
 // to `ui-monospace`, which on macOS is Apple's SF Mono — and Chromium then
 // EMBEDDED SF Mono into every exported PDF, which Apple's licence does not allow
 // for documents shared off-Apple. Roboto Mono is Apache-2.0 (free to embed) and
 // is the closest match to SF Mono's proportions, so the template barely shifts.
+//
+// The variable is `--font-inv-mono`, NOT `--font-mono`: Tailwind v4 owns that
+// name for its own `font-mono` utility, which the app UI uses (vault paths,
+// invoice numbers). Naming ours the same silently repainted those UI bits too.
+// Templates and app chrome are separate concerns — keep their names separate.
 const robotoMono = Roboto_Mono({
   subsets: ["latin"],
-  variable: "--font-mono",
+  variable: "--font-inv-mono",
   weight: ["400", "700"],
 });
 
