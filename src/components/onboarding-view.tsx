@@ -404,7 +404,11 @@ export function OnboardingView({ onDone }: { onDone: () => void }) {
                   </label>
                   <label className="flex flex-col gap-1.5">
                     <span className="text-xs font-semibold text-muted-foreground">{t("f.email")}</span>
-                    <Input type="email" value={email} placeholder={t("ph.email")} onChange={(e) => setEmail(e.target.value)} />
+                    {/* ph.bizEmail, not ph.email: this is the user's OWN address.
+                        ph.email is the CLIENT's ("klien@example.com") and was being
+                        offered here, telling people to type someone else's email
+                        into their own field. */}
+                    <Input type="email" value={email} placeholder={t("ph.bizEmail")} onChange={(e) => setEmail(e.target.value)} />
                   </label>
                   <label className="flex flex-col gap-1.5">
                     <span className="text-xs font-semibold text-muted-foreground">{t("bk.phone")}</span>
