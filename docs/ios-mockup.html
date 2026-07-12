@@ -1,0 +1,709 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8" />
+<title>Invois iOS — mockup interaktif</title>
+<style>
+  /* ── Mockup chrome (bukan bagian app) ───────────────────────────────── */
+  :root{
+    --primary:#1d4ed8; --primary-fg:#fff;
+    --bg:#f2f5fb; --card:#fff; --fg:#16203a; --muted:#5b6b86;
+    --border:#dde5f0; --secondary:#e6eefb; --secondary-fg:#1e3a8a;
+    --gold:#f2c04e; --gold-fg:#4a3500; --navy:#182a4e;
+    --green:#0f9d58; --red:#e5484d;
+    --ios-gray:#f2f2f7; --ios-sep:#e5e5ea; --ios-label2:#8a8a8e;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  body{
+    margin:0; min-height:100vh; display:flex; gap:40px; align-items:flex-start;
+    justify-content:center; padding:40px 20px; background:#0f1421;
+    font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",Inter,sans-serif;
+    color:#fff;
+  }
+  .side{max-width:280px; padding-top:24px}
+  .side h1{font-size:19px; margin:0 0 6px; letter-spacing:-.3px}
+  .side p{font-size:13px; line-height:1.6; color:#93a0bb; margin:0 0 14px}
+  .side code{background:#1b2436; padding:1px 5px; border-radius:4px; font-size:12px}
+  .side .k{display:flex; gap:8px; font-size:12.5px; color:#c7d0e2; margin-bottom:7px; line-height:1.45}
+  .side .k b{color:#fff; font-weight:600}
+  .dot{width:6px;height:6px;border-radius:99px;background:var(--gold);margin-top:6px;flex:0 0 6px}
+
+  /* ── iPhone ─────────────────────────────────────────────────────────── */
+  .phone{
+    width:390px; height:844px; border-radius:54px; background:#000;
+    padding:11px; box-shadow:0 40px 90px rgba(0,0,0,.6), 0 0 0 2px #2a3348;
+    flex:0 0 390px; position:relative;
+  }
+  .screen{
+    width:100%; height:100%; border-radius:44px; overflow:hidden; position:relative;
+    background:var(--bg); color:var(--fg); display:flex; flex-direction:column;
+  }
+  .notch{
+    position:absolute; top:11px; left:50%; transform:translateX(-50%);
+    width:120px; height:32px; background:#000; border-radius:99px; z-index:60;
+  }
+  .statusbar{
+    height:54px; flex:0 0 54px; display:flex; align-items:flex-end; justify-content:space-between;
+    padding:0 26px 6px; font-size:14px; font-weight:600; letter-spacing:.2px; z-index:50;
+  }
+  .statusbar .r{display:flex; gap:5px; align-items:center}
+
+  /* ── Umum ───────────────────────────────────────────────────────────── */
+  .view{display:none; flex:1; overflow-y:auto; overscroll-behavior:contain; padding-bottom:12px}
+  .view.on{display:block}
+  .lt{padding:4px 20px 10px}
+  .lt h2{font-size:32px; letter-spacing:-.8px; margin:0; font-weight:700}
+  .lt .sub{font-size:13.5px; color:var(--muted); margin-top:2px}
+  .navbar{
+    display:flex; align-items:center; justify-content:space-between; padding:2px 16px 8px;
+    font-size:17px; font-weight:600;
+  }
+  .navbar .b{color:var(--primary); font-size:16px; font-weight:400; cursor:pointer; background:none;border:0;padding:6px 2px;font-family:inherit}
+  .navbar .b.strong{font-weight:600}
+  .navbar .b:disabled{color:#b9c2d4}
+  .group{background:var(--card); border-radius:14px; margin:0 16px 18px; overflow:hidden}
+  .row{
+    display:flex; align-items:center; gap:12px; padding:13px 16px; cursor:pointer;
+    border-bottom:1px solid var(--ios-sep); background:var(--card);
+  }
+  .row:last-child{border-bottom:0}
+  .row:active{background:#eef2f9}
+  .row .t{flex:1; min-width:0}
+  .row .t b{display:block; font-size:15.5px; font-weight:600; letter-spacing:-.2px}
+  .row .t small{display:block; font-size:12.5px; color:var(--muted); margin-top:2px}
+  .row .v{font-size:14.5px; color:var(--muted); white-space:nowrap}
+  .chev{color:#c3cbdd; font-size:17px}
+  .sec{font-size:12.5px; font-weight:600; color:var(--muted); text-transform:uppercase; letter-spacing:.6px; margin:2px 0 8px 32px}
+
+  .pill{display:inline-flex; align-items:center; gap:4px; border-radius:99px; padding:3px 9px; font-size:11.5px; font-weight:600}
+  .pill.paid{background:#e6f6ee; color:var(--green)}
+  .pill.due{background:#fdeceb; color:var(--red)}
+  .pill.pro{background:#fdf3dd; color:var(--gold-fg)}
+
+  .btn{
+    display:block; width:100%; border:0; border-radius:13px; padding:14px; font-size:16px;
+    font-weight:600; font-family:inherit; cursor:pointer; background:var(--primary); color:#fff;
+  }
+  .btn.gold{background:var(--gold); color:var(--gold-fg)}
+  .btn.ghost{background:var(--secondary); color:var(--secondary-fg)}
+  .btn:active{opacity:.85}
+
+  .seg{display:flex; background:var(--ios-gray); border-radius:9px; padding:2px; margin:0 16px 14px}
+  .seg button{
+    flex:1; border:0; background:none; padding:7px; border-radius:7px; font-size:13px;
+    font-weight:600; color:var(--muted); font-family:inherit; cursor:pointer;
+  }
+  .seg button.on{background:#fff; color:var(--fg); box-shadow:0 1px 3px rgba(0,0,0,.12)}
+
+  input,textarea,select{
+    width:100%; border:0; background:transparent; font-family:inherit; font-size:15.5px;
+    color:var(--fg); outline:none; text-align:right;
+  }
+  .field{display:flex; align-items:center; gap:10px; padding:12px 16px; border-bottom:1px solid var(--ios-sep); background:var(--card)}
+  .field:last-child{border-bottom:0}
+  .field label{font-size:15.5px; flex:0 0 40%; font-weight:500}
+
+  /* ── Tab bar ────────────────────────────────────────────────────────── */
+  .tabbar{
+    flex:0 0 84px; display:flex; background:rgba(255,255,255,.92);
+    backdrop-filter:blur(20px); border-top:1px solid var(--ios-sep); padding-bottom:18px;
+  }
+  .tab{
+    flex:1; border:0; background:none; display:flex; flex-direction:column; align-items:center;
+    justify-content:center; gap:3px; color:#98a2b6; font-size:10.5px; font-weight:500;
+    font-family:inherit; cursor:pointer; padding-top:8px;
+  }
+  .tab.on{color:var(--primary)}
+  .tab svg{width:24px; height:24px}
+
+  /* ── Sheet ──────────────────────────────────────────────────────────── */
+  .sheet-wrap{
+    position:absolute; inset:0; z-index:70; display:none;
+    background:rgba(0,0,0,.35); border-radius:44px;
+  }
+  .sheet-wrap.on{display:block}
+  .sheet{
+    position:absolute; left:0; right:0; bottom:0; background:var(--bg);
+    border-radius:16px 16px 44px 44px; max-height:88%; overflow-y:auto;
+    padding-bottom:34px; animation:up .28s cubic-bezier(.2,.8,.2,1);
+  }
+  .sheet.full{top:24px; border-radius:16px 16px 44px 44px}
+  @keyframes up{from{transform:translateY(100%)}to{transform:translateY(0)}}
+  .grab{width:38px;height:5px;border-radius:99px;background:#cfd6e4;margin:8px auto 4px}
+
+  /* ── Metrik & chart ─────────────────────────────────────────────────── */
+  .metrics{display:grid; grid-template-columns:1fr 1fr; gap:10px; margin:0 16px 16px}
+  .metric{background:var(--card); border-radius:14px; padding:13px 14px}
+  .metric small{font-size:11.5px; color:var(--muted); font-weight:600; letter-spacing:.3px}
+  .metric b{display:block; font-size:20px; letter-spacing:-.6px; margin-top:5px}
+  .metric .d{font-size:11.5px; font-weight:600; margin-top:3px}
+  .metric .d.up{color:var(--green)} .metric .d.down{color:var(--red)}
+  .chart{background:var(--card); border-radius:14px; margin:0 16px 18px; padding:14px}
+  .bars{display:flex; align-items:flex-end; gap:6px; height:110px; margin-top:10px}
+  .bars div{flex:1; background:var(--secondary); border-radius:4px 4px 2px 2px; position:relative}
+  .bars div.hi{background:var(--primary)}
+  .bars span{position:absolute; bottom:-18px; left:0; right:0; text-align:center; font-size:9px; color:var(--muted)}
+
+  /* ── Invoice paper (preview) ────────────────────────────────────────── */
+  .paper{background:#fff; margin:0 16px 16px; border-radius:10px; padding:22px; box-shadow:0 6px 20px rgba(0,0,0,.1)}
+  .paper .ph{display:flex; justify-content:space-between; align-items:flex-start}
+  .paper .biz{font-size:15px; font-weight:700; letter-spacing:-.3px}
+  .paper .meta{font-size:9.5px; color:#6f6f6f; line-height:1.6; margin-top:2px}
+  .paper .ttl{font-size:9px; font-weight:600; letter-spacing:1.6px; text-transform:uppercase; color:var(--primary)}
+  .paper .num{font-size:15px; font-weight:700; text-align:right; letter-spacing:-.3px}
+  .paper hr{border:0; border-top:1px solid #eee; margin:14px 0}
+  .paper .addr{display:flex; gap:20px; font-size:9.5px}
+  .paper .addr b{display:block; font-size:8.5px; color:#6f6f6f; text-transform:uppercase; letter-spacing:.8px; margin-bottom:4px; font-weight:600}
+  .paper .addr .nm{font-size:11px; font-weight:600; color:#111}
+  .paper table{width:100%; border-collapse:collapse; margin-top:14px; font-size:10px}
+  .paper th{text-align:left; font-size:8px; text-transform:uppercase; letter-spacing:.7px; color:#6f6f6f; border-top:1px solid #eee; border-bottom:1px solid #eee; padding:6px 0}
+  .paper td{padding:8px 0; border-bottom:1px solid #f5f5f5}
+  .paper .r{text-align:right}
+  .paper .tot{display:flex; justify-content:space-between; font-size:12px; font-weight:700; margin-top:10px; padding-top:8px; border-top:1px solid #eee}
+
+  .tpl-card{border-radius:10px; overflow:hidden; border:2px solid transparent; position:relative; cursor:pointer; background:#fff; aspect-ratio:.72}
+  .tpl-card.on{border-color:var(--primary)}
+  .tpl-card .lbl{position:absolute; bottom:0; left:0; right:0; background:rgba(255,255,255,.94); font-size:11px; font-weight:600; padding:5px; text-align:center}
+  .tpl-card .crown{position:absolute; top:6px; right:6px; background:var(--gold); color:var(--gold-fg); border-radius:99px; width:20px; height:20px; display:flex; align-items:center; justify-content:center; font-size:11px}
+  .tpl-mini{padding:10px; height:100%}
+  .tpl-mini .l1{height:5px; background:var(--primary); width:36%; border-radius:2px}
+  .tpl-mini .l2{height:3px; background:#e9edf5; margin-top:5px; border-radius:2px}
+  .tpl-mini .l3{height:3px; background:#f1f3f8; margin-top:4px; border-radius:2px; width:70%}
+
+  .fab{
+    position:absolute; right:18px; bottom:100px; width:56px; height:56px; border-radius:99px;
+    background:var(--primary); color:#fff; border:0; font-size:28px; z-index:40; cursor:pointer;
+    box-shadow:0 10px 24px rgba(29,78,216,.42); display:flex; align-items:center; justify-content:center;
+  }
+  .toast{
+    position:absolute; left:50%; transform:translateX(-50%); bottom:110px; z-index:80;
+    background:var(--navy); color:#fff; font-size:13px; padding:11px 16px; border-radius:12px;
+    opacity:0; transition:opacity .2s, transform .2s; pointer-events:none; max-width:80%;
+  }
+  .toast.on{opacity:1; transform:translateX(-50%) translateY(-6px)}
+  .empty{text-align:center; color:var(--muted); font-size:13.5px; padding:40px 30px; line-height:1.6}
+  .note{margin:0 16px 18px; font-size:12px; color:var(--muted); line-height:1.55}
+</style>
+</head>
+<body>
+
+<div class="side">
+  <h1>Invois — iOS</h1>
+  <p>Mockup interaktif. Semua alur macOS dipetakan ke iPhone. Data dummy, tapi tombolnya benar-benar jalan.</p>
+  <div class="k"><i class="dot"></i><span><b>Mulai dari onboarding.</b> Tekan lanjut sampai masuk app.</span></div>
+  <div class="k"><i class="dot"></i><span><b>Coba gating Pro:</b> di Pengaturan ada saklar Free/Pro. Sebagai Free, buat invoice ke-4 atau pilih template bermahkota.</span></div>
+  <div class="k"><i class="dot"></i><span><b>Alur inti:</b> tab Invois → tombol <code>+</code> → pilih klien → tambah item → Simpan → Bagikan.</span></div>
+  <div class="k"><i class="dot"></i><span><b>Penyimpanan:</b> iCloud Drive, satu vault, otomatis. Tidak ada pemilihan folder di iPhone.</span></div>
+</div>
+
+<div class="phone">
+  <div class="notch"></div>
+  <div class="screen">
+    <div class="statusbar"><span>9:41</span><span class="r">􀟠 􀙇 􀛨</span></div>
+
+    <!-- ══ ONBOARDING ══════════════════════════════════════════════════ -->
+    <div class="view on" id="v-onb">
+      <div id="onb1">
+        <div style="padding:30px 28px 0">
+          <div style="width:64px;height:64px;border-radius:16px;background:var(--primary);display:flex;align-items:center;justify-content:center;font-size:30px;font-weight:800;color:#fff;letter-spacing:-1px">i</div>
+          <h2 style="font-size:30px;letter-spacing:-.9px;margin:22px 0 8px">Invois</h2>
+          <p style="font-size:15px;color:var(--muted);line-height:1.6;margin:0">Buat invoice profesional dari iPhone. Datamu tersimpan di iCloud milikmu sendiri.</p>
+        </div>
+        <div style="padding:26px 20px">
+          <div class="group">
+            <div class="row" style="cursor:default"><span>􀉪</span><div class="t"><b>Satu profil bisnis</b><small>Logo, alamat, rekening — sekali isi</small></div></div>
+            <div class="row" style="cursor:default"><span>􀈕</span><div class="t"><b>Ekspor PDF</b><small>Kirim lewat WhatsApp, email, AirDrop</small></div></div>
+            <div class="row" style="cursor:default"><span>􀉦</span><div class="t"><b>Sinkron dengan Mac</b><small>Vault yang sama, otomatis</small></div></div>
+          </div>
+        </div>
+        <div style="padding:0 20px"><button class="btn" onclick="step(2)">Mulai</button></div>
+      </div>
+
+      <div id="onb2" style="display:none">
+        <div class="navbar"><button class="b" onclick="step(1)">Kembali</button><span>Profil bisnis</span><button class="b strong" onclick="step(3)">Lanjut</button></div>
+        <div class="note">Muncul di setiap invoice. Bisa diubah kapan saja di Pengaturan.</div>
+        <div class="group">
+          <div class="field"><label>Nama</label><input value="Studio Arunika" /></div>
+          <div class="field"><label>Email</label><input value="halo@arunika.studio" /></div>
+          <div class="field"><label>Telepon</label><input value="0812-5550-1188" /></div>
+          <div class="field"><label>Alamat</label><input value="Jl. Kaliurang KM 5, Yogyakarta" /></div>
+        </div>
+        <div class="sec">Rekening</div>
+        <div class="group">
+          <div class="field"><label>Bank</label><input value="BCA" /></div>
+          <div class="field"><label>No. rekening</label><input value="8720 5544 31" /></div>
+          <div class="field"><label>Atas nama</label><input value="Arif Riyanto" /></div>
+        </div>
+      </div>
+
+      <div id="onb3" style="display:none">
+        <div class="navbar"><button class="b" onclick="step(2)">Kembali</button><span>Penyimpanan</span><span style="width:52px"></span></div>
+        <div style="padding:20px 26px 8px; text-align:center">
+          <div style="font-size:46px">􀉦</div>
+          <h3 style="font-size:21px; letter-spacing:-.5px; margin:12px 0 8px">Data kamu di iCloud</h3>
+          <p style="font-size:14px; color:var(--muted); line-height:1.6; margin:0">
+            Invois menyimpan satu berkas vault di <b>iCloud Drive → Invois</b>. Mac dan iPhone membaca vault yang sama, jadi invoice yang kamu buat di sini langsung muncul di Mac.
+          </p>
+        </div>
+        <div class="group" style="margin-top:20px">
+          <div class="row" style="cursor:default"><span style="color:var(--green)">􀆅</span><div class="t"><b>Milikmu, bukan server kami</b><small>Berkasnya ada di iCloud Drive-mu</small></div></div>
+          <div class="row" style="cursor:default"><span style="color:var(--green)">􀆅</span><div class="t"><b>Bisa dibuka di Files</b><small>Salin, backup, atau pindahkan sendiri</small></div></div>
+        </div>
+        <div class="note" style="color:#9aa6bd">
+          Di Mac kamu bebas memilih folder mana pun. Di iPhone, iOS tidak mengizinkan itu tanpa merepotkan — jadi lokasinya kami tetapkan, dan tetap terbuka lewat app Files.
+        </div>
+        <div style="padding:0 20px"><button class="btn" onclick="enterApp()">Selesai</button></div>
+      </div>
+    </div>
+
+    <!-- ══ BERANDA ═════════════════════════════════════════════════════ -->
+    <div class="view" id="v-home">
+      <div class="lt"><h2>Beranda</h2><div class="sub">Studio Arunika · 12 bulan terakhir</div></div>
+      <div class="metrics">
+        <div class="metric"><small>PENDAPATAN</small><b>Rp 48,2jt</b><div class="d up">▲ 18% vs periode lalu</div></div>
+        <div class="metric"><small>BELUM DIBAYAR</small><b>Rp 9,4jt</b><div class="d down">3 invoice jatuh tempo</div></div>
+        <div class="metric"><small>INVOICE</small><b>27</b><div class="d" style="color:var(--muted)">7 bulan aktif</div></div>
+        <div class="metric"><small>RATA-RATA</small><b>Rp 1,8jt</b><div class="d" style="color:var(--muted)">per invoice</div></div>
+      </div>
+      <div class="chart">
+        <div style="font-size:13px;font-weight:600">Pendapatan per bulan</div>
+        <div class="bars" id="bars"></div>
+        <div style="height:16px"></div>
+      </div>
+      <div class="sec">Terbaru</div>
+      <div class="group" id="home-recent"></div>
+    </div>
+
+    <!-- ══ INVOICE ═════════════════════════════════════════════════════ -->
+    <div class="view" id="v-inv">
+      <div class="lt"><h2>Invoice</h2></div>
+      <div class="seg">
+        <button class="on" onclick="filt('all',this)">Semua</button>
+        <button onclick="filt('due',this)">Belum bayar</button>
+        <button onclick="filt('paid',this)">Lunas</button>
+      </div>
+      <div class="group" id="inv-list"></div>
+      <div class="note" id="cap-note"></div>
+    </div>
+
+    <!-- ══ KLIEN ═══════════════════════════════════════════════════════ -->
+    <div class="view" id="v-cli">
+      <div class="lt"><h2>Klien</h2></div>
+      <div class="group" id="cli-list"></div>
+      <div style="padding:0 16px"><button class="btn ghost" onclick="toast('Form klien baru (mockup)')">+ Klien baru</button></div>
+    </div>
+
+    <!-- ══ KATALOG ═════════════════════════════════════════════════════ -->
+    <div class="view" id="v-cat">
+      <div class="lt"><h2>Katalog</h2><div class="sub">Item yang sering kamu tagihkan</div></div>
+      <div class="group" id="cat-list"></div>
+      <div style="padding:0 16px"><button class="btn ghost" onclick="toast('Form item baru (mockup)')">+ Item baru</button></div>
+    </div>
+
+    <!-- ══ PENGATURAN ══════════════════════════════════════════════════ -->
+    <div class="view" id="v-set">
+      <div class="lt"><h2>Pengaturan</h2></div>
+
+      <div class="group" id="pro-box"></div>
+
+      <div class="sec">Bisnis</div>
+      <div class="group">
+        <div class="row" onclick="toast('Edit profil bisnis')"><div class="t"><b>Studio Arunika</b><small>halo@arunika.studio</small></div><span class="chev">›</span></div>
+        <div class="row" onclick="toast('Ganti logo')"><div class="t"><b>Logo</b></div><span class="v">Terpasang</span><span class="chev">›</span></div>
+      </div>
+
+      <div class="sec">Invoice</div>
+      <div class="group">
+        <div class="row" onclick="openTpl()"><div class="t"><b>Template</b></div><span class="v" id="set-tpl">Minimal</span><span class="chev">›</span></div>
+        <div class="row" onclick="toast('Pilih mata uang')"><div class="t"><b>Mata uang</b><small>Terkunci setelah ada invoice</small></div><span class="v">IDR</span><span class="chev">›</span></div>
+        <div class="row" onclick="toast('Ganti bahasa')"><div class="t"><b>Bahasa</b></div><span class="v">Indonesia</span><span class="chev">›</span></div>
+        <div class="row" onclick="toast('Nomor otomatis: INV-2026-013')"><div class="t"><b>Penomoran</b></div><span class="v">INV-2026-0##</span><span class="chev">›</span></div>
+      </div>
+
+      <div class="sec">Data</div>
+      <div class="group">
+        <div class="row" style="cursor:default"><div class="t"><b>iCloud Drive</b><small>Tersinkron 2 menit lalu · juga terbaca di Mac</small></div><span style="color:var(--green)">􀆅</span></div>
+        <div class="row" onclick="toast('Membuka app Files…')"><div class="t"><b>Buka di Files</b><small>Salin atau backup vault sendiri</small></div><span class="chev">›</span></div>
+      </div>
+
+      <div class="sec">Simulasi (khusus mockup)</div>
+      <div class="group">
+        <div class="row" onclick="togglePro()"><div class="t"><b>Status akun</b><small>Ketuk untuk bertukar Free ⇄ Pro</small></div><span class="v" id="pro-state">Free</span></div>
+      </div>
+      <div class="note">Saklar ini tidak ada di app sungguhan — hanya agar kamu bisa mencoba kedua sisi gating.</div>
+    </div>
+
+    <!-- ══ TAB BAR ═════════════════════════════════════════════════════ -->
+    <div class="tabbar" id="tabbar" style="display:none">
+      <button class="tab on" data-v="home" onclick="go('home',this)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/></svg>Beranda</button>
+      <button class="tab" data-v="inv" onclick="go('inv',this)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M6 2h9l5 5v15H6z"/><path d="M15 2v5h5M9 12h7M9 16h7"/></svg>Invoice</button>
+      <button class="tab" data-v="cli" onclick="go('cli',this)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="8" r="3.4"/><path d="M4.5 20a7.5 7.5 0 0 1 15 0"/></svg>Klien</button>
+      <button class="tab" data-v="cat" onclick="go('cat',this)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3.5" y="4.5" width="17" height="15" rx="2"/><path d="M3.5 9.5h17M8 14h8"/></svg>Katalog</button>
+      <button class="tab" data-v="set" onclick="go('set',this)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M19.1 4.9 17 7M7 17l-2.1 2.1"/></svg>Pengaturan</button>
+    </div>
+
+    <button class="fab" id="fab" style="display:none" onclick="newInvoice()">+</button>
+    <div class="toast" id="toast"></div>
+
+    <!-- ══ SHEET: EDITOR ═══════════════════════════════════════════════ -->
+    <div class="sheet-wrap" id="sh-ed">
+      <div class="sheet full">
+        <div class="grab"></div>
+        <div class="navbar">
+          <button class="b" onclick="closeSheet('sh-ed')">Batal</button>
+          <span id="ed-title">Invoice baru</span>
+          <button class="b strong" id="ed-save" onclick="saveInv()">Simpan</button>
+        </div>
+
+        <div class="sec">Klien</div>
+        <div class="group">
+          <div class="row" onclick="pickClient()"><div class="t"><b id="ed-cli">Pilih klien</b><small id="ed-cli-sub">Wajib diisi</small></div><span class="chev">›</span></div>
+        </div>
+
+        <div class="sec">Item</div>
+        <div class="group" id="ed-items"></div>
+        <div style="padding:0 16px 18px"><button class="btn ghost" onclick="addItem()">+ Tambah item</button></div>
+
+        <div class="sec">Rincian</div>
+        <div class="group">
+          <div class="field"><label>Nomor</label><input id="ed-num" value="INV-2026-013" /></div>
+          <div class="field"><label>Tanggal</label><input value="11 Jul 2026" /></div>
+          <div class="field"><label>Jatuh tempo</label><input value="25 Jul 2026" /></div>
+          <div class="row" onclick="toast('Diskon & pajak (mockup)')"><div class="t"><b>Diskon & pajak</b></div><span class="v">Tidak ada</span><span class="chev">›</span></div>
+          <div class="field"><label>Catatan</label><input placeholder="Opsional" /></div>
+        </div>
+
+        <div class="group" style="background:var(--navy); color:#fff">
+          <div class="row" style="background:transparent; border:0; cursor:default">
+            <div class="t"><b style="color:#fff">Total</b><small style="color:#a9b6d0" id="ed-count">0 item</small></div>
+            <span class="v" style="color:#fff; font-size:19px; font-weight:700" id="ed-total">Rp 0</span>
+          </div>
+        </div>
+
+        <div style="padding:0 16px 10px"><button class="btn ghost" onclick="openPrev()">Pratinjau</button></div>
+        <div class="note" id="ed-hint">Simpan dulu sebelum bisa dibagikan — nomor invoice baru dikunci saat disimpan.</div>
+      </div>
+    </div>
+
+    <!-- ══ SHEET: DETAIL INVOICE TERSIMPAN ═════════════════════════════ -->
+    <div class="sheet-wrap" id="sh-det">
+      <div class="sheet full">
+        <div class="grab"></div>
+        <div class="navbar">
+          <button class="b" onclick="closeSheet('sh-det')">Tutup</button>
+          <span id="det-num">INV-2026-012</span>
+          <button class="b strong" onclick="toast('Mode edit (mockup)')">Edit</button>
+        </div>
+        <div id="det-paper"></div>
+        <div style="padding:0 16px 10px"><button class="btn" onclick="share()">􀈂 Bagikan PDF</button></div>
+        <div style="padding:0 16px 10px"><button class="btn ghost" onclick="togglePaid()" id="det-paid">Tandai lunas</button></div>
+        <div style="padding:0 16px"><button class="btn ghost" onclick="openTpl()">Ganti template</button></div>
+        <div class="note">Bagikan memakai share sheet iOS — WhatsApp, email, AirDrop, atau simpan ke Files.</div>
+      </div>
+    </div>
+
+    <!-- ══ SHEET: PRATINJAU ════════════════════════════════════════════ -->
+    <div class="sheet-wrap" id="sh-prev">
+      <div class="sheet full">
+        <div class="grab"></div>
+        <div class="navbar"><button class="b" onclick="closeSheet('sh-prev')">Tutup</button><span>Pratinjau</span><button class="b" onclick="openTpl()">Template</button></div>
+        <div id="prev-paper"></div>
+      </div>
+    </div>
+
+    <!-- ══ SHEET: PILIH KLIEN ══════════════════════════════════════════ -->
+    <div class="sheet-wrap" id="sh-cli">
+      <div class="sheet">
+        <div class="grab"></div>
+        <div class="navbar"><button class="b" onclick="closeSheet('sh-cli')">Batal</button><span>Pilih klien</span><span style="width:44px"></span></div>
+        <div class="group" id="cli-pick"></div>
+        <div style="padding:0 16px 10px"><button class="btn ghost" onclick="toast('Form klien baru')">+ Klien baru</button></div>
+      </div>
+    </div>
+
+    <!-- ══ SHEET: TAMBAH ITEM ══════════════════════════════════════════ -->
+    <div class="sheet-wrap" id="sh-item">
+      <div class="sheet">
+        <div class="grab"></div>
+        <div class="navbar"><button class="b" onclick="closeSheet('sh-item')">Batal</button><span>Tambah item</span><span style="width:44px"></span></div>
+        <div class="sec">Dari katalog</div>
+        <div class="group" id="item-pick"></div>
+        <div class="note">Atau ketik manual — item baru bisa disimpan ke katalog.</div>
+      </div>
+    </div>
+
+    <!-- ══ SHEET: TEMPLATE ═════════════════════════════════════════════ -->
+    <div class="sheet-wrap" id="sh-tpl">
+      <div class="sheet">
+        <div class="grab"></div>
+        <div class="navbar"><button class="b" onclick="closeSheet('sh-tpl')">Tutup</button><span>Template</span><span style="width:44px"></span></div>
+        <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:10px; padding:6px 16px 16px" id="tpl-grid"></div>
+        <div class="note" id="tpl-note"></div>
+      </div>
+    </div>
+
+    <!-- ══ SHEET: UPGRADE ══════════════════════════════════════════════ -->
+    <div class="sheet-wrap" id="sh-pro">
+      <div class="sheet">
+        <div style="background:linear-gradient(135deg,#fbdd6b,#f2b23c 55%,#e07a1f); padding:26px 20px 34px; text-align:center; color:#fff; clip-path:ellipse(150% 100% at 50% 0); border-radius:16px 16px 0 0">
+          <span style="display:inline-flex; align-items:center; gap:6px; background:linear-gradient(135deg,#d9852a,#b45f12); padding:6px 14px; border-radius:99px; font-size:12.5px; font-weight:600">􀝬 Invois Pro</span>
+          <div style="font-size:17px; font-weight:600; margin-top:12px; line-height:1.35" id="pro-headline">Sekali upgrade, semua terbuka.</div>
+        </div>
+        <div class="group" style="margin-top:16px">
+          <div class="row" style="cursor:default"><span style="color:var(--primary)">􀯠</span><div class="t"><b>Invoice tanpa batas</b></div></div>
+          <div class="row" style="cursor:default"><span style="color:var(--primary)">􀏝</span><div class="t"><b>Semua template premium</b></div></div>
+          <div class="row" style="cursor:default"><span style="color:var(--primary)">􀑉</span><div class="t"><b>Template baru selalu termasuk</b></div></div>
+          <div class="row" style="cursor:default"><span style="color:var(--primary)">􀉉</span><div class="t"><b>Banyak vault</b></div></div>
+          <div class="row" style="cursor:default"><span style="color:var(--primary)">􀈄</span><div class="t"><b>Update gratis</b></div></div>
+        </div>
+        <div style="margin:0 16px 14px; border:1.5px solid var(--gold); border-radius:12px; padding:12px 14px; position:relative; background:#fff; overflow:hidden">
+          <span style="position:absolute; right:0; top:0; background:var(--navy); color:#fff; font-size:11px; font-weight:500; padding:4px 10px; border-radius:0 0 0 10px">􀆅 Bayar sekali</span>
+          <div style="font-size:19px; font-weight:700">Rp 249.000</div>
+          <div style="font-size:12px; color:var(--muted)">Tanpa langganan</div>
+        </div>
+        <div style="padding:0 16px 10px"><button class="btn gold" onclick="buyPro()">Upgrade ke Pro</button></div>
+        <div style="padding:0 16px 6px"><button class="btn ghost" onclick="toast('Memulihkan pembelian…')">Pulihkan pembelian</button></div>
+        <div class="note" style="text-align:center">Dibeli sekali, berlaku di iPhone dan Mac (Universal Purchase).</div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+/* ── Data dummy ───────────────────────────────────────────────────────── */
+const CLIENTS = [
+  {n:"PT Cahaya Nusantara", e:"finance@cahayanusantara.example", a:"Jl. Sudirman 45, Jakarta"},
+  {n:"Brightside Studio",   e:"hello@brightsidestudio.example", a:"Jl. Riau 12, Bandung"},
+  {n:"Koperasi Tani Makmur",e:"admin@tanimakmur.example",       a:"Jl. Raya Solo 8, Klaten"},
+  {n:"Warung Kopi Sila",    e:"sila@warungsila.example",        a:"Jl. Kaliurang KM 7, Sleman"},
+];
+const CATALOG = [
+  {d:"Desain logo & identitas", p:6500000},
+  {d:"Halaman landing (1 halaman)", p:4200000},
+  {d:"Sesi foto produk (½ hari)", p:2800000},
+  {d:"Retainer sosial media / bulan", p:3500000},
+];
+let INVOICES = [
+  {num:"INV-2026-012", cli:"PT Cahaya Nusantara", amt:8700000, paid:true,  date:"9 Jul 2026"},
+  {num:"INV-2026-011", cli:"Brightside Studio",   amt:4200000, paid:false, date:"5 Jul 2026"},
+  {num:"INV-2026-010", cli:"Warung Kopi Sila",    amt:2800000, paid:true,  date:"28 Jun 2026"},
+];
+const TPLS = [
+  {id:"minimal", n:"Minimal", pro:false},
+  {id:"bold",    n:"Bold",    pro:true},
+  {id:"elegant", n:"Elegant", pro:true},
+  {id:"retro",   n:"Retro",   pro:true},
+  {id:"aurora",  n:"Aurora",  pro:true},
+  {id:"mono",    n:"Mono",    pro:true},
+];
+const CAP = 3;                 // batas invoice untuk user Free
+let isPro = false;
+let tpl = "minimal";
+let filter = "all";
+let draft = { cli:null, items:[] };
+let detail = null;
+
+const rp = n => "Rp " + n.toLocaleString("id-ID");
+
+/* ── Navigasi ─────────────────────────────────────────────────────────── */
+function step(n){ [1,2,3].forEach(i => document.getElementById("onb"+i).style.display = i===n?"block":"none"); }
+function enterApp(){
+  document.getElementById("v-onb").classList.remove("on");
+  document.getElementById("tabbar").style.display = "flex";
+  go("home", document.querySelector('.tab[data-v="home"]'));
+  renderAll();
+}
+function go(v, el){
+  document.querySelectorAll(".view").forEach(x => x.classList.remove("on"));
+  document.getElementById("v-"+v).classList.add("on");
+  document.querySelectorAll(".tab").forEach(t => t.classList.remove("on"));
+  if (el) el.classList.add("on");
+  document.getElementById("fab").style.display = v==="inv" ? "flex" : "none";
+}
+function openSheet(id){ document.getElementById(id).classList.add("on"); }
+function closeSheet(id){ document.getElementById(id).classList.remove("on"); }
+function toast(m){
+  const t = document.getElementById("toast");
+  t.textContent = m; t.classList.add("on");
+  clearTimeout(t._x); t._x = setTimeout(()=>t.classList.remove("on"), 1900);
+}
+
+/* ── Render ───────────────────────────────────────────────────────────── */
+function renderAll(){ renderBars(); renderInv(); renderCli(); renderCat(); renderPro(); }
+
+function renderBars(){
+  const data = [28,35,22,48,31,55,42,68,51,74,62,88];
+  const mo = ["A","S","O","N","D","J","F","M","A","M","J","J"];
+  document.getElementById("bars").innerHTML = data.map((v,i)=>
+    `<div class="${i>=9?'hi':''}" style="height:${v}%"><span>${mo[i]}</span></div>`).join("");
+}
+
+function renderInv(){
+  const list = INVOICES.filter(i => filter==="all" || (filter==="paid") === i.paid);
+  document.getElementById("inv-list").innerHTML = list.length ? list.map((i,ix)=>`
+    <div class="row" onclick="openDetail(${INVOICES.indexOf(i)})">
+      <div class="t"><b>${i.num}</b><small>${i.cli} · ${i.date}</small></div>
+      <div style="text-align:right">
+        <div style="font-size:15px;font-weight:600">${rp(i.amt)}</div>
+        <span class="pill ${i.paid?'paid':'due'}">${i.paid?'Lunas':'Belum bayar'}</span>
+      </div>
+      <span class="chev">›</span>
+    </div>`).join("") : `<div class="empty">Belum ada invoice di filter ini.</div>`;
+
+  document.getElementById("home-recent").innerHTML = INVOICES.slice(0,3).map((i,ix)=>`
+    <div class="row" onclick="openDetail(${ix})">
+      <div class="t"><b>${i.num}</b><small>${i.cli}</small></div>
+      <div style="text-align:right"><div style="font-size:14.5px;font-weight:600">${rp(i.amt)}</div>
+      <span class="pill ${i.paid?'paid':'due'}">${i.paid?'Lunas':'Belum'}</span></div>
+    </div>`).join("");
+
+  const left = CAP - INVOICES.length;
+  document.getElementById("cap-note").innerHTML = isPro
+    ? "Pro — invoice tanpa batas."
+    : `Free: ${INVOICES.length} dari ${CAP} invoice terpakai.${left<=0 ? " <b>Batas tercapai.</b>" : ""}`;
+}
+
+function renderCli(){
+  const html = CLIENTS.map(c=>`
+    <div class="row" onclick="toast('Detail ${c.n}')">
+      <div class="t"><b>${c.n}</b><small>${c.e}</small></div><span class="chev">›</span>
+    </div>`).join("");
+  document.getElementById("cli-list").innerHTML = html;
+  document.getElementById("cli-pick").innerHTML = CLIENTS.map((c,i)=>`
+    <div class="row" onclick="setClient(${i})"><div class="t"><b>${c.n}</b><small>${c.a}</small></div></div>`).join("");
+}
+
+function renderCat(){
+  const html = CATALOG.map(c=>`
+    <div class="row" onclick="toast('Edit item')"><div class="t"><b>${c.d}</b></div><span class="v">${rp(c.p)}</span><span class="chev">›</span></div>`).join("");
+  document.getElementById("cat-list").innerHTML = html;
+  document.getElementById("item-pick").innerHTML = CATALOG.map((c,i)=>`
+    <div class="row" onclick="pushItem(${i})"><div class="t"><b>${c.d}</b></div><span class="v">${rp(c.p)}</span></div>`).join("");
+}
+
+function renderPro(){
+  document.getElementById("pro-state").textContent = isPro ? "Pro" : "Free";
+  document.getElementById("pro-box").innerHTML = isPro
+    ? `<div class="row" style="cursor:default"><span style="color:var(--gold-fg)">􀝬</span>
+         <div class="t"><b>Invois Pro</b><small>Aktif · dibeli sekali</small></div>
+         <span class="pill pro">PRO</span></div>`
+    : `<div class="row" onclick="openPro('general')" style="background:linear-gradient(135deg,#fdf3dd,#fbe7bd)">
+         <span>􀝬</span><div class="t"><b>Upgrade ke Pro</b><small>Invoice tanpa batas & semua template</small></div>
+         <span class="v" style="color:var(--gold-fg);font-weight:600">Rp 249rb</span><span class="chev">›</span></div>`;
+  document.getElementById("set-tpl").textContent = TPLS.find(t=>t.id===tpl).n;
+}
+
+/* ── Alur invoice ─────────────────────────────────────────────────────── */
+function newInvoice(){
+  if (!isPro && INVOICES.length >= CAP) return openPro('invoice');   // gate: di CREATE, bukan di save
+  draft = { cli:null, items:[] };
+  document.getElementById("ed-title").textContent = "Invoice baru";
+  document.getElementById("ed-cli").textContent = "Pilih klien";
+  document.getElementById("ed-cli-sub").textContent = "Wajib diisi";
+  renderDraft();
+  openSheet("sh-ed");
+}
+function pickClient(){ openSheet("sh-cli"); }
+function setClient(i){
+  draft.cli = CLIENTS[i];
+  document.getElementById("ed-cli").textContent = draft.cli.n;
+  document.getElementById("ed-cli-sub").textContent = draft.cli.e;
+  closeSheet("sh-cli");
+}
+function addItem(){ openSheet("sh-item"); }
+function pushItem(i){ draft.items.push({...CATALOG[i], q:1}); closeSheet("sh-item"); renderDraft(); }
+function renderDraft(){
+  const el = document.getElementById("ed-items");
+  el.innerHTML = draft.items.length ? draft.items.map((it,i)=>`
+    <div class="row" style="cursor:default">
+      <div class="t"><b>${it.d}</b><small>${it.q} × ${rp(it.p)}</small></div>
+      <span class="v">${rp(it.p*it.q)}</span>
+      <span onclick="draft.items.splice(${i},1);renderDraft()" style="color:var(--red);padding:0 4px">􀁏</span>
+    </div>`).join("") : `<div class="empty" style="padding:22px">Belum ada item.</div>`;
+  const tot = draft.items.reduce((s,i)=>s+i.p*i.q,0);
+  document.getElementById("ed-total").textContent = rp(tot);
+  document.getElementById("ed-count").textContent = draft.items.length + " item";
+}
+function saveInv(){
+  if (!draft.cli || !draft.items.length) return toast("Pilih klien dan tambah minimal satu item.");
+  INVOICES.unshift({
+    num: document.getElementById("ed-num").value,
+    cli: draft.cli.n,
+    amt: draft.items.reduce((s,i)=>s+i.p*i.q,0),
+    paid:false, date:"11 Jul 2026"
+  });
+  closeSheet("sh-ed"); renderInv();
+  toast("Invoice disimpan — sekarang bisa dibagikan");
+  setTimeout(()=>openDetail(0), 500);
+}
+
+function paperHTML(inv){
+  const c = CLIENTS.find(x=>x.n===inv.cli) || CLIENTS[0];
+  return `<div class="paper">
+    <div class="ph">
+      <div><div class="biz">Studio Arunika</div><div class="meta">halo@arunika.studio<br>Jl. Kaliurang KM 5, Yogyakarta</div></div>
+      <div><div class="ttl">Invoice</div><div class="num">${inv.num}</div>
+        <div class="meta" style="text-align:right">Tanggal: ${inv.date}<br>Jatuh tempo: 25 Jul 2026</div></div>
+    </div><hr>
+    <div class="addr">
+      <div style="flex:1"><b>Dari</b><div class="nm">Studio Arunika</div><div style="color:#666">Yogyakarta</div></div>
+      <div style="flex:1"><b>Untuk</b><div class="nm">${c.n}</div><div style="color:#666">${c.a}</div></div>
+    </div>
+    <table><thead><tr><th>Deskripsi</th><th class="r">Qty</th><th class="r">Harga</th><th class="r">Jumlah</th></tr></thead>
+      <tbody><tr><td>Desain logo & identitas</td><td class="r">1</td><td class="r">${rp(inv.amt)}</td><td class="r">${rp(inv.amt)}</td></tr></tbody></table>
+    <div class="tot"><span>Total</span><span>${rp(inv.amt)}</span></div>
+    <div class="meta" style="margin-top:14px">BCA 8720 5544 31 · a.n. Arif Riyanto</div>
+  </div>`;
+}
+function openPrev(){ document.getElementById("prev-paper").innerHTML = paperHTML({num:document.getElementById("ed-num").value, cli:draft.cli?draft.cli.n:CLIENTS[0].n, amt:draft.items.reduce((s,i)=>s+i.p*i.q,0), date:"11 Jul 2026"}); openSheet("sh-prev"); }
+function openDetail(i){
+  detail = i;
+  const inv = INVOICES[i];
+  document.getElementById("det-num").textContent = inv.num;
+  document.getElementById("det-paper").innerHTML = paperHTML(inv);
+  document.getElementById("det-paid").textContent = inv.paid ? "Batalkan status lunas" : "Tandai lunas";
+  openSheet("sh-det");
+}
+function togglePaid(){ INVOICES[detail].paid = !INVOICES[detail].paid; renderInv(); openDetail(detail); toast(INVOICES[detail].paid?"Ditandai lunas":"Status lunas dibatalkan"); }
+function share(){ toast("Share sheet iOS: WhatsApp · Mail · AirDrop · Files"); }
+
+/* ── Template + gating Pro ────────────────────────────────────────────── */
+function openTpl(){
+  document.getElementById("tpl-grid").innerHTML = TPLS.map(t=>`
+    <div class="tpl-card ${t.id===tpl?'on':''}" onclick="setTpl('${t.id}',${t.pro})">
+      <div class="tpl-mini"><div class="l1"></div><div class="l2"></div><div class="l3"></div>
+        <div class="l2" style="margin-top:14px"></div><div class="l2"></div><div class="l3"></div></div>
+      ${t.pro && !isPro ? '<div class="crown">􀝬</div>' : ''}
+      <div class="lbl">${t.n}</div>
+    </div>`).join("");
+  document.getElementById("tpl-note").textContent = isPro
+    ? "Semua template terbuka. Template baru otomatis termasuk."
+    : "Minimal gratis. Template bermahkota bagian dari Pro — template baru nanti ikut termasuk.";
+  openSheet("sh-tpl");
+}
+function setTpl(id, pro){
+  if (pro && !isPro) return openPro('template');
+  tpl = id; closeSheet("sh-tpl"); renderPro(); toast("Template: " + TPLS.find(t=>t.id===id).n);
+}
+
+function openPro(ctx){
+  const h = { template:"Buka template dan semua fitur Pro.",
+              invoice:`Lanjut tanpa batas dengan Pro.`,
+              general:"Sekali upgrade, semua terbuka." }[ctx] || "Sekali upgrade, semua terbuka.";
+  document.getElementById("pro-headline").textContent = h;
+  openSheet("sh-pro");
+}
+function buyPro(){ isPro = true; closeSheet("sh-pro"); renderAll(); toast("Terima kasih — Invois Pro aktif"); }
+function togglePro(){ isPro = !isPro; renderAll(); toast(isPro ? "Simulasi: Pro" : "Simulasi: Free"); }
+function filt(f, el){ filter=f; document.querySelectorAll(".seg button").forEach(b=>b.classList.remove("on")); el.classList.add("on"); renderInv(); }
+
+renderAll();
+</script>
+</body>
+</html>

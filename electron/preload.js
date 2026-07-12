@@ -10,6 +10,11 @@ contextBridge.exposeInMainWorld("invois", {
   /** Lets the shared code tell "desktop" from "plain browser" (was: __TAURI_INTERNALS__). */
   isDesktop: true,
 
+  /** True inside a packaged .app (main passes it via additionalArguments — it comes
+   *  from `app.isPackaged`, i.e. the OS, not from a build-time constant). The UI
+   *  uses it to keep dev-only tools shut in a shipped build. */
+  isPackaged: process.argv.includes("--invois-packaged=1"),
+
   fs: {
     exists: (p) => ipcRenderer.invoke("fs:exists", p),
     readText: (p) => ipcRenderer.invoke("fs:readText", p),

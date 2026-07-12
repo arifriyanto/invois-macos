@@ -2,7 +2,7 @@
   "name": "invois-macos",
   "version": "0.1.0",
   "private": true,
-  "description": "Invois — local-first invoice generator for macOS (Electron + Next.js).",
+  "description": "Invois \u2014 local-first invoice generator for macOS (Electron + Next.js).",
   "main": "electron/main.js",
   "author": "Arif Riyanto",
   "license": "UNLICENSED",
@@ -18,7 +18,7 @@
     "pack:mac": "npm run build && electron-builder --mac dir",
     "pack:mas-dev": "npm run build && electron-builder --mac mas-dev",
     "pack:mas": "npm run build && electron-builder --mac mas",
-    "size": "du -sh dist/*/Invois.app 2>/dev/null || echo 'nothing built yet — run a pack:* script first'"
+    "size": "du -sh dist/*/Invois.app 2>/dev/null || echo 'nothing built yet \u2014 run a pack:* script first'"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",
@@ -31,7 +31,6 @@
     "lucide-react": "^1.21.0",
     "next": "16.2.9",
     "pdf-lib": "^1.17.1",
-    "posthog-js": "^1.396.2",
     "radix-ui": "^1.6.0",
     "react": "19.2.4",
     "react-colorful": "^5.7.0",

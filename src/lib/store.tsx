@@ -21,9 +21,20 @@ const VALID_TEMPLATES: string[] = [...TEMPLATES, ...PREMIUM_TEMPLATES].map((t) =
 // toggled from Settings → Preferences ("Pro mode (dev)") flips it locally so
 // both the free and Pro experiences can be tested without editing code.
 export const DEV_PRO_KEY = "invois_dev_pro";
-/** True only in a development build (never in the shipped app). */
+/**
+ * True only while developing — gates the Developer section in Settings and the
+ * fake Pro toggle. Deliberately guarded TWICE:
+ *
+ *   1. NODE_ENV — a build-time constant, inlined by `next build`.
+ *   2. app.isPackaged — the truth from macOS, forwarded by electron/preload.js.
+ *
+ * Either alone would do the job today. Both together mean a mistake in the build
+ * pipeline (a dev bundle packaged by accident) still cannot hand a paying customer
+ * a free Pro switch. The dev tools are worth exactly nothing to us in production;
+ * the cost of being wrong is a broken paywall.
+ */
 export function isDevBuild(): boolean {
-  return process.env.NODE_ENV !== "production";
+  return process.env.NODE_ENV !== "production" && !native.isPackaged();
 }
 function readDevPro(): boolean {
   if (!isDevBuild()) return false; // production: always locked to real billing

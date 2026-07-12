@@ -16,6 +16,7 @@ type Unsub = () => void;
 
 interface Bridge {
   isDesktop: true;
+  isPackaged: boolean;
   fs: {
     exists(p: string): Promise<boolean>;
     readText(p: string): Promise<string>;
@@ -55,6 +56,12 @@ function need(): Bridge {
 /** True inside the desktop app; false in a plain browser. Replaces `inTauri()`. */
 export function isDesktop(): boolean {
   return typeof window !== "undefined" && Boolean(window.invois?.isDesktop);
+}
+
+/** True inside a PACKAGED .app — sourced from Electron's `app.isPackaged`, i.e. the
+ *  OS, not a build-time constant. Used to lock the dev-only tools shut. */
+export function isPackaged(): boolean {
+  return typeof window !== "undefined" && Boolean(window.invois?.isPackaged);
 }
 
 /** Drop-in for `@tauri-apps/plugin-fs`. Options args are accepted and ignored. */

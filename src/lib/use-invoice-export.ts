@@ -2,7 +2,6 @@
 import * as native from "@/lib/native";
 import * as React from "react";
 import { toast } from "sonner";
-import { trackEvent } from "@/lib/analytics";
 import { useStore } from "@/lib/store";
 import { useI18n } from "@/lib/i18n";
 import { usePrintToPdf } from "@/lib/print";
@@ -64,10 +63,8 @@ export function useInvoiceExport() {
             }
             const savedName = path.split("/").pop() ?? `${base()}.pdf`;
             toast.success(t("toast.pdfOk"), { description: savedName });
-            trackEvent("invoice_exported", { format: "pdf", template, engine: "vector" });
           } else {
             toast.error(res.error || t("toast.pdfFail"));
-            trackEvent("export_failed", { format: "pdf", template, engine: "vector" });
           }
         } finally {
           setBusy(false);
@@ -81,11 +78,9 @@ export function useInvoiceExport() {
         const savedName = await exportInvoicePNG(p, `${base()}.png`, settings.exportDir, true);
         const okMsg = t("toast.pngOk");
         toast.success(savedFirst ? `${t("ed.saved")} · ${okMsg}` : okMsg, { description: savedName });
-        trackEvent("invoice_exported", { format: kind, template, currency: settings.currency, lang });
       } catch (e) {
         console.error(e);
-        toast.error(t("toast.pdfFail"));
-        trackEvent("export_failed", { format: kind, template });
+        toast.error(t("toast.pngFail")); // was toast.pdfFail — a PNG failure claimed the PDF broke
       } finally {
         setBusy(false);
       }

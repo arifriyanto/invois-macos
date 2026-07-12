@@ -28,7 +28,7 @@ const SAMPLE_INVOICE: InvoiceData = {
   note: "Thank you for your business.",
   client: {
     name: "Bright Creative Co.",
-    email: "hello@brightcreative.co",
+    email: "hello@example.com",
     phone: "+1 (415) 555-0142",
     address: "24 Market Street, San Francisco",
   },
@@ -50,7 +50,7 @@ export function buildSampleView(bk: BusinessSettings): InvoiceView {
   const sampleBk: BusinessSettings = {
     ...bk,
     bizName: bk.bizName || "Northwind Studio",
-    email: bk.email || "hello@northwind.studio",
+    email: bk.email || "hello@example.com",
     phone: bk.phone || "+1 (212) 555-0198",
     address: bk.address || "18 Hudson Yards, New York",
     bankName: bk.bankName || "First National Bank",

@@ -7,7 +7,6 @@ import { useI18n } from "@/lib/i18n";
 import { TEMPLATES, PREMIUM_TEMPLATES, resolveTemplate } from "@/lib/format";
 import { buildView } from "@/lib/view";
 import { InvoiceTemplate } from "@/components/templates/invoice-template";
-import { trackEvent } from "@/lib/analytics";
 import { cn } from "@/lib/utils";
 
 const PAGE_W = 794;
@@ -41,7 +40,6 @@ export function Preview({
   const shownTemplate = resolveTemplate(template, isPro);
 
   const pick = (id: typeof template, pro: boolean) => {
-    if (id !== template) trackEvent("template_selected", { template: id, pro });
     if (pro && !isPro) {
       setUpgradeOpen(true);
       return;

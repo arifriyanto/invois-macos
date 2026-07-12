@@ -3,7 +3,6 @@ import * as React from "react";
 import { Check, Crown } from "lucide-react";
 import { TEMPLATES, PREMIUM_TEMPLATES } from "@/lib/format";
 import { InvoiceTemplate } from "@/components/templates/invoice-template";
-import { trackEvent } from "@/lib/analytics";
 import { useStore } from "@/lib/store";
 import { useI18n } from "@/lib/i18n";
 import { buildSampleView } from "@/lib/sample-preview";
@@ -51,7 +50,6 @@ export function TemplateGrid({
   const scale = colW / PAGE_W;
 
   const pick = (id: TemplateId, pro: boolean) => {
-    if (id !== template) trackEvent("template_selected", { template: id, pro });
     if (pro && !isPro) {
       setUpgradeContext("template");
       setUpgradeOpen(true);

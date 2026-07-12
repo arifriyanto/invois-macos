@@ -10,7 +10,6 @@ import { Textarea } from "@/components/ui/textarea";
 import { Field } from "@/components/field";
 import { useStore } from "@/lib/store";
 import { useI18n } from "@/lib/i18n";
-import { trackEvent } from "@/lib/analytics";
 
 export function ProfileDialog() {
   const { settings, setSettings } = useStore();
@@ -132,13 +131,7 @@ export function ProfileDialog() {
         </div>
 
         <DialogFooter className="border-t pt-4">
-          <Button
-            size="sm"
-            onClick={() => {
-              if (settings.bizName.trim()) trackEvent("business_profile_saved");
-              setOpen(false);
-            }}
-          >
+          <Button size="sm" onClick={() => setOpen(false)}>
             {t("done")}
           </Button>
         </DialogFooter>

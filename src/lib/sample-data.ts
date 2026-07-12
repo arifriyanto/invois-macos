@@ -28,8 +28,8 @@ export function seedSampleData(currency: Currency) {
     const customer = {
       id: "sample-client",
       name: "Bright Studio (Sample)",
-      email: "hey@sampledomain.com",
-      phone: "+1 (555) 123-4567",
+      email: "hello@example.com",
+      phone: "+1 (415) 555-0142",
       address: "123 Market Street, San Francisco, CA",
     };
     const item = {

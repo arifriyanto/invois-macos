@@ -354,6 +354,12 @@ async function createWindow() {
       preload: path.join(__dirname, "preload.js"),
       contextIsolation: true,
       nodeIntegration: false,
+      // Tell the renderer whether it is running inside a PACKAGED .app. The UI
+      // uses this as a second lock on the dev-only tools (Developer menu, Pro
+      // toggle): `NODE_ENV` is a build-time constant, so if a dev bundle were
+      // ever shipped by accident, those tools would open up in a paid app. This
+      // value comes from the OS, not from the build.
+      additionalArguments: [`--invois-packaged=${app.isPackaged ? "1" : "0"}`],
       // OS-level renderer sandbox. Our preload only touches contextBridge +
       // ipcRenderer, both of which stay available under it, so this costs us
       // nothing and buys a real boundary.
