@@ -24,6 +24,12 @@ files:
   - build/icon.png
   - package.json
 
+# Chromium ships ~220 locale packs (Tamil, Malayalam, Kannada…) — 47 MB of UI
+# strings for an app that speaks two languages. Keep ours, drop the rest.
+electronLanguages:
+  - en
+  - id
+
 mac:
   category: public.app-category.business
   # Reused from the Tauri build (invois-app/src-tauri/icons/icon.icns).
