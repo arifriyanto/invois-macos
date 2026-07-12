@@ -25,7 +25,7 @@ import {
 import { NUM_PRESETS, MONTHS_SHORT, computeNextNumber, presetOf, useInvoices } from "@/lib/invoices-store";
 import { FREE_VAULT_LIMIT } from "@/lib/limits";
 import { useI18n } from "@/lib/i18n";
-import { CURRENCY_OPTIONS, CURRENCY_SYMBOLS, formatDate } from "@/lib/format";
+import { CURRENCY_OPTIONS, CURRENCY_SYMBOLS, PHONE_PLACEHOLDER, formatDate } from "@/lib/format";
 import type { Currency, DateFormat, Lang } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
@@ -303,7 +303,7 @@ export function SettingsDialog({
                   <Input type="email" value={settings.email} placeholder={t("ph.bizEmail")} onChange={(e) => setSettings({ email: e.target.value })} />
                 </Field>
                 <Field label={t("bk.phone")}>
-                  <Input value={settings.phone} placeholder={t("ph.phone")} onChange={(e) => setSettings({ phone: e.target.value })} />
+                  <Input value={settings.phone} placeholder={PHONE_PLACEHOLDER[settings.currency]} onChange={(e) => setSettings({ phone: e.target.value })} />
                 </Field>
               </div>
               <Field label={t("bk.address")}>

@@ -23,7 +23,7 @@ import {
   Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle,
 } from "@/components/ui/dialog";
 import { Beacon } from "@/components/ui/beacon";
-import { CURRENCY_SYMBOLS } from "@/lib/format";
+import { CURRENCY_SYMBOLS, PHONE_PLACEHOLDER } from "@/lib/format";
 import type { DiscountType } from "@/lib/types";
 import { useI18n } from "@/lib/i18n";
 import { useEditorActions } from "@/lib/editor-actions";
@@ -298,7 +298,7 @@ export function InvoiceForm() {
                 <Input type="email" value={draft.email} placeholder={t("ph.email")} onChange={(e) => setDraft((d) => ({ ...d, email: e.target.value }))} />
               </Field>
               <Field label={t("bk.phone")}>
-                <Input value={draft.phone} placeholder={t("ph.phone")} onChange={(e) => setDraft((d) => ({ ...d, phone: e.target.value }))} />
+                <Input value={draft.phone} placeholder={PHONE_PLACEHOLDER[settings.currency]} onChange={(e) => setDraft((d) => ({ ...d, phone: e.target.value }))} />
               </Field>
             </div>
             <Field label={t("f.address")}>

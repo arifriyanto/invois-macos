@@ -15,6 +15,33 @@ export const CURRENCY_OPTIONS: { value: Currency; label: string }[] = [
   { value: "GBP", label: "GBP - Pound Sterling" },
 ];
 
+/**
+ * Phone placeholders — a real prefix, an INCOMPLETE tail.
+ *
+ * Two mistakes to avoid, and this app made both:
+ *
+ * 1. A realistic fake number can belong to a real person, and a placeholder is
+ *    shown on thousands of screens — a fine way to get a stranger phoned. So the
+ *    last digits are left as "x". The prefix is real (a carrier block like 812, an
+ *    area code like 415), which is the part that actually teaches the format; the
+ *    number as a whole cannot be dialled because it does not exist.
+ *    GBP goes further: 7700 900xxx is Ofcom's range reserved for fiction, so even
+ *    a completed guess belongs to nobody.
+ *
+ * 2. It must follow the user's COUNTRY, not the UI language. The English
+ *    dictionary used to offer a US example — so an Indonesian freelancer who
+ *    switched the interface to English was shown a New York phone shape. Language
+ *    says nothing about where someone lives. Currency, chosen at onboarding, is
+ *    the closest signal we have, so we key off that.
+ */
+export const PHONE_PLACEHOLDER: Record<Currency, string> = {
+  IDR: "+62 812 3456 xxxx",
+  USD: "+1 (415) 555-xxxx",
+  SGD: "+65 8123 xxxx",
+  EUR: "+49 30 1234 xxxx",
+  GBP: "+44 7700 900xxx", // Ofcom's reserved fiction range
+};
+
 // Map an ISO region to one of the currencies we support. Anything not listed
 // falls back to USD (see detectDefaultCurrency).
 const REGION_CURRENCY: Record<string, Currency> = {

@@ -26,7 +26,7 @@ import { setBootIntent } from "@/lib/boot-intent";
 import { seedSampleData } from "@/lib/sample-data";
 import { prettyPath } from "@/lib/paths";
 import { readLogoFile } from "@/lib/logo";
-import { CURRENCY_OPTIONS, detectDefaultCurrency } from "@/lib/format";
+import { CURRENCY_OPTIONS, PHONE_PLACEHOLDER, detectDefaultCurrency } from "@/lib/format";
 import type { Currency } from "@/lib/types";
 
 const KEYFRAMES = `
@@ -50,7 +50,10 @@ const OB_GOLD = "#f2c04e";
 // Shown small in the corner. Keep in sync with tauri.conf.json / package.json.
 const APP_VERSION = "0.1.0";
 
-const SORA = { fontFamily: "var(--font-sora), var(--font-sans)" } as React.CSSProperties;
+// NOTE: the onboarding headings deliberately use the APP UI font (--font-sans →
+// SF on macOS), not Sora. Sora stays for the wordmark in the title bar only.
+// (Screen-only, so no licence concern — SF must never reach a PDF, but nothing
+// here does.)
 
 // ---- animated illustrations (white + gold on the brand-blue background) ------
 
@@ -321,7 +324,7 @@ export function OnboardingView({ onDone }: { onDone: () => void }) {
                 <DoneCheck />
               </div>
             )}
-            <h1 className="text-[30px] font-semibold leading-tight text-white" style={SORA}>
+            <h1 className="text-[30px] font-semibold leading-tight text-white">
               {hero.title}
               {hero.dot && <span style={{ color: OB_GOLD }}>.</span>}
             </h1>
@@ -405,7 +408,7 @@ export function OnboardingView({ onDone }: { onDone: () => void }) {
                   </label>
                   <label className="flex flex-col gap-1.5">
                     <span className="text-xs font-semibold text-muted-foreground">{t("bk.phone")}</span>
-                    <Input value={phone} placeholder={t("ph.phone")} onChange={(e) => setPhone(e.target.value)} />
+                    <Input value={phone} placeholder={PHONE_PLACEHOLDER[currency]} onChange={(e) => setPhone(e.target.value)} />
                   </label>
                   <label className="flex flex-col gap-1.5">
                     <span className="text-xs font-semibold text-muted-foreground">{t("bk.currency")}</span>

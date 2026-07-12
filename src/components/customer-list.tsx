@@ -6,6 +6,8 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { useStore } from "@/lib/store";
+import { PHONE_PLACEHOLDER } from "@/lib/format";
 import { Textarea } from "@/components/ui/textarea";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Field } from "@/components/field";
@@ -19,6 +21,9 @@ export function CustomerList() {
   const { customers, addCustomer, updateCustomer, removeCustomer } = useCustomers();
   const confirm = useConfirm();
   const { t } = useI18n();
+  // Only for the phone placeholder: its SHAPE follows the user's country, and the
+  // chosen currency is the closest signal we have for that (see PHONE_PLACEHOLDER).
+  const { settings } = useStore();
   const [open, setOpen] = React.useState(false);
   const [editId, setEditId] = React.useState<string | null>(null);
   const [draft, setDraft] = React.useState<CustomerInput>(EMPTY);
@@ -183,7 +188,7 @@ export function CustomerList() {
                 <Input type="email" value={draft.email} placeholder={t("ph.email")} onChange={(e) => set({ email: e.target.value })} />
               </Field>
               <Field label={t("bk.phone")}>
-                <Input value={draft.phone} placeholder={t("ph.phone")} onChange={(e) => set({ phone: e.target.value })} />
+                <Input value={draft.phone} placeholder={PHONE_PLACEHOLDER[settings.currency]} onChange={(e) => set({ phone: e.target.value })} />
               </Field>
             </div>
             <Field label={t("f.address")}>

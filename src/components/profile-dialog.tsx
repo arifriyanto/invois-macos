@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Field } from "@/components/field";
 import { useStore } from "@/lib/store";
+import { PHONE_PLACEHOLDER } from "@/lib/format";
 import { useI18n } from "@/lib/i18n";
 
 export function ProfileDialog() {
@@ -107,7 +108,7 @@ export function ProfileDialog() {
               <Input type="email" value={settings.email} placeholder={t("ph.bizEmail")} onChange={(e) => setSettings({ email: e.target.value })} />
             </Field>
             <Field label={t("bk.phone")}>
-              <Input value={settings.phone} placeholder={t("ph.phone")} onChange={(e) => setSettings({ phone: e.target.value })} />
+              <Input value={settings.phone} placeholder={PHONE_PLACEHOLDER[settings.currency]} onChange={(e) => setSettings({ phone: e.target.value })} />
             </Field>
           </div>
           <Field label={t("bk.address")}>
