@@ -302,7 +302,7 @@ export function InvoiceForm() {
               </Field>
             </div>
             <Field label={t("f.address")}>
-              <Textarea value={draft.address} placeholder={t("ph.clientAddress")} onChange={(e) => setDraft((d) => ({ ...d, address: e.target.value }))} />
+              <Textarea value={draft.address} placeholder={t("ph.address")} onChange={(e) => setDraft((d) => ({ ...d, address: e.target.value }))} />
             </Field>
           </div>
           <DialogFooter className="pt-2">
