@@ -554,6 +554,8 @@ export function SettingsDialog({
 
           {sec === "tampilan" && (
             <Section title={t("set.tampilan")} desc={t("set.tampilanDesc")}>
+              {/* This picker sets BOTH the app's language and the language of the
+                  exported invoice (see lib/i18n.tsx). It is not chrome. */}
               <Field label={t("set.language")}>
                 <Select value={lang} onValueChange={(v) => setLang(v as Lang)}>
                   <SelectTrigger className="w-full" aria-label={t("set.language")}><SelectValue /></SelectTrigger>

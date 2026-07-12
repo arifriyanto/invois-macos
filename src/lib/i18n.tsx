@@ -6,10 +6,6 @@ type Dict = Record<string, string>;
 
 const id: Dict = {
   // header / actions
-  exportPdf: "Export PDF",
-  preparing: "Menyiapkan…",
-  print: "Cetak",
-  export: "Export",
   fmtPdf: "PDF",
   fmtPng: "PNG",
   "toast.pdfOk": "PDF tersimpan",
@@ -101,7 +97,7 @@ const id: Dict = {
   "ph.holder": "Nama pemilik rekening",
   // misc
   "date.pick": "Pilih tanggal",
-  template: "Style template",
+  template: "Gaya template",
   "lang.id": "Bahasa Indonesia",
   "lang.en": "English",
   // invoice content
@@ -324,10 +320,6 @@ const id: Dict = {
 };
 
 const en: Dict = {
-  exportPdf: "Export PDF",
-  preparing: "Preparing…",
-  print: "Print",
-  export: "Export",
   fmtPdf: "PDF",
   fmtPng: "PNG",
   "toast.pdfOk": "PDF saved",
@@ -408,13 +400,13 @@ const en: Dict = {
   "pd.markPaid": "Mark as paid",
   "ph.bizName": "Creative Studio",
   "ph.bizEmail": "hello@example.com",
-  "ph.phone": "+62 812 3456 7890",
+  "ph.phone": "+1 (415) 555-0142",
   "ph.bizAddress": "123 Example St., City",
   "ph.bankName": "Bank name",
   "ph.bankAccount": "1234567890",
   "ph.holder": "Account holder name",
   "date.pick": "Pick a date",
-  template: "Style template",
+  template: "Template style",
   "lang.id": "Bahasa Indonesia",
   "lang.en": "English",
   "inv.invoice": "Invoice",
@@ -631,7 +623,8 @@ const en: Dict = {
   "dlg.newItem": "New item",
 };
 
-const DICTS: Record<Lang, Dict> = { id, en };
+/** Exported for i18n.test.ts, which enforces id/en parity — see the note there. */
+export const DICTS: Record<Lang, Dict> = { id, en };
 
 export type TFunc = (key: string) => string;
 
@@ -639,7 +632,7 @@ export type TFunc = (key: string) => string;
  *  language. Used e.g. for the template-picker thumbnails, which always render
  *  in English regardless of the selected UI language. */
 export function tFor(lang: Lang): TFunc {
-  return (k) => DICTS[lang][k] ?? DICTS.id[k] ?? k;
+  return (k) => DICTS[lang][k] ?? DICTS.en[k] ?? k;
 }
 
 interface I18nValue {
@@ -650,6 +643,22 @@ interface I18nValue {
 
 const Ctx = React.createContext<I18nValue | null>(null);
 const KEY = "invois_lang";
+
+/**
+ * The app ships bilingual (id + en). We briefly cut Indonesian for v1 and put it
+ * straight back (11 Jul 2026) — worth recording WHY, because the reasoning is not
+ * obvious from the code:
+ *
+ * `lang` does not just translate the app's chrome. It decides the language of the
+ * INVOICE ITSELF — From/To/Date/Due/Description/Qty come from the `inv.*` keys,
+ * and the date format follows it. Dropping Indonesian would have meant an
+ * Indonesian freelancer sending an English-labelled invoice to an Indonesian
+ * client. What that saved was listing work (one set of screenshots), not
+ * engineering: the dictionary is complete, in parity, and weighs a few KB.
+ *
+ * So: do not "simplify" this away again without deciding, out loud, what the
+ * CLIENT should receive.
+ */
 
 export function LanguageProvider({ children }: { children: React.ReactNode }) {
   // Default English; restore the user's saved choice if there is one.
@@ -672,7 +681,7 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
     }
   }, []);
 
-  const t = React.useCallback<TFunc>((k) => DICTS[lang][k] ?? DICTS.id[k] ?? k, [lang]);
+  const t = React.useCallback<TFunc>((k) => DICTS[lang][k] ?? DICTS.en[k] ?? k, [lang]);
 
   return <Ctx.Provider value={{ lang, setLang, t }}>{children}</Ctx.Provider>;
 }
