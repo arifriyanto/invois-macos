@@ -327,9 +327,15 @@ menyimpan salinan datanya sendiri).
 | Pembayaran | Nama bank, nomor rekening, atas nama — muncul di preview |
 | Default | Termin pembayaran, PPN default, catatan default → **hanya** mempengaruhi invoice **baru** |
 | Format | Format tanggal (5 pilihan) — cek di preview |
-| Palet | 12 palet — ganti dan lihat seluruh UI berubah |
+| Palet | 6 palet (Corporate, Cool Neutral, Amber Cream, Ocean, Jewel, Midnight) — ganti dan lihat seluruh UI berubah |
 | Folder ekspor | Ganti; hapus foldernya dari Finder lalu ekspor lagi → harus pulih sendiri |
 | Template | Grid template; Free hanya bisa memilih Minimal |
+
+Untuk palet, **Midnight** yang paling perlu diperhatikan: ia satu-satunya tema gelap, jadi ia yang
+paling mungkin mematahkan kontras. Telusuri seluruh app dengan Midnight menyala dan cari teks yang
+hilang ke latarnya — terutama chip status, banner mode-aman (kuning di atas gelap), dan grafik
+dashboard. Perhatikan juga bahwa **preview invoice harus tetap putih**: palet mengubah app, bukan
+dokumen yang kamu kirim ke klien.
 
 ### 7.1 Kunci mata uang
 
