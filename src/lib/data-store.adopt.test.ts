@@ -79,7 +79,10 @@ describe("completeOnboarding — adopt vs fresh (reinstall data-loss guard)", ()
 
     expect(res.adopted).toBe(false);
     expect(files.has(`/vault/new/${VAULT}`)).toBe(true); // file written
-    expect(files.get(`/vault/new/${VAULT}`)).toBe("{}"); // and it is empty
+    // Empty of DATA — the file still declares its format, so an older build meeting
+    // it refuses rather than guessing (see VAULT_FORMAT in data-store.ts).
+    const doc = JSON.parse(files.get(`/vault/new/${VAULT}`)!) as Record<string, unknown>;
+    expect(Object.keys(doc)).toEqual(["__invois"]);
     expect(ds.getRaw("invois_settings")).toBeNull(); // nothing loaded
   });
 

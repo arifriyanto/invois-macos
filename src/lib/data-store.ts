@@ -213,20 +213,52 @@ function backupName(path: string, i: number): string {
  */
 type VaultDoc = Record<string, unknown>;
 
+/**
+ * The file declares its own format, and a reader that does not understand it must
+ * REFUSE rather than guess. This is not hypothetical bookkeeping — it is the exact
+ * accident that cost Arif his vault on 13 Jul 2026.
+ *
+ * Format 2 (nested) is readable by format-1 code only by accident: the old reader
+ * hands each value straight to JSON.parse, so an object arrives as "[object Object]",
+ * throws, and gets swallowed into an empty list — and the old writer then saves that
+ * emptiness over the file. Backward compatibility (new reads old) was never the
+ * danger. FORWARD compatibility was: an older build meeting a newer file destroys it
+ * silently.
+ *
+ * We cannot retrofit that check into code already written, but we can stop it ever
+ * happening again: from here on, a file that claims a format we do not know puts the
+ * vault into safe mode and nothing is written.
+ */
+const VAULT_FORMAT = 2; // 1 = legacy double-encoded (values were JSON strings)
+const FORMAT_KEY = "__invois";
+
+interface FormatMarker {
+  format: number;
+}
+
 /** Disk → memory. Accepts BOTH formats: a string value is the legacy double-encoded
  *  form and is taken as-is; anything else is re-serialized for the in-memory map. */
 function docToMem(doc: VaultDoc): Map<string, string> {
+  const marker = doc[FORMAT_KEY] as FormatMarker | undefined;
+  const format = typeof marker?.format === "number" ? marker.format : 1;
+  if (format > VAULT_FORMAT) {
+    // Written by a NEWER build of Invois. Read what we can, but never write: we do
+    // not know what fields we would be dropping.
+    markVaultUnsafe(`vault was written by a newer version of Invois (format ${format})`);
+  }
+
   const m = new Map<string, string>();
   for (const [k, v] of Object.entries(doc)) {
+    if (k === FORMAT_KEY) continue; // bookkeeping, not app data
     m.set(k, typeof v === "string" ? v : JSON.stringify(v));
   }
   return m;
 }
 
-/** Memory → disk. Always writes the new nested form. A value that somehow is not
- *  valid JSON is stored as a string rather than dropped. */
+/** Memory → disk. Always writes the current nested form, stamped with its format. A
+ *  value that somehow is not valid JSON is stored as a string rather than dropped. */
 function memToDoc(m: Map<string, string>): VaultDoc {
-  const doc: VaultDoc = {};
+  const doc: VaultDoc = { [FORMAT_KEY]: { format: VAULT_FORMAT } };
   for (const [k, v] of m) {
     try {
       doc[k] = JSON.parse(v);
@@ -329,8 +361,23 @@ async function writeDailyBackup(dir: string): Promise<void> {
   }
 }
 
-// Atomic write: serialize → temp file → rotate backups → rename temp into place.
-// std::fs::rename (what plugin-fs uses) overwrites atomically on macOS/Unix.
+/**
+ * Write the vault. The primary file must NEVER stop existing, not for an instant.
+ *
+ * The old code rotated by MOVING the primary out of the way (`rename(path, .bak1)`)
+ * and only then renamed the temp file into place. Between those two steps the vault
+ * did not exist. Anything that interrupted the process there — a quit, a crash, a
+ * dev-server reload — took the user's only copy with it. That is not theoretical:
+ * it happened on Arif's machine on 13 Jul 2026, and left behind nothing but backups.
+ *
+ * The move was never necessary. On macOS `rename(tmp, path)` ALREADY replaces the
+ * destination atomically; the old file is released the moment the new one lands.
+ * We were destroying the only copy to clear a space that did not need clearing.
+ *
+ * So: COPY the primary into .bak1 (it stays where it is), rotate the older backups
+ * by copy too, and finish with the one atomic rename. Every step is now recoverable,
+ * and at every instant of it there is a complete vault on disk.
+ */
 async function writeVaultFile(dir: string, data: Map<string, string>): Promise<void> {
   const fs = native.fs;
   // Snapshot the day's starting state before we overwrite the primary file.
@@ -347,16 +394,23 @@ async function writeVaultFile(dir: string, data: Map<string, string>): Promise<v
   // whole promise of the vault.
   await fs.writeTextFile(tmp, JSON.stringify(memToDoc(data), null, 2));
 
-  // Rotate: bak2→bak3, bak1→bak2, current→bak1 (best-effort).
+  // Rotate by COPY, oldest first: bak2→bak3, bak1→bak2, primary→bak1. The primary
+  // is never moved, so it never disappears. Best-effort: a failed rotation must not
+  // block the save.
+  const copy = async (from: string, to: string) => {
+    if (await fs.exists(from)) await fs.writeTextFile(to, await fs.readTextFile(from));
+  };
   try {
     for (let i = BACKUP_COUNT; i > 1; i--) {
-      const from = backupName(path, i - 1);
-      if (await fs.exists(from)) await fs.rename(from, backupName(path, i));
+      await copy(backupName(path, i - 1), backupName(path, i));
     }
-    if (await fs.exists(path)) await fs.rename(path, backupName(path, 1));
+    await copy(path, backupName(path, 1));
   } catch {
     /* backups are best-effort; don't block the main write */
   }
+
+  // The only destructive step, and it is atomic: the vault is either the old file
+  // or the new one, never nothing.
   await fs.rename(tmp, path);
 }
 

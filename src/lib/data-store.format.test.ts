@@ -101,6 +101,56 @@ describe("vault file format — nested, not double-encoded", () => {
   });
 });
 
+describe("the primary file must never stop existing", () => {
+  it("keeps the vault on disk while rotating backups (it used to move it away)", async () => {
+    const ds = await import("./data-store");
+    await ds.completeOnboarding("/v/atomic");
+    ds.setRaw("invois_history", JSON.stringify(HISTORY));
+    await ds.flushNow();
+
+    // Second save: rotation runs. The old code did `rename(primary → .bak1)` and
+    // only THEN put the new file in place, so for a moment there was no vault at
+    // all — and a quit/crash/dev-reload in that window took the only copy with it.
+    // (That is exactly what happened on 13 Jul 2026: bak1 and bak3 survived, the
+    // vault did not.) Rotation now copies, so the primary is never moved.
+    ds.setRaw("invois_history", JSON.stringify([...HISTORY, { id: "inv2" }]));
+    await ds.flushNow();
+
+    expect(files.has(`/v/atomic/${VAULT}`)).toBe(true);
+    expect(files.has(`/v/atomic/${VAULT}.bak1`)).toBe(true);
+    const doc = JSON.parse(files.get(`/v/atomic/${VAULT}`)!) as { invois_history: unknown[] };
+    expect(doc.invois_history).toHaveLength(2); // newest data landed
+    const bak = JSON.parse(files.get(`/v/atomic/${VAULT}.bak1`)!) as { invois_history: unknown[] };
+    expect(bak.invois_history).toHaveLength(1); // previous state preserved
+  });
+
+  it("stamps the file with its format, and refuses a file from a newer build", async () => {
+    const ds = await import("./data-store");
+    await ds.completeOnboarding("/v/fmt");
+    ds.setRaw("invois_history", JSON.stringify(HISTORY));
+    await ds.flushNow();
+    const doc = JSON.parse(files.get(`/v/fmt/${VAULT}`)!) as Record<string, { format: number }>;
+    expect(doc.__invois.format).toBe(2);
+  });
+
+  it("goes into safe mode instead of mangling a vault from the future", async () => {
+    // A newer Invois wrote this. An older reader that just guesses would drop the
+    // fields it does not know — and then save the loss. Refuse instead.
+    files.set(
+      `/v/future/${VAULT}`,
+      JSON.stringify({ __invois: { format: 99 }, invois_history: HISTORY, brandNewField: 1 }),
+    );
+    const ds = await import("./data-store");
+    await ds.completeOnboarding("/v/future");
+
+    expect(ds.getVaultHealth().unsafe).toBe(true);
+    ds.setRaw("invois_history", JSON.stringify([]));
+    await ds.flushNow();
+    const doc = JSON.parse(files.get(`/v/future/${VAULT}`)!) as Record<string, unknown>;
+    expect(doc.brandNewField).toBe(1); // untouched — we never wrote
+  });
+});
+
 describe("dirty check — the vault is not rewritten for nothing", () => {
   it("does not touch the file when nothing changed", async () => {
     const ds = await import("./data-store");
