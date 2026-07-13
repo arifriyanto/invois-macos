@@ -617,18 +617,33 @@ export async function suggestVaultDir(): Promise<string> {
 }
 
 /**
- * True if `dir` sits INSIDE another vault — i.e. its parent folder already holds
- * a vault file (e.g. picking a vault's own `Backups/` or `Exports/` subfolder).
+ * True if `dir` sits INSIDE another vault — i.e. some ANCESTOR folder holds a
+ * vault file (e.g. picking a vault's own `Backups/` or `Exports/` subfolder).
  * A folder that IS itself a vault does NOT count (that's an adopt, not a nest).
- * Used to stop onboarding from registering a nested/stray empty vault (the
- * addVault path has an equivalent guard against the registered vault list).
+ *
+ * This asks the DISK, not the registry, and that distinction is the whole point.
+ * A vault that is not currently registered — the user re-onboarded elsewhere, or
+ * has not added it as a business yet — is still a vault, and still must not have
+ * another one nested inside it. `addVault` used to check only `config.vaults`,
+ * so `~/qa/v-baru/Backups` was accepted the moment v-baru fell out of the
+ * registry, and a stray empty vault was written into another vault's backup
+ * folder. The registry is a list of what we happen to know about; the disk is
+ * what is true.
+ *
+ * It walks every ancestor, not just the immediate parent: `<vault>/Backups/sub`
+ * is nested just as surely as `<vault>/Backups`.
  */
 export async function isDirInsideVault(dir: string): Promise<boolean> {
   const clean = dir.replace(/\/+$/, "");
   if (await anyVaultFileExists(clean)) return false; // it IS a vault → not nested
-  const parent = clean.replace(/\/[^/]+$/, "");
-  if (!parent || parent === clean) return false;
-  return anyVaultFileExists(parent);
+
+  let cur = clean;
+  for (;;) {
+    const parent = cur.replace(/\/[^/]+$/, "");
+    if (!parent || parent === cur) return false; // reached the root
+    if (await anyVaultFileExists(parent)) return true;
+    cur = parent;
+  }
 }
 
 /**
@@ -720,13 +735,27 @@ export async function addVault(dir: string, name?: string): Promise<string> {
     throw new Error("folder-in-use");
   }
   // Reject a folder that sits INSIDE an existing vault (e.g. its Backups/ or
-  // Exports/ subfolder), or that would CONTAIN an existing vault. Either nests a
-  // vault inside another → an empty stray vault + confusing recursive backups.
-  const nested = config.vaults.some((v) => {
+  // Exports/ subfolder), or that would CONTAIN one. Either nests a vault inside
+  // another → a stray empty vault and recursive backups.
+  //
+  // TWO checks, because they catch different things and this used to have only
+  // the first:
+  //
+  //  1. The REGISTRY, which is the only way to see a folder that would CONTAIN a
+  //     known vault (we cannot cheaply scan a folder's descendants).
+  //
+  //  2. The DISK, which is the only way to see a vault we are not currently
+  //     tracking. That gap was real: after re-onboarding to another folder,
+  //     `~/qa/v-baru` left the registry, so `~/qa/v-baru/Backups` sailed past the
+  //     registry check — and since no vault file existed *in* Backups, the code
+  //     below happily WROTE one there, inside another vault's backup folder.
+  //     Onboarding already asked the disk (isDirInsideVault); this path did not.
+  //     Two guards for the same rule, and the weaker one was the one that writes.
+  const nestedInRegistered = config.vaults.some((v) => {
     const vd = v.dir.replace(/\/+$/, "");
     return clean.startsWith(vd + "/") || vd.startsWith(clean + "/");
   });
-  if (nested) {
+  if (nestedInRegistered || (await isDirInsideVault(clean))) {
     throw new Error("folder-nested");
   }
   if (!(await vaultExistsIn(clean))) {

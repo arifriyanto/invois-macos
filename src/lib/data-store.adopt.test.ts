@@ -164,6 +164,14 @@ describe("isDirInsideVault", () => {
     expect(await ds.isDirInsideVault("/v/biz")).toBe(false); // it IS the vault
     expect(await ds.isDirInsideVault("/v/other")).toBe(false); // unrelated folder
   });
+
+  it("walks every ancestor, not just the immediate parent", async () => {
+    files.set(`/v/biz/${VAULT}`, vaultBody({ a: "1" }));
+    const ds = await import("./data-store");
+    // Backups/ is nested; so is anything below it. Checking only the parent
+    // would call this one clean.
+    expect(await ds.isDirInsideVault("/v/biz/Backups/2026/deep")).toBe(true);
+  });
 });
 
 describe("addVault — reject a folder inside an existing vault", () => {
@@ -177,6 +185,30 @@ describe("addVault — reject a folder inside an existing vault", () => {
     await expect(ds.addVault("/vault")).rejects.toThrow("folder-nested");
     // A truly separate folder is fine.
     await expect(ds.addVault("/other/place")).resolves.toBeTruthy();
+  });
+
+  it("rejects a folder inside a vault that is NOT in the registry", async () => {
+    // The bug, found by Arif running the QA plan (13 Jul 2026).
+    //
+    // A vault exists at /qa/v-baru, but the user has since onboarded to a
+    // different folder, so v-baru is not in config.vaults. addVault checked only
+    // the registry — so /qa/v-baru/Backups looked like a clean, unrelated folder,
+    // passed every guard, and (since no vault file existed *in* Backups) the code
+    // WROTE a fresh empty vault into another vault's backup directory.
+    //
+    // The registry is a list of what we happen to know about. The disk is what is
+    // true. This must ask the disk.
+    files.set(`/qa/v-baru/${VAULT}`, vaultBody({ invois_history: "[]" }));
+
+    const ds = await import("./data-store");
+    await ds.completeOnboarding("/qa/v-adopsi"); // registry holds ONLY v-adopsi
+
+    await expect(ds.addVault("/qa/v-baru/Backups")).rejects.toThrow("folder-nested");
+    // …and nothing was written into the backup folder on the way out.
+    expect(files.has(`/qa/v-baru/Backups/${VAULT}`)).toBe(false);
+
+    // The unregistered vault itself is still addable — it is a vault, not a nest.
+    await expect(ds.addVault("/qa/v-baru")).resolves.toBeTruthy();
   });
 });
 

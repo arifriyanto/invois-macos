@@ -127,11 +127,28 @@ menyimpan apa pun.
 
 ### 1.4 Menolak folder di dalam vault lain
 
-Di onboarding (atau Settings → Bisnis → Tambah), pilih `~/Desktop/qa/v-baru/Backups`.
+Uji di **dua** jalur, karena keduanya punya kode penjaga sendiri-sendiri — dan pernah tidak sepakat.
 
-**Seharusnya:** ditolak dengan pesan "folder berada di dalam vault lain" (bukan crash, bukan
-membuat vault bersarang). Coba juga folder **induknya** (`~/Desktop/qa`) setelah `v-baru` jadi
-vault — juga harus ditolak.
+**Jalur onboarding.** Pilih `~/Desktop/qa/v-baru/Backups`. Harus ditolak dengan pesan "folder berada
+di dalam vault lain". Coba juga folder **induknya** (`~/Desktop/qa`) — juga ditolak.
+
+**Jalur Settings → Data & ekspor → Tambah bisnis.** Ulangi keduanya di sini. Lalu kasus yang paling
+penting:
+
+Vault aktifmu sekarang `v-adopsi`, jadi **`v-baru` sudah tidak terdaftar lagi** sebagai bisnis. Dalam
+keadaan itu, tambahkan `~/Desktop/qa/v-baru/Backups`.
+
+**Seharusnya:** tetap ditolak. `v-baru` tidak terdaftar, tapi ia **tetap sebuah vault** — dan tidak
+boleh ada vault bersarang di dalamnya.
+
+**Bentuk kegagalannya** (ini bug yang Arif temukan pada 13 Jul 2026): folder itu **diterima**, dan app
+menulis vault kosong baru **ke dalam folder Backups milik vault lain**. Penyebabnya, penjaga di
+`addVault` hanya memeriksa daftar bisnis yang **terdaftar**, sementara onboarding memeriksa **disk**.
+Daftar terdaftar itu catatan tentang apa yang kebetulan kita ketahui; disk adalah kenyataannya. Kalau
+folder itu diterima lagi, atau muncul `invois-data.json` di dalam `v-baru/Backups`, **lapor**.
+
+Terakhir, pastikan yang **boleh** tetap boleh: menambahkan `~/Desktop/qa/v-baru` sendiri (bukan
+Backups-nya) harus berhasil — itu vault, bukan sarang.
 
 - [ ] Lolos
 
