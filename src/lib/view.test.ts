@@ -19,12 +19,23 @@ function bk(partial: Partial<BusinessSettings> = {}): BusinessSettings {
     bankName: "",
     bankAccount: "",
     bankOwner: "",
+    paymentTermDays: 14,
+    defaultTaxEnabled: false,
+    defaultTaxRate: 0,
+    defaultNote: "",
+    numPadding: 3,
+    numReset: "yearly",
+    numFormat: "{PREFIX}-{YYYY}-{SEQ}",
+    dateFormat: "long",
+    exportDir: "",
+    pdfEngine: "raster",
+    palette: "royal",
     ...partial,
   };
 }
 
 function item(partial: Partial<LineItem> = {}): LineItem {
-  return { id: "1", desc: "Item", qty: 1, price: 100, ...partial };
+  return { id: "1", desc: "Item", qty: 1, priceMinor: 100, ...partial };
 }
 
 function invoice(partial: Partial<InvoiceData> = {}): InvoiceData {
@@ -36,7 +47,7 @@ function invoice(partial: Partial<InvoiceData> = {}): InvoiceData {
     client: { name: "", email: "", phone: "", address: "" },
     items: [item()],
     discountEnabled: false,
-    discount: 0,
+    discountValue: 0,
     discountType: "pct",
     taxEnabled: false,
     taxRate: 0,
@@ -48,7 +59,7 @@ describe("buildView — items", () => {
   it("drops empty rows (no desc and no price)", () => {
     const v = buildView(
       bk(),
-      invoice({ items: [item({ id: "1", desc: "Real", price: 100 }), item({ id: "2", desc: "", price: 0 })] }),
+      invoice({ items: [item({ id: "1", desc: "Real", priceMinor: 100 }), item({ id: "2", desc: "", priceMinor: 0 })] }),
       t,
       "id"
     );
@@ -57,7 +68,7 @@ describe("buildView — items", () => {
   });
 
   it("keeps a row that has a price but no description, showing an em dash", () => {
-    const v = buildView(bk(), invoice({ items: [item({ desc: "", price: 500 })] }), t, "id");
+    const v = buildView(bk(), invoice({ items: [item({ desc: "", priceMinor: 500 })] }), t, "id");
     expect(v.items).toHaveLength(1);
     expect(v.items[0].desc).toBe("—");
   });
@@ -65,12 +76,12 @@ describe("buildView — items", () => {
   it("computes each line subtotal, flooring negatives to 0", () => {
     const v = buildView(
       bk(),
-      invoice({ items: [item({ qty: 3, price: 100 }), item({ id: "2", desc: "x", qty: -1, price: 100 })] }),
+      invoice({ items: [item({ qty: 3, priceMinor: 100 }), item({ id: "2", desc: "x", qty: -1, priceMinor: 100 })] }),
       t,
       "id"
     );
-    expect(v.items[0].sub).toBe(300);
-    expect(v.items[1].sub).toBe(0);
+    expect(v.items[0].subMinor).toBe(300);
+    expect(v.items[1].subMinor).toBe(0);
   });
 });
 
@@ -99,8 +110,8 @@ describe("buildView — placeholders & passthrough", () => {
   });
 
   it("exposes the discount percentage label only for pct type", () => {
-    const pct = buildView(bk(), invoice({ discountType: "pct", discount: 15 }), t, "id");
-    const flat = buildView(bk(), invoice({ discountType: "flat", discount: 15 }), t, "id");
+    const pct = buildView(bk(), invoice({ discountType: "pct", discountValue: 15 }), t, "id");
+    const flat = buildView(bk(), invoice({ discountType: "flat", discountValue: 15 }), t, "id");
     expect(pct.discountPctLabel).toBe(" (15%)");
     expect(flat.discountPctLabel).toBe("");
   });

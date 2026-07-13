@@ -160,7 +160,7 @@ function arrayMove<T>(arr: T[], from: number, to: number): T[] {
 let itemSeq = 0;
 function newItem(): LineItem {
   itemSeq += 1;
-  return { id: `item-${itemSeq}-${Math.random().toString(36).slice(2, 7)}`, desc: "", qty: 1, price: 0 };
+  return { id: `item-${itemSeq}-${Math.random().toString(36).slice(2, 7)}`, desc: "", qty: 1, priceMinor: 0 };
 }
 
 function isoDate(d: Date) {
@@ -183,7 +183,7 @@ function defaultInvoice(): InvoiceData {
     client: { name: "", email: "", phone: "", address: "" },
     items: [newItem()],
     discountEnabled: false,
-    discount: 0,
+    discountValue: 0,
     discountType: "pct",
     taxEnabled: false,
     taxRate: 11,
@@ -215,7 +215,7 @@ interface StoreValue {
   resetInvoice: (number: string) => void;
   addItem: () => void;
   /** Append a line item pre-filled from a catalog entry. */
-  addItemWith: (desc: string, price: number) => void;
+  addItemWith: (desc: string, priceMinor: number) => void;
   focusItemId: string | null;
   clearFocusItem: () => void;
   removeItem: (id: string) => void;
@@ -393,8 +393,8 @@ export function InvoiceProvider({ children }: { children: React.ReactNode }) {
     setInvoice((prev) => ({ ...prev, items: [...prev.items, item] }));
     setFocusItemId(item.id);
   }, []);
-  const addItemWith = React.useCallback((desc: string, price: number) => {
-    setInvoice((prev) => ({ ...prev, items: [...prev.items, { ...newItem(), desc, price }] }));
+  const addItemWith = React.useCallback((desc: string, priceMinor: number) => {
+    setInvoice((prev) => ({ ...prev, items: [...prev.items, { ...newItem(), desc, priceMinor }] }));
   }, []);
   const clearFocusItem = React.useCallback(() => setFocusItemId(null), []);
 

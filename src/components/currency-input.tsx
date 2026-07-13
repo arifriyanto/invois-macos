@@ -2,11 +2,17 @@
 import * as React from "react";
 import { cn } from "@/lib/utils";
 import { CURRENCY_SYMBOLS } from "@/lib/format";
+import { toMajor, toMinor } from "@/lib/money";
 import type { Currency } from "@/lib/types";
 
 // Parse a raw input string into a clean numeric value + a grouped display text.
 // IDR: integer only, "." thousands separator (Indonesian convention).
 // Others: "," thousands + optional "." decimal (up to 2 places).
+//
+// `value` here is DECIMAL (19.99), because that is what the user typed and what
+// the text has to show. The component converts it to minor units at its edge —
+// see the note on CurrencyInputProps.value. This function is the inner,
+// text-shaped half and deliberately knows nothing about minor units.
 function build(raw: string, currency: Currency): { text: string; value: number } {
   const allowDecimal = currency !== "IDR";
   const groupSep = currency === "IDR" ? "." : ",";
@@ -38,8 +44,12 @@ function build(raw: string, currency: Currency): { text: string; value: number }
 
 interface CurrencyInputProps
   extends Omit<React.ComponentProps<"input">, "value" | "onChange"> {
+  /** INTEGER minor units — 1999, not 19.99. This field is one of the two borders
+   *  where money changes representation (lib/format.ts formatMoney is the other),
+   *  so the decimal the user types lives inside this component and nowhere else. */
   value: number;
-  onValueChange: (n: number) => void;
+  /** Called with INTEGER minor units. */
+  onValueChange: (minor: number) => void;
   currency: Currency;
 }
 
@@ -53,21 +63,31 @@ export function CurrencyInput({
 }: CurrencyInputProps) {
   const sym = CURRENCY_SYMBOLS[currency];
   const ref = React.useRef<HTMLInputElement>(null);
-  const [text, setText] = React.useState(() =>
-    value ? build(String(value), currency).text : ""
+
+  // minor (1999) → the grouped text the field shows ("1,999" / "19.99").
+  const textOf = React.useCallback(
+    (minor: number) => (minor ? build(String(toMajor(minor, currency)), currency).text : ""),
+    [currency]
   );
+
+  const [text, setText] = React.useState(() => textOf(value));
 
   // Resync display when value or currency changes from outside. On a currency
   // switch we ALWAYS reformat (the separators differ even when the number is
   // identical, e.g. "1,234,567" → "1.234.567"); on a value change we only
   // reformat if the number actually differs, so mid-edit typing is untouched.
+  //
+  // The comparison happens in MINOR units on both sides. Comparing decimals here
+  // would reintroduce the exact bug this change removes: the text "19.99" parses
+  // to a double that is not equal to the double the store holds, the guard fires
+  // on every keystroke, and the field rewrites itself under the caret.
   const prevCurrency = React.useRef(currency);
   React.useEffect(() => {
     const currencyChanged = prevCurrency.current !== currency;
     prevCurrency.current = currency;
-    const parsed = build(text, currency).value;
-    if (currencyChanged || value !== parsed) {
-      setText(value ? build(String(value), currency).text : "");
+    const typedMinor = toMinor(build(text, currency).value, currency);
+    if (currencyChanged || value !== typedMinor) {
+      setText(textOf(value));
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [value, currency]);
@@ -87,7 +107,7 @@ export function CurrencyInput({
 
     const { text: newText, value: num } = build(raw, currency);
     setText(newText);
-    onValueChange(num);
+    onValueChange(toMinor(num, currency));
 
     // Restore caret after React commits, counting past group separators.
     requestAnimationFrame(() => {
@@ -132,7 +152,7 @@ export function CurrencyInput({
     const raw = el.value.slice(0, start) + el.value.slice(end);
     const r = build(raw, currency);
     setText(r.text);
-    onValueChange(r.value);
+    onValueChange(toMinor(r.value, currency));
   };
 
   return (

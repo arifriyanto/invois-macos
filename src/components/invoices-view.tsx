@@ -137,7 +137,7 @@ export function InvoicesView({
       const desc = it.desc.trim();
       if (!desc || seen.has(desc.toLowerCase())) continue;
       seen.add(desc.toLowerCase());
-      addCatalogItem({ desc, price: it.price });
+      addCatalogItem({ desc, priceMinor: it.priceMinor });
     }
     if (silent) return;
     // First save = a milestone → celebrate with the success modal. Re-saves are

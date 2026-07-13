@@ -1,0 +1,21 @@
+// Typecheck the TESTS.
+//
+// The main tsconfig excludes **/*.test.ts, because Next.js should not compile
+// them into the app. The side effect was that the test files were the one part
+// of the codebase the compiler never looked at — and vitest does not typecheck
+// either, it just runs. So a test could go on referring to a field that no
+// longer exists, quietly asserting things about `undefined`.
+//
+// That is not hypothetical: renaming `price` → `priceMinor` left view.test.ts
+// still building items with a `price`, and `npm run typecheck` said everything
+// was fine. A test that cannot fail to compile is a test you cannot trust.
+//
+// `npm run typecheck:tests` covers them. Run it with the other checks.
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "noEmit": true
+  },
+  "include": ["src/**/*.ts", "src/**/*.tsx"],
+  "exclude": ["node_modules"]
+}

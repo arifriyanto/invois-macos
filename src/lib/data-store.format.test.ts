@@ -130,7 +130,7 @@ describe("the primary file must never stop existing", () => {
     ds.setRaw("invois_history", JSON.stringify(HISTORY));
     await ds.flushNow();
     const doc = JSON.parse(files.get(`/v/fmt/${VAULT}`)!) as Record<string, { format: number }>;
-    expect(doc.__invois.format).toBe(2);
+    expect(doc.__invois.format).toBe(3);
   });
 
   it("goes into safe mode instead of mangling a vault from the future", async () => {
@@ -148,6 +148,71 @@ describe("the primary file must never stop existing", () => {
     await ds.flushNow();
     const doc = JSON.parse(files.get(`/v/future/${VAULT}`)!) as Record<string, unknown>;
     expect(doc.brandNewField).toBe(1); // untouched — we never wrote
+  });
+});
+
+describe("format 2 → 3: money becomes integer minor units", () => {
+  const OLD_VAULT = {
+    __invois: { format: 2 },
+    invois_settings: { v: 5, data: { currency: "USD" } },
+    invois_history: [
+      { id: "a", data: { items: [{ id: "i1", desc: "Design", qty: 3, price: 19.99 }] } },
+    ],
+  };
+
+  it("upgrades the money on load, and saves the upgrade on the next write", async () => {
+    files.set(`/v/money/${VAULT}`, JSON.stringify(OLD_VAULT));
+    const ds = await import("./data-store");
+    await ds.completeOnboarding("/v/money");
+
+    // In memory, straight away — the app never sees a decimal price.
+    const loaded = JSON.parse(ds.getRaw("invois_history")!) as {
+      data: { items: { priceMinor: number; price?: number }[] };
+    }[];
+    expect(loaded[0].data.items[0].priceMinor).toBe(1999);
+    expect(loaded[0].data.items[0].price).toBeUndefined();
+
+    // A migration makes memory differ from disk, so the vault is dirty and the
+    // next flush must land — even though the user has not typed anything. (This
+    // is why the load sets the dirty flag: with the dirty check in place, an
+    // untouched migrated vault would otherwise never be written back.)
+    await ds.flushNow();
+    const doc = JSON.parse(files.get(`/v/money/${VAULT}`)!) as {
+      __invois: { format: number };
+      invois_history: { data: { items: { priceMinor: number }[] } }[];
+    };
+    expect(doc.__invois.format).toBe(3);
+    expect(doc.invois_history[0].data.items[0].priceMinor).toBe(1999);
+  });
+
+  it("does not write on load — the old file survives an open-and-quit", async () => {
+    // Opening the app must not, by itself, touch the disk. If the user opens
+    // Invois and quits, their format-2 file should still be there, unchanged and
+    // still readable by the build they had yesterday.
+    const original = JSON.stringify(OLD_VAULT);
+    files.set(`/v/noWrite/${VAULT}`, original);
+    const ds = await import("./data-store");
+    await ds.completeOnboarding("/v/noWrite");
+
+    expect(files.get(`/v/noWrite/${VAULT}`)).toBe(original);
+  });
+
+  it("does not re-scale a vault already in format 3", async () => {
+    files.set(
+      `/v/already/${VAULT}`,
+      JSON.stringify({
+        __invois: { format: 3 },
+        invois_settings: { v: 5, data: { currency: "USD" } },
+        invois_history: [{ id: "a", data: { items: [{ id: "i1", qty: 1, priceMinor: 1999 }] } }],
+      }),
+    );
+    const ds = await import("./data-store");
+    await ds.completeOnboarding("/v/already");
+
+    const loaded = JSON.parse(ds.getRaw("invois_history")!) as {
+      data: { items: { priceMinor: number }[] };
+    }[];
+    expect(loaded[0].data.items[0].priceMinor).toBe(1999); // not 199_900
   });
 });
 

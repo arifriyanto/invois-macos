@@ -1,10 +1,19 @@
+import { moneyDecimals, roundHalf, safeMinor, safeQty, toMajor } from "./money";
 import type { Currency, DateFormat, InvoiceData, Lang, TemplateId, Totals } from "./types";
 
 export const CURRENCY_SYMBOLS: Record<Currency, string> = {
-  IDR: "Rp", USD: "$", SGD: "S$", EUR: "€", GBP: "£",
+  IDR: "Rp",
+  USD: "$",
+  SGD: "S$",
+  EUR: "€",
+  GBP: "£",
 };
 export const CURRENCY_LOCALE: Record<Currency, string> = {
-  IDR: "id-ID", USD: "en-US", SGD: "en-SG", EUR: "de-DE", GBP: "en-GB",
+  IDR: "id-ID",
+  USD: "en-US",
+  SGD: "en-SG",
+  EUR: "de-DE",
+  GBP: "en-GB",
 };
 
 export const CURRENCY_OPTIONS: { value: Currency; label: string }[] = [
@@ -45,26 +54,63 @@ export const PHONE_PLACEHOLDER: Record<Currency, string> = {
 // Map an ISO region to one of the currencies we support. Anything not listed
 // falls back to USD (see detectDefaultCurrency).
 const REGION_CURRENCY: Record<string, Currency> = {
-  ID: "IDR", SG: "SGD", GB: "GBP",
+  ID: "IDR",
+  SG: "SGD",
+  GB: "GBP",
   // Eurozone
-  AT: "EUR", BE: "EUR", CY: "EUR", EE: "EUR", FI: "EUR", FR: "EUR", DE: "EUR",
-  GR: "EUR", IE: "EUR", IT: "EUR", LV: "EUR", LT: "EUR", LU: "EUR", MT: "EUR",
-  NL: "EUR", PT: "EUR", SK: "EUR", SI: "EUR", ES: "EUR", HR: "EUR",
+  AT: "EUR",
+  BE: "EUR",
+  CY: "EUR",
+  EE: "EUR",
+  FI: "EUR",
+  FR: "EUR",
+  DE: "EUR",
+  GR: "EUR",
+  IE: "EUR",
+  IT: "EUR",
+  LV: "EUR",
+  LT: "EUR",
+  LU: "EUR",
+  MT: "EUR",
+  NL: "EUR",
+  PT: "EUR",
+  SK: "EUR",
+  SI: "EUR",
+  ES: "EUR",
+  HR: "EUR",
 };
 
 // Timezone → currency. Preferred over locale because the OS timezone reflects
 // the user's actual location, whereas the UI language can be e.g. "en-GB"
 // (British English) for someone who isn't in the UK.
 const TZ_CURRENCY: Record<string, Currency> = {
-  "Asia/Jakarta": "IDR", "Asia/Pontianak": "IDR", "Asia/Makassar": "IDR", "Asia/Jayapura": "IDR",
+  "Asia/Jakarta": "IDR",
+  "Asia/Pontianak": "IDR",
+  "Asia/Makassar": "IDR",
+  "Asia/Jayapura": "IDR",
   "Asia/Singapore": "SGD",
   "Europe/London": "GBP",
   // Eurozone hubs
-  "Europe/Paris": "EUR", "Europe/Berlin": "EUR", "Europe/Madrid": "EUR", "Europe/Rome": "EUR",
-  "Europe/Amsterdam": "EUR", "Europe/Brussels": "EUR", "Europe/Vienna": "EUR", "Europe/Lisbon": "EUR",
-  "Europe/Dublin": "EUR", "Europe/Athens": "EUR", "Europe/Helsinki": "EUR", "Europe/Bratislava": "EUR",
-  "Europe/Ljubljana": "EUR", "Europe/Zagreb": "EUR", "Europe/Vilnius": "EUR", "Europe/Riga": "EUR",
-  "Europe/Tallinn": "EUR", "Europe/Luxembourg": "EUR", "Europe/Malta": "EUR", "Europe/Nicosia": "EUR",
+  "Europe/Paris": "EUR",
+  "Europe/Berlin": "EUR",
+  "Europe/Madrid": "EUR",
+  "Europe/Rome": "EUR",
+  "Europe/Amsterdam": "EUR",
+  "Europe/Brussels": "EUR",
+  "Europe/Vienna": "EUR",
+  "Europe/Lisbon": "EUR",
+  "Europe/Dublin": "EUR",
+  "Europe/Athens": "EUR",
+  "Europe/Helsinki": "EUR",
+  "Europe/Bratislava": "EUR",
+  "Europe/Ljubljana": "EUR",
+  "Europe/Zagreb": "EUR",
+  "Europe/Vilnius": "EUR",
+  "Europe/Riga": "EUR",
+  "Europe/Tallinn": "EUR",
+  "Europe/Luxembourg": "EUR",
+  "Europe/Malta": "EUR",
+  "Europe/Nicosia": "EUR",
 };
 
 /** Best-effort default currency, restricted to the currencies the app supports.
@@ -93,9 +139,7 @@ export function detectDefaultCurrency(): Currency {
 
 // Free tier ships a single template (Minimal). Everything else is Pro — this is
 // the primary Pro lever. See invois-app/docs/free-vs-pro-plan.md.
-export const TEMPLATES: { id: TemplateId; label: string }[] = [
-  { id: "minimal", label: "Minimal" },
-];
+export const TEMPLATES: { id: TemplateId; label: string }[] = [{ id: "minimal", label: "Minimal" }];
 
 // Premium (Pro) templates: fully previewable for free, but selecting one prompts
 // the upgrade popup for free users (see TemplateGrid/preview). They render like
@@ -122,13 +166,26 @@ export function resolveTemplate(id: TemplateId, isPro: boolean): TemplateId {
   return !isPro && isPremiumTemplate(id) ? "minimal" : id;
 }
 
-export function formatCurrency(n: number, currency: Currency): string {
+/**
+ * Integer minor units → the string a human reads. This is one of only two places
+ * money crosses between integer and decimal (the other is CurrencyInput), which
+ * is the whole point of the design: 1999 becomes "$19.99" here and nowhere else.
+ *
+ * It is named formatMoney, not formatCurrency, because the argument changed
+ * meaning. Passing 19.99 to the old function printed "$19.99"; passing 19.99 to
+ * this one prints "$0.20". A rename makes every call site a compiler error, so
+ * none of them can quietly keep the old assumption — which a same-named function
+ * with a new meaning would have allowed.
+ */
+export function formatMoney(minor: number, currency: Currency): string {
   const sym = CURRENCY_SYMBOLS[currency];
   const locale = CURRENCY_LOCALE[currency];
+  const decimals = moneyDecimals(currency);
   const formatted = new Intl.NumberFormat(locale, {
-    minimumFractionDigits: 0,
-    maximumFractionDigits: currency === "IDR" ? 0 : 2,
-  }).format(Number.isFinite(n) ? n : 0);
+    // Show the currency's full precision, always: "$19.90", never "$19.9".
+    minimumFractionDigits: decimals,
+    maximumFractionDigits: decimals,
+  }).format(toMajor(minor, currency));
   return currency === "IDR" ? `${sym} ${formatted}` : `${sym}${formatted}`;
 }
 
@@ -142,12 +199,32 @@ export function formatCurrency(n: number, currency: Currency): string {
 // way to guarantee that. Do not "simplify" this back to toLocaleDateString.
 const MONTH_NAMES: Record<Lang, string[]> = {
   id: [
-    "Januari", "Februari", "Maret", "April", "Mei", "Juni",
-    "Juli", "Agustus", "September", "Oktober", "November", "Desember",
+    "Januari",
+    "Februari",
+    "Maret",
+    "April",
+    "Mei",
+    "Juni",
+    "Juli",
+    "Agustus",
+    "September",
+    "Oktober",
+    "November",
+    "Desember",
   ],
   en: [
-    "January", "February", "March", "April", "May", "June",
-    "July", "August", "September", "October", "November", "December",
+    "January",
+    "February",
+    "March",
+    "April",
+    "May",
+    "June",
+    "July",
+    "August",
+    "September",
+    "October",
+    "November",
+    "December",
   ],
 };
 
@@ -172,23 +249,40 @@ export function formatDate(str: string, lang: Lang = "id", fmt: DateFormat = "lo
   return `${yyyy}-${mm}-${dd}`;
 }
 
+/**
+ * Every figure here is an INTEGER number of minor units, in and out.
+ *
+ * The subtotal needs no rounding at all, and that is the payoff for making qty a
+ * whole number: an integer quantity times an integer price is an integer, and a
+ * sum of integers is exact. There is no per-line rounding step to argue about
+ * because there is nothing to round.
+ *
+ * Rounding survives in exactly two places, and both are forced by percentages —
+ * 10% of 5,999 is 599.9, and there is no such coin. Each is rounded once, half
+ * away from zero (the ordinary invoicing convention), and the total is then
+ * assembled from the rounded parts. That ordering matters: it guarantees the
+ * printed lines add up to the printed total, which is the property a client
+ * checks with a calculator.
+ */
 export function calcTotals(inv: InvoiceData): Totals {
-  const subtotal = inv.items.reduce(
-    (s, i) => s + Math.max(0, i.qty) * Math.max(0, i.price),
-    0
-  );
+  const subtotal = inv.items.reduce((s, i) => s + safeQty(i.qty) * safeMinor(i.priceMinor), 0);
+
   let discount = 0;
   if (inv.discountEnabled) {
-    const dv = Math.max(0, inv.discount || 0);
-    discount = inv.discountType === "pct" ? (subtotal * dv) / 100 : dv;
+    const dv = Math.max(0, inv.discountValue || 0);
+    discount =
+      inv.discountType === "pct"
+        ? roundHalf((subtotal * dv) / 100) // percentage → rounding point 1
+        : Math.trunc(dv); // flat: already minor units
   }
-  // Clamp: discount can never exceed subtotal (no negative totals)
+  // Clamp: a discount can never exceed the subtotal (no negative totals).
   discount = Math.min(discount, subtotal);
 
   let tax = 0;
   if (inv.taxEnabled) {
     const tr = Math.max(0, inv.taxRate || 0);
-    tax = ((subtotal - discount) * tr) / 100;
+    tax = roundHalf(((subtotal - discount) * tr) / 100); // rounding point 2
   }
+
   return { subtotal, discount, tax, total: subtotal - discount + tax };
 }

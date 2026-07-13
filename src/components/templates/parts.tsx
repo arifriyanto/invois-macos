@@ -1,5 +1,5 @@
 import * as React from "react";
-import { formatCurrency } from "@/lib/format";
+import { formatMoney } from "@/lib/format";
 import { mix, readableOn } from "@/lib/color";
 import type { InvoiceView } from "@/lib/view";
 
@@ -65,8 +65,8 @@ export function ItemsTable({ view, last }: { view: InvoiceView; last: string }) 
           <div className="inv-item-row" role="row" key={i.id}>
             <div className="inv-item-desc" role="cell">{i.desc}</div>
             <div className="inv-item-qty" role="cell">{i.qty}</div>
-            <div className="col-right" role="cell">{formatCurrency(i.price, currency)}</div>
-            <div className="col-right" role="cell">{formatCurrency(i.sub, currency)}</div>
+            <div className="col-right" role="cell">{formatMoney(i.priceMinor, currency)}</div>
+            <div className="col-right" role="cell">{formatMoney(i.subMinor, currency)}</div>
           </div>
         ))
       )}
@@ -82,23 +82,23 @@ export function SummaryTable({ view }: { view: InvoiceView }) {
     <div className="inv-summary-table" role="table">
       <div className="inv-summary-row" role="row">
         <span role="rowheader">{labels.subtotal}</span>
-        <span role="cell">{formatCurrency(totals.subtotal, currency)}</span>
+        <span role="cell">{formatMoney(totals.subtotal, currency)}</span>
       </div>
       {view.showDiscount && (
         <div className="inv-summary-row" role="row">
           <span role="rowheader">{labels.discount}{view.discountPctLabel}</span>
-          <span role="cell">− {formatCurrency(totals.discount, currency)}</span>
+          <span role="cell">− {formatMoney(totals.discount, currency)}</span>
         </div>
       )}
       {view.showTax && (
         <div className="inv-summary-row" role="row">
           <span role="rowheader">{labels.tax} ({view.taxRate}%)</span>
-          <span role="cell">{formatCurrency(totals.tax, currency)}</span>
+          <span role="cell">{formatMoney(totals.tax, currency)}</span>
         </div>
       )}
       <div className="inv-summary-row total" role="row">
         <span role="rowheader">{labels.total}</span>
-        <span role="cell">{formatCurrency(totals.total, currency)}</span>
+        <span role="cell">{formatMoney(totals.total, currency)}</span>
       </div>
     </div>
   );

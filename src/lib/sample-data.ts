@@ -4,12 +4,14 @@
 // raw store payloads BEFORE the data providers mount (called from onboarding,
 // after completeOnboarding), so the stores hydrate with them.
 import { getRaw, setRaw } from "./data-store";
+import { toMinor } from "./money";
 import type { Currency } from "./types";
 
 const CUSTOMERS_KEY = "invois_customers";
 const CATALOG_KEY = "invois_catalog";
 
-// Rough, tidy round number per currency for the example service price.
+// Rough, tidy round number per currency for the example service price, in MAJOR
+// units (250 = two hundred and fifty dollars). Stored as minor units below.
 const SAMPLE_PRICE: Record<Currency, number> = {
   IDR: 2_500_000,
   USD: 250,
@@ -35,7 +37,7 @@ export function seedSampleData(currency: Currency) {
     const item = {
       id: "sample-item",
       desc: "Logo design (Sample)",
-      price: SAMPLE_PRICE[currency],
+      priceMinor: toMinor(SAMPLE_PRICE[currency], currency),
     };
 
     setRaw(CUSTOMERS_KEY, JSON.stringify([customer]));

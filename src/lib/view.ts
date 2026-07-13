@@ -1,13 +1,16 @@
 import type { BusinessSettings, Currency, InvoiceData, Lang, Totals } from "./types";
 import { calcTotals, formatDate } from "./format";
+import { safeMinor, safeQty } from "./money";
 import type { TFunc } from "./i18n";
 
 export interface VisibleItem {
   id: string;
   desc: string;
   qty: number;
-  price: number;
-  sub: number;
+  /** Integer minor units (lib/money.ts). */
+  priceMinor: number;
+  /** qty × priceMinor — exact, because both are integers. */
+  subMinor: number;
 }
 
 export interface InvoiceLabels {
@@ -60,13 +63,13 @@ export interface InvoiceView {
 
 export function buildView(bk: BusinessSettings, inv: InvoiceData, t: TFunc, lang: Lang): InvoiceView {
   const visible = inv.items
-    .filter((i) => i.desc || i.price > 0)
+    .filter((i) => i.desc || i.priceMinor > 0)
     .map((i) => ({
       id: i.id,
       desc: i.desc || "—",
-      qty: i.qty,
-      price: i.price,
-      sub: Math.max(0, i.qty) * Math.max(0, i.price),
+      qty: safeQty(i.qty),
+      priceMinor: safeMinor(i.priceMinor),
+      subMinor: safeQty(i.qty) * safeMinor(i.priceMinor),
     }));
 
   const payment = [bk.bankName, bk.bankAccount, bk.bankOwner].filter(Boolean);
@@ -112,7 +115,7 @@ export function buildView(bk: BusinessSettings, inv: InvoiceData, t: TFunc, lang
     totals: calcTotals(inv),
     currency: bk.currency,
     showDiscount: inv.discountEnabled,
-    discountPctLabel: inv.discountType === "pct" ? ` (${inv.discount}%)` : "",
+    discountPctLabel: inv.discountType === "pct" ? ` (${inv.discountValue}%)` : "",
     showTax: inv.taxEnabled,
     taxRate: inv.taxRate,
     payment: payment.length ? payment : ["—"],

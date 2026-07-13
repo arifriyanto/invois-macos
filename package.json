@@ -2,12 +2,12 @@
   "name": "invois-macos",
   "version": "0.1.0",
   "private": true,
-  "description": "Invois — local-first invoice generator for macOS (Electron + Next.js).",
+  "description": "Invois \u2014 local-first invoice generator for macOS (Electron + Next.js).",
   "main": "electron/main.js",
   "author": "Arif Riyanto",
   "license": "UNLICENSED",
   "comments": {
-    "dependencies": "READ THIS BEFORE ADDING ONE. electron-builder ships EVERY package listed under `dependencies` into the .app — verbatim, as source. Our UI is a static export: `next build` bundles React, radix, lucide, date-fns and the rest INTO out/, and none of them are ever require()d at runtime. The only package the running app loads from node_modules is pdf-lib, in the main process. So: anything the UI imports belongs in devDependencies. Getting this wrong is not subtle — with the frontend libs under `dependencies` the packaged app was 649 MB, of which 370 MB was node_modules (next alone: 275 MB of build tooling that never runs)."
+    "dependencies": "READ THIS BEFORE ADDING ONE. electron-builder ships EVERY package listed under `dependencies` into the .app \u2014 verbatim, as source. Our UI is a static export: `next build` bundles React, radix, lucide, date-fns and the rest INTO out/, and none of them are ever require()d at runtime. The only package the running app loads from node_modules is pdf-lib, in the main process. So: anything the UI imports belongs in devDependencies. Getting this wrong is not subtle \u2014 with the frontend libs under `dependencies` the packaged app was 649 MB, of which 370 MB was node_modules (next alone: 275 MB of build tooling that never runs)."
   },
   "scripts": {
     "dev": "concurrently -k -n next,electron -c blue,magenta \"next dev\" \"wait-on tcp:3000 && cross-env ELECTRON_DEV=1 electron .\"",
@@ -15,13 +15,15 @@
     "build": "next build",
     "start": "electron .",
     "typecheck": "tsc --noEmit",
+    "typecheck:tests": "tsc -p tsconfig.test.json",
+    "verify": "npm run typecheck && npm run typecheck:tests && npm run lint && npm run test",
     "pdf:fonts": "node scripts/pdf-fonts.mjs",
     "lint": "eslint src",
     "test": "vitest run",
     "pack:mac": "npm run build && electron-builder --mac dir",
     "pack:mas-dev": "npm run build && electron-builder --mac mas-dev",
     "pack:mas": "npm run build && electron-builder --mac mas",
-    "size": "du -sh dist/*/Invois.app 2>/dev/null || echo 'nothing built yet — run a pack:* script first'"
+    "size": "du -sh dist/*/Invois.app 2>/dev/null || echo 'nothing built yet \u2014 run a pack:* script first'"
   },
   "dependencies": {
     "pdf-lib": "^1.17.1"

@@ -13,9 +13,9 @@ import { useCatalog, type CatalogInput, type CatalogItem } from "@/lib/catalog-s
 import { useConfirm } from "@/lib/confirm";
 import { useStore } from "@/lib/store";
 import { useI18n } from "@/lib/i18n";
-import { formatCurrency } from "@/lib/format";
+import { formatMoney } from "@/lib/format";
 
-const EMPTY: CatalogInput = { desc: "", price: 0 };
+const EMPTY: CatalogInput = { desc: "", priceMinor: 0 };
 
 export function CatalogList() {
   const { items, addItem, updateItem, removeItem } = useCatalog();
@@ -46,7 +46,7 @@ export function CatalogList() {
   }
   function openEdit(it: CatalogItem) {
     setEditId(it.id);
-    setDraft({ desc: it.desc, price: it.price });
+    setDraft({ desc: it.desc, priceMinor: it.priceMinor });
     setOpen(true);
   }
   function save() {
@@ -112,7 +112,7 @@ export function CatalogList() {
                 <TableRow key={it.id}>
                   <TableCell className="font-medium">{it.desc}</TableCell>
                   <TableCell className="text-right font-mono tabular-nums">
-                    {formatCurrency(it.price, settings.currency)}
+                    {formatMoney(it.priceMinor, settings.currency)}
                   </TableCell>
                   <TableCell className="text-right">
                     <div className="flex justify-end gap-1 opacity-0 transition-opacity group-hover:opacity-100">
@@ -179,8 +179,8 @@ export function CatalogList() {
             <Field label={t("list.defaultPrice")}>
               <CurrencyInput
                 currency={settings.currency}
-                value={draft.price}
-                onValueChange={(n) => set({ price: n })}
+                value={draft.priceMinor}
+                onValueChange={(n) => set({ priceMinor: n })}
               />
             </Field>
           </div>

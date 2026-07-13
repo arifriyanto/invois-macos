@@ -12,19 +12,17 @@ import { useInvoices, type SavedInvoice } from "@/lib/invoices-store";
 import { useConfirm } from "@/lib/confirm";
 import { useStore } from "@/lib/store";
 import { useI18n } from "@/lib/i18n";
-import { formatCurrency, formatDate } from "@/lib/format";
+import { calcTotals, formatMoney, formatDate } from "@/lib/format";
 import type { InvoiceData } from "@/lib/types";
 
+// This used to be a hand-rolled SECOND copy of the totals maths — subtotal,
+// discount, tax, in that order — sitting a few files away from the real one. Two
+// implementations of the same sum is one too many: they were already drifting
+// (this one clamped after the discount, calcTotals clamped the discount itself),
+// so a rounding rule fixed in one place would quietly not apply in the other and
+// the history list could disagree with the invoice it was listing.
 function total(d: InvoiceData): number {
-  const sub = d.items.reduce((s, i) => s + Math.max(0, i.qty) * Math.max(0, i.price), 0);
-  const disc = d.discountEnabled
-    ? d.discountType === "pct"
-      ? (sub * d.discount) / 100
-      : d.discount
-    : 0;
-  const afterDisc = Math.max(0, sub - disc);
-  const tax = d.taxEnabled ? (afterDisc * d.taxRate) / 100 : 0;
-  return afterDisc + tax;
+  return calcTotals(d).total;
 }
 
 /** A drill-down filter passed in from the dashboard (AND-combined with search). */
@@ -213,7 +211,7 @@ export function InvoiceHistory({
                 </TableCell>
                 <TableCell className="text-muted-foreground">{fmtDate(rec.data.date)}</TableCell>
                 <TableCell className="text-right font-mono tabular-nums">
-                  {formatCurrency(total(rec.data), settings.currency)}
+                  {formatMoney(total(rec.data), settings.currency)}
                 </TableCell>
                 <TableCell className="text-right">
                   <InvoiceStatusPill

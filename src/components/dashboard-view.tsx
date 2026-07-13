@@ -12,7 +12,7 @@ import { AlertTriangle, Clock, FileText, Wallet } from "lucide-react";
 import { useInvoices } from "@/lib/invoices-store";
 import { useStore } from "@/lib/store";
 import { useI18n } from "@/lib/i18n";
-import { calcTotals, formatCurrency } from "@/lib/format";
+import { calcTotals, formatMoney } from "@/lib/format";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { MonthlyIncomeChart } from "@/components/monthly-income-chart";
 import { cn } from "@/lib/utils";
@@ -39,7 +39,7 @@ export function DashboardView() {
       }).format(v),
     [loc, settings.currency]
   );
-  const full = React.useCallback((v: number) => formatCurrency(v, settings.currency), [settings.currency]);
+  const full = React.useCallback((v: number) => formatMoney(v, settings.currency), [settings.currency]);
 
   const RANGES: { id: Range; label: string }[] = [
     { id: "3m", label: t("db.range3") },

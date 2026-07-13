@@ -1,5 +1,6 @@
 "use client";
 import * as native from "@/lib/native";
+import { migrateMoneyToMinor } from "./vault-migrate";
 // ---------------------------------------------------------------------------
 // Central persistence backend.
 //
@@ -229,15 +230,19 @@ type VaultDoc = Record<string, unknown>;
  * happening again: from here on, a file that claims a format we do not know puts the
  * vault into safe mode and nothing is written.
  */
-const VAULT_FORMAT = 2; // 1 = legacy double-encoded (values were JSON strings)
+const VAULT_FORMAT = 3;
+// 1 = double-encoded (values were JSON strings)
+// 2 = nested values
+// 3 = money as integer minor units (prices were decimal `price` fields)
 const FORMAT_KEY = "__invois";
 
 interface FormatMarker {
   format: number;
 }
 
-/** Disk → memory. Accepts BOTH formats: a string value is the legacy double-encoded
- *  form and is taken as-is; anything else is re-serialized for the in-memory map. */
+/** Disk → memory. Accepts every format we have ever written: a string value is the
+ *  legacy double-encoded form and is taken as-is, and pre-3 money is converted to
+ *  minor units here, so the rest of the app only ever sees the current shape. */
 function docToMem(doc: VaultDoc): Map<string, string> {
   const marker = doc[FORMAT_KEY] as FormatMarker | undefined;
   const format = typeof marker?.format === "number" ? marker.format : 1;
@@ -252,8 +257,28 @@ function docToMem(doc: VaultDoc): Map<string, string> {
     if (k === FORMAT_KEY) continue; // bookkeeping, not app data
     m.set(k, typeof v === "string" ? v : JSON.stringify(v));
   }
+
+  // Money: decimal → integer minor units. Guarded by `format < 3` AND by the
+  // migration's own per-field check, so a vault that is already in minor units is
+  // not scaled a second time (which would turn $19.99 into $1,999.00). Belt and
+  // braces on purpose: the format marker is absent from format-1 files, so it is
+  // not, on its own, something to bet the user's invoices on.
+  if (format < 3 && format <= VAULT_FORMAT) {
+    if (migrateMoneyToMinor(m)) {
+      // The vault on disk is now out of date. Mark it dirty so the next save
+      // persists the migrated form — but do NOT write here: a load is not the
+      // place to touch the disk, and if the app is closed without changing
+      // anything, the old file is still perfectly readable by this build.
+      migratedOnLoad = true;
+    }
+  }
+
   return m;
 }
+
+/** Set when docToMem upgraded the loaded data; initDataStore turns it into a
+ *  dirty flag once the load has actually succeeded. */
+let migratedOnLoad = false;
 
 /** Memory → disk. Always writes the current nested form, stamped with its format. A
  *  value that somehow is not valid JSON is stored as a string rather than dropped. */
@@ -283,6 +308,7 @@ async function loadVaultFile(dir: string): Promise<Map<string, string>> {
 
   vaultSource = "primary";
   vaultBackupIndex = 0;
+  migratedOnLoad = false;
 
   try {
     if (await fs.exists(path)) return parse(await fs.readTextFile(path));
@@ -558,7 +584,9 @@ export async function initDataStore(): Promise<DataStoreStatus> {
     initialized = true;
     if (await anyVaultFileExists(active.dir)) {
       mem = await loadVaultFile(active.dir);
-      dirty = false; // freshly loaded == what's on disk
+      // Freshly loaded == what is on disk, UNLESS the load upgraded the money
+      // fields — then memory is ahead of the file and the next save must land.
+      dirty = migratedOnLoad;
       installFlushHooks();
     } else {
       // Folder moved/deleted externally — flag it so the UI can offer to locate
@@ -627,7 +655,7 @@ export async function completeOnboarding(
   // recover data even when the primary file was deleted/corrupted.
   const adopted = await anyVaultFileExists(clean);
   mem = adopted ? await loadVaultFile(clean) : new Map();
-  dirty = false;
+  dirty = adopted && migratedOnLoad;
   const id = genVaultId();
   config = {
     vaults: [{ id, name: name?.trim() || basename(clean), dir: clean }],

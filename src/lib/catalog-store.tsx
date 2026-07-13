@@ -6,7 +6,8 @@ import { readArray } from "./vault-read";
 export interface CatalogItem {
   id: string;
   desc: string;
-  price: number;
+  /** Integer minor units — see lib/money.ts. */
+  priceMinor: number;
 }
 export type CatalogInput = Omit<CatalogItem, "id">;
 

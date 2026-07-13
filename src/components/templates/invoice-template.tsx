@@ -1,5 +1,5 @@
 import * as React from "react";
-import { formatCurrency } from "@/lib/format";
+import { formatMoney } from "@/lib/format";
 import type { TemplateId } from "@/lib/types";
 import type { InvoiceView } from "@/lib/view";
 import {
@@ -174,7 +174,7 @@ function Retro({ view }: { view: InvoiceView }) {
         </div>
         <div className="inv-meta-cell">
           <div className="inv-meta-label">{L.total}</div>
-          <div className="inv-meta-value">{formatCurrency(view.totals.total, view.currency)}</div>
+          <div className="inv-meta-value">{formatMoney(view.totals.total, view.currency)}</div>
         </div>
       </div>
       <div className="inv-addresses">
@@ -230,7 +230,7 @@ function Aurora({ view }: { view: InvoiceView }) {
         </div>
         <div className="inv-meta-cell inv-meta-total">
           <div className="inv-meta-label">{L.total}</div>
-          <div className="inv-meta-value">{formatCurrency(view.totals.total, view.currency)}</div>
+          <div className="inv-meta-value">{formatMoney(view.totals.total, view.currency)}</div>
         </div>
       </div>
       <div className="inv-addresses">

@@ -22,15 +22,16 @@ import { useStore } from "@/lib/store";
 import { useCatalog } from "@/lib/catalog-store";
 import { useI18n } from "@/lib/i18n";
 import { useEditorActions } from "@/lib/editor-actions";
-import { formatCurrency } from "@/lib/format";
+import { formatMoney } from "@/lib/format";
+import { normalizeQty, safeMinor, safeQty } from "@/lib/money";
 import { cn } from "@/lib/utils";
 import type { Currency, LineItem } from "@/lib/types";
 
 
 function OverlayCard({ item, currency }: { item: LineItem; currency: Currency }) {
   const { t } = useI18n();
-  const qty = Math.max(0, item.qty);
-  const price = Math.max(0, item.price);
+  const qty = safeQty(item.qty);
+  const priceMinor = safeMinor(item.priceMinor);
   return (
     <div className="bg-item rounded-xl p-3.5 shadow-xl ring-1 ring-border cursor-grabbing">
       <div className="flex items-center gap-2.5 mb-1.5">
@@ -42,10 +43,10 @@ function OverlayCard({ item, currency }: { item: LineItem; currency: Currency })
       </div>
       <div className="flex items-center justify-between text-xs text-muted-foreground">
         <span>
-          {qty} × {formatCurrency(price, currency)}
+          {qty} × {formatMoney(priceMinor, currency)}
         </span>
         <span className="text-sm font-semibold text-foreground tabular-nums">
-          {formatCurrency(qty * price, currency)}
+          {formatMoney(qty * priceMinor, currency)}
         </span>
       </div>
     </div>
@@ -80,7 +81,7 @@ function SortableLineItem({
   };
 
   // Split the currency symbol from the digits so the symbol can be dimmed.
-  const amountText = formatCurrency(Math.max(0, item.qty) * Math.max(0, item.price), settings.currency);
+  const amountText = formatMoney(safeQty(item.qty) * safeMinor(item.priceMinor), settings.currency);
   const amtMatch = amountText.match(/^(\D*)(.*)$/);
   const amtSym = amtMatch?.[1]?.trim() ?? "";
   const amtNum = amtMatch?.[2] || amountText;
@@ -156,21 +157,31 @@ function SortableLineItem({
         />
         <div className="flex items-end gap-2">
           <Field label={t("f.qty")} className="w-14">
+            {/* A quantity is a count, so the field only accepts whole numbers.
+                `step=1` makes the browser's own validation and arrow keys agree
+                with that, `inputMode` gets the numeric keypad, and the pattern
+                stops a pasted "2.5" from ever reaching the store. The three of
+                them close the three ways a decimal could otherwise get in: the
+                stepper, the keyboard, and the clipboard. normalizeQty is the
+                backstop that also floors at 1. */}
             <Input
               type="number"
               min={1}
+              step={1}
+              inputMode="numeric"
+              pattern="[0-9]*"
               value={item.qty}
               aria-label={t("f.qty")}
               className="bg-card"
-              onChange={(e) => updateItem(item.id, { qty: Math.max(1, parseFloat(e.target.value) || 1) })}
+              onChange={(e) => updateItem(item.id, { qty: normalizeQty(parseInt(e.target.value, 10)) })}
             />
           </Field>
           <Field label={t("f.price")} className="min-w-0 flex-1">
             <CurrencyInput
               currency={settings.currency}
               className="bg-card"
-              value={item.price}
-              onValueChange={(n) => updateItem(item.id, { price: n })}
+              value={item.priceMinor}
+              onValueChange={(n) => updateItem(item.id, { priceMinor: n })}
             />
           </Field>
           <Field label={t("inv.amount")} className="min-w-0 flex-1" labelClassName="text-right">
@@ -254,9 +265,9 @@ export function LineItems() {
               if (!c) return;
               // If there's an empty item (blank desc + no price), fill THAT one
               // instead of appending a new card.
-              const empty = invoice.items.find((it) => !it.desc.trim() && !it.price);
-              if (empty) updateItem(empty.id, { desc: c.desc, price: c.price });
-              else addItemWith(c.desc, c.price);
+              const empty = invoice.items.find((it) => !it.desc.trim() && !it.priceMinor);
+              if (empty) updateItem(empty.id, { desc: c.desc, priceMinor: c.priceMinor });
+              else addItemWith(c.desc, c.priceMinor);
             }}
           >
             <SelectTrigger
@@ -272,7 +283,7 @@ export function LineItems() {
               ) : (
                 catalogItems.map((c) => (
                   <SelectItem key={c.id} value={c.id}>
-                    {c.desc} — {formatCurrency(c.price, settings.currency)}
+                    {c.desc} — {formatMoney(c.priceMinor, settings.currency)}
                   </SelectItem>
                 ))
               )}

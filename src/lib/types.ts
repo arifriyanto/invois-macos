@@ -50,8 +50,11 @@ export interface BusinessSettings {
 export interface LineItem {
   id: string;
   desc: string;
+  /** Whole units only. See normalizeQty in lib/money.ts for why. */
   qty: number;
-  price: number;
+  /** INTEGER minor units (cents; whole rupiah for IDR). 19.99 is stored as 1999.
+   *  Never a decimal — see the note at the top of lib/money.ts. */
+  priceMinor: number;
 }
 
 export interface Client {
@@ -69,12 +72,28 @@ export interface InvoiceData {
   client: Client;
   items: LineItem[];
   discountEnabled: boolean;
-  discount: number;
+  /**
+   * The one field in the app whose UNIT depends on another field:
+   *   discountType "pct"  → a percentage (0–100), and may be fractional (7.5%)
+   *   discountType "flat" → INTEGER minor units, exactly like priceMinor
+   * It cannot be typed away without splitting it in two, so it is written down
+   * instead. Anything reading it must branch on discountType first — see
+   * calcTotals, which is the only place that should need to.
+   *
+   * The name is also load-bearing. It used to be `discount`, and the format-2→3
+   * migration had no way to tell an already-scaled amount from an unscaled one —
+   * so running it twice turned a $50 discount into $5,000. `priceMinor` did not
+   * have that problem, because the rename WAS the marker. This field now works
+   * the same way: `discount` present = old, `discountValue` present = migrated.
+   */
+  discountValue: number;
   discountType: DiscountType;
   taxEnabled: boolean;
+  /** A percentage (0–100). May be fractional — 8.5% is a real tax rate. */
   taxRate: number;
 }
 
+/** All four are INTEGER minor units (see lib/money.ts). */
 export interface Totals {
   subtotal: number;
   discount: number;

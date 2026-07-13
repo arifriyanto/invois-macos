@@ -255,10 +255,10 @@ export function InvoiceForm() {
                 </Select>
                 {invoice.discountType === "flat" ? (
                   <div className="flex-1">
-                    <CurrencyInput currency={settings.currency} value={invoice.discount} className="h-8 border-input bg-card" onValueChange={(n) => updateInvoice({ discount: n })} />
+                    <CurrencyInput currency={settings.currency} value={invoice.discountValue} className="h-8 border-input bg-card" onValueChange={(n) => updateInvoice({ discountValue: n })} />
                   </div>
                 ) : (
-                  <Input type="number" min={0} max={100} className="no-spinner h-8 flex-1 border-input bg-card" value={invoice.discount === 0 ? "" : invoice.discount} placeholder="0" onChange={(e) => updateInvoice({ discount: Math.min(100, Math.max(0, parseFloat(e.target.value) || 0)) })} />
+                  <Input type="number" min={0} max={100} className="no-spinner h-8 flex-1 border-input bg-card" value={invoice.discountValue === 0 ? "" : invoice.discountValue} placeholder="0" onChange={(e) => updateInvoice({ discountValue: Math.min(100, Math.max(0, parseFloat(e.target.value) || 0)) })} />
                 )}
               </>
             )}
