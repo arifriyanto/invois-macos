@@ -87,15 +87,41 @@ sungguhan, dan ia dipajang di ribuan layar.
 
 Ini yang paling penting di bagian ini. Salah di sini artinya menimpa data orang.
 
-1. Salin vault yang sudah berisi data ke `~/Desktop/qa/v-adopsi`.
-2. Hapus pointer, reload.
-3. Di onboarding, pilih folder `v-adopsi`.
+**Siapkan sumber yang bisa dibedakan.** Ini bukan kerewelan: kalau kamu menyalin `v-baru` apa adanya,
+ia **sudah** membawa klien dan katalog "(Sample)" dari saat ia dibuat — dan kamu tidak akan punya cara
+membedakan "Sample ikut terbawa file" (benar) dari "Sample disemai ulang oleh app" (bug). Kasus ujinya
+jadi tidak bisa dijatuhkan.
 
-**Seharusnya:** app **mengadopsi** data itu — invoice lama muncul di History, profil bisnis
-ter-prefill dari vault, dan **tidak ada** klien/katalog "(Sample)" yang diseed.
+Jadi: salin `v-baru` ke `~/Desktop/qa/v-adopsi`, buka, lalu **hapus** klien dan item katalog
+"(Sample)"-nya, tambahkan satu klien bernama misalnya `KLIEN ADOPSI`, simpan satu invoice, lalu tutup
+app.
 
-**Bentuk kegagalannya:** app menyapamu dengan vault kosong dan menimpa file itu pada penyimpanan
-berikutnya. Kalau History kosong padahal file berisi, **hentikan dan lapor**.
+Sekarang catat isi file itu — angka inilah pembandingmu:
+
+```bash
+python3 -c "
+import json,sys
+d=json.load(open(sys.argv[1]))
+v=lambda k: json.loads(d[k]) if isinstance(d.get(k),str) else d.get(k) or []
+print('klien', len(v('invois_customers')), '| katalog', len(v('invois_catalog')), '| invoice', len(v('invois_history')))
+print('sample:', [c.get('id') for c in v('invois_customers')+v('invois_catalog') if str(c.get('id','')).startswith('sample-')])
+" ~/Desktop/qa/v-adopsi/invois-data.json
+```
+
+Lalu: hapus pointer, reload, dan di onboarding pilih folder `v-adopsi`.
+
+**Seharusnya:** invoice dan klien `KLIEN ADOPSI` muncul, profil bisnis ter-prefill dari vault, dan
+jumlah klien/katalog **persis sama** dengan yang barusan kamu catat. **Tidak ada record ber-id
+`sample-` yang muncul** — kalau ada, app menyemai ke atas vault orang.
+
+**Bentuk kegagalan yang paling berbahaya:** app menyapamu dengan vault kosong, lalu menimpa file itu
+pada penyimpanan berikutnya. Kalau History kosong padahal file berisi, **hentikan dan lapor** — jangan
+menyimpan apa pun.
+
+> Kalau kamu memang menyalin `v-baru` tanpa membersihkannya, Sample yang kamu lihat itu **datang dari
+> file**, bukan dari penyemaian ulang. Itu adopsi yang bekerja. Bedakan lewat id: record semaian selalu
+> ber-id `sample-client` / `sample-item`, dan penyemaian hanya jalan kalau klien **dan** katalog
+> dua-duanya kosong.
 
 - [ ] Lolos
 
