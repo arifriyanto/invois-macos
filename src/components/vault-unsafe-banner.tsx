@@ -27,7 +27,12 @@ export function VaultUnsafeBanner() {
   return (
     <div
       role="alert"
-      className="fixed inset-x-0 top-0 z-[60] flex items-start gap-3 border-b border-amber-300 bg-amber-50 px-4 py-3 text-amber-950"
+      // Sits ON the title bar, so two things matter. The 84px left inset clears the
+      // macOS traffic lights — they are drawn natively ON TOP of web content, so
+      // without it they land in the middle of the sentence. And `drag-region` keeps
+      // the window movable while the banner covers the strip you would normally
+      // drag (the button inside opts out via the CSS rule in globals.css).
+      className="drag-region fixed inset-x-0 top-0 z-[60] flex items-start gap-3 border-b border-amber-300 bg-amber-50 py-3 pl-[92px] pr-4 text-amber-950"
     >
       <AlertTriangle className="mt-0.5 size-[18px] shrink-0 text-amber-700" />
       <div className="min-w-0 flex-1">
