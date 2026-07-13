@@ -61,8 +61,9 @@ dengan titik desimal di dalam file, itu bug.
 5. Selesaikan.
 
 **Seharusnya:** app masuk ke editor invoice dengan walkthrough beacon menyala (titik berdenyut di
-tombol Klien → Item → Simpan). File `invois-data.json` muncul di `v-baru`. Di dalamnya ada satu
-klien contoh dan satu item katalog, keduanya berlabel **(Contoh)**.
+tombol Klien → Item → Simpan; beacon padam setelah simpan pertama). File `invois-data.json` muncul
+di `v-baru`. Di dalamnya ada satu klien contoh dan satu item katalog, keduanya berlabel **(Sample)**
+dengan id berawalan `sample-`.
 
 Buka file itu. **Seharusnya** ada baris `"__invois": { "format": 3 }` di paling atas, dan harga item
 contoh berupa bilangan bulat tanpa titik desimal.
@@ -91,7 +92,7 @@ Ini yang paling penting di bagian ini. Salah di sini artinya menimpa data orang.
 3. Di onboarding, pilih folder `v-adopsi`.
 
 **Seharusnya:** app **mengadopsi** data itu — invoice lama muncul di History, profil bisnis
-ter-prefill dari vault, dan **tidak ada** klien/katalog "(Contoh)" yang diseed.
+ter-prefill dari vault, dan **tidak ada** klien/katalog "(Sample)" yang diseed.
 
 **Bentuk kegagalannya:** app menyapamu dengan vault kosong dan menimpa file itu pada penyimpanan
 berikutnya. Kalau History kosong padahal file berisi, **hentikan dan lapor**.
@@ -249,10 +250,17 @@ Pilih klien tersimpan; ganti; kosongkan. Pastikan alamat multi-baris tampil utuh
 
 ### 3.3 Nomor invoice
 
-Settings → Penomoran. Ubah formatnya, misalnya `{PREFIX}/{YYYY}/{MM}/{SEQ}`, padding 4.
+Settings → Penomoran invoice. Tersedia **delapan** token: `{PREFIX}` `{YYYY}` `{YY}` `{MM}` `{MMM}`
+`{DD}` `{CLIENT}` `{SEQ}`. Klik salah satunya untuk menyalin; toast muncul.
+
+Ubah formatnya, misalnya `{PREFIX}/{YYYY}/{MM}/{SEQ}` dengan padding 4.
 
 **Seharusnya:** invoice baru mengikuti format itu, dan urutannya melanjutkan nomor terakhir dalam
-lingkup yang sama — bukan mengulang dari 1. Klik token di Settings untuk menyalinnya; toast muncul.
+lingkup yang sama — bukan mengulang dari 1.
+
+Uji juga `{CLIENT}`: nomornya harus memuat inisial klien, dan **berganti saat kliennya diganti**.
+Ini token yang paling mungkin patah, karena ia satu-satunya yang bergantung pada isi invoice, bukan
+pada tanggal atau hitungan.
 
 - [ ] Lolos
 
@@ -268,9 +276,26 @@ ada.
 
 - [ ] Lolos
 
-### 3.5 Modal sukses (simpan pertama)
+### 3.5 Modal sukses
 
-Simpan pertama kali dalam vault baru → modal perayaan. Simpan kedua dan seterusnya → toast biasa.
+Muncul saat menyimpan invoice **baru** — bukan hanya yang pertama seumur hidup vault. Menyimpan ulang
+invoice yang **sudah ada** hanya memunculkan toast biasa.
+
+Jadi urutan ujinya: simpan invoice baru → modal. Ubah invoice itu lalu simpan lagi → toast, bukan
+modal. Buat invoice baru lagi → modal lagi.
+
+Modal muncul ~0,5 detik setelah tombol Simpan selesai beranimasi. Kalau ia menyela animasinya,
+itu regresi.
+
+- [ ] Lolos
+
+### 3.6 Item otomatis masuk katalog
+
+Buat invoice dengan satu baris berdeskripsi baru (yang belum ada di katalog), lalu simpan.
+
+**Seharusnya:** deskripsi itu muncul di halaman Katalog beserta harganya. Deskripsi yang **sudah** ada
+(cocok tanpa memandang huruf besar-kecil) tidak diduplikasi dan harganya tidak ditimpa. Baris tanpa
+deskripsi dilewati.
 
 - [ ] Lolos
 
@@ -297,11 +322,19 @@ identik**.
 
 ## 5. Dashboard
 
-Rentang waktu, toggle metrik bulanan, tooltip mengikuti kursor, dan **klik-tembus**: klik sebuah bulan
-atau segmen status → mendarat di daftar invoice dengan chip filter aktif. Klik X di chip → filter
-bersih.
+Rentang waktu (3M/6M/12M/YTD), toggle metrik bulanan (Dibayar/Ditagih/Jumlah), tooltip mengikuti
+kursor, dan kartu statistik.
 
-Jumlah di dashboard harus cocok dengan jumlah di daftar untuk filter yang sama.
+Jumlah di dashboard harus cocok dengan jumlah di daftar untuk filter yang sama. Cek satu bulan
+dengan tangan: total "Ditagih" bulan itu harus sama dengan jumlah total invoice bertanggal bulan itu
+di halaman Invoices.
+
+> **Klik-tembus TIDAK ADA lagi.** Jangan mengujinya. `DashboardView` tidak punya satu pun handler
+> klik, dan pipanya (`invFilter` di `shell.tsx` → prop `filter` → chip filter di `invoice-history`)
+> tidak pernah terisi. Fiturnya hilang saat Recharts dicopot — batang yang bisa diklik itu elemen
+> Recharts, dan grafik penggantinya yang ditulis tangan tidak membawanya. Kode chip filternya masih
+> ada dan tidak bisa dijangkau. Ini regresi nyata, bukan kasus uji; ia menunggu keputusan: pasang
+> lagi, atau buang pipanya.
 
 - [ ] Lolos
 
@@ -321,15 +354,18 @@ menyimpan salinan datanya sendiri).
 
 ## 7. Settings
 
+Settings punya **delapan** bagian (yang terakhir hanya ada di build dev):
+
 | Bagian | Yang diuji |
 |---|---|
-| Profil | Nama, email, telepon, alamat, **logo** (unggah PNG/SVG, ganti, hapus), warna aksen, mode kop surat (logo vs nama teks) |
-| Pembayaran | Nama bank, nomor rekening, atas nama — muncul di preview |
-| Default | Termin pembayaran, PPN default, catatan default → **hanya** mempengaruhi invoice **baru** |
-| Format | Format tanggal (5 pilihan) — cek di preview |
-| Palet | 6 palet (Corporate, Cool Neutral, Amber Cream, Ocean, Jewel, Midnight) — ganti dan lihat seluruh UI berubah |
-| Folder ekspor | Ganti; hapus foldernya dari Finder lalu ekspor lagi → harus pulih sendiri |
-| Template | Grid template; Free hanya bisa memilih Minimal |
+| Profil bisnis | Nama, email, telepon, alamat, **logo** (unggah PNG/SVG, ganti, hapus), warna aksen, mode kop surat (logo vs nama teks) |
+| Pembayaran | Nama bank, nomor rekening, atas nama — muncul di footer preview |
+| Default invoice | Termin pembayaran, **mata uang** (lihat 7.1), format tanggal (5 pilihan), PPN default, catatan default. Semuanya **hanya** mempengaruhi invoice **baru** |
+| Penomoran invoice | Lihat 3.3 |
+| Template invoice | Grid template; Free hanya bisa memilih Minimal (lihat 7.2) |
+| Preferensi | Bahasa (ID/EN) dan **6 palet**: Corporate, Cool Neutral, Amber Cream, Ocean, Jewel, Midnight |
+| Data & ekspor | Daftar bisnis (lihat bagian 8) + folder ekspor. Hapus foldernya dari Finder lalu ekspor lagi → harus pulih sendiri |
+| Dev | Hanya di build dev (`isDevBuild`). Berisi toggle Pro. **Pastikan tab ini tidak ada di build produksi.** |
 
 Untuk palet, **Midnight** yang paling perlu diperhatikan: ia satu-satunya tema gelap, jadi ia yang
 paling mungkin mematahkan kontras. Telusuri seluruh app dengan Midnight menyala dan cari teks yang
@@ -349,16 +385,32 @@ mengubah arti angka yang sama.
 
 ### 7.2 Gerbang Pro
 
-Sebagai **Free** (matikan toggle Dev Pro):
+Ada **tiga** batas Free, dan dialog upgrade punya konteks berbeda untuk masing-masing. Uji ketiganya
+dengan toggle Dev Pro **mati**.
 
-1. Buka pemilih template → template premium **terlihat** dan bisa dipratinjau.
-2. Pilih salah satunya → dialog upgrade muncul.
-3. Batalkan → template tetap Minimal.
-4. Sekarang **paksa lewat pintu belakang**: tutup app, ubah `template` di `invois-data.json` jadi
-   `"aurora"`, buka lagi.
+**(a) Template.** Buka pemilih template → template premium **terlihat** dan bisa dipratinjau. Pilih
+salah satunya → dialog upgrade muncul (kepala dialog memperlihatkan pratinjau template). Batalkan →
+template tetap Minimal.
 
-**Seharusnya:** preview dan ekspor tetap **Minimal**. Gerbangnya ada di render, bukan cuma di UI
+Lalu **paksa lewat pintu belakang**: tutup app, ubah `template` di `invois-data.json` jadi `"aurora"`,
+buka lagi. **Preview dan ekspor harus tetap Minimal.** Gerbangnya ada di render, bukan cuma di UI
 pemilih.
+
+**(b) Batas 3 invoice.** `FREE_INVOICE_LIMIT = 3`. Dengan 3 invoice tersimpan, tekan **New invoice**.
+
+**Seharusnya:** editor **tidak terbuka**; dialog upgrade muncul dengan konteks batas-invoice. Invoice
+yang sudah ada **tidak pernah disembunyikan atau dihapus** — hanya pembuatan yang baru yang diblokir.
+Membuka dan **menyunting** invoice lama harus tetap bisa, termasuk menyimpannya lagi.
+
+Ada pengaman kedua di jalur Simpan (untuk draf yang sudah terlanjur terbuka sebelum gerbangnya ada).
+Untuk memicunya: dengan 2 invoice tersimpan, buka editor invoice baru, lalu **tanpa menutupnya**
+simpan invoice ketiga dari tempat lain — kembali ke draf tadi dan tekan Simpan. Harus digerbangi,
+bukan tersimpan diam-diam sebagai yang keempat.
+
+**(c) Batas 1 bisnis.** `FREE_VAULT_LIMIT = 1`. Settings → Data & ekspor → **Tambah bisnis**.
+
+**Seharusnya:** dialog upgrade, bukan pemilih folder. Tapi **memindahkan** vault yang satu-satunya itu
+harus tetap gratis — memindahkan bukan menambah. Pastikan Relocate tidak ikut tergerbang.
 
 - [ ] Lolos
 
@@ -366,13 +418,18 @@ pemilih.
 
 ## 8. Banyak bisnis (vault ganda)
 
-1. Settings → Bisnis → Tambah → `~/Desktop/qa/v-bisnis2`.
+Butuh **Pro** (lihat 7.2c). Nyalakan toggle Dev Pro dulu, atau bagian ini hanya akan memunculkan
+dialog upgrade.
+
+1. Settings → Data & ekspor → Tambah bisnis → `~/Desktop/qa/v-bisnis2`.
 2. Berpindah antar bisnis → konfirmasi, lalu seluruh data berganti (klien, katalog, invoice, profil,
-   penomoran).
+   penomoran). Ini pemeriksaan terpenting di bagian ini: kalau ada satu saja yang **bocor** antar
+   bisnis, itu bug data.
 3. Menambahkan folder yang sudah terdaftar → ditolak ("folder sudah dipakai").
-4. Hapus sebuah bisnis dari daftar → **file di disk tidak boleh ikut terhapus.** Pastikan dengan
+4. Menambahkan folder di **dalam** vault lain → ditolak (lihat 1.4).
+5. Hapus sebuah bisnis dari daftar → **file di disk tidak boleh ikut terhapus.** Pastikan dengan
    Finder.
-5. Pindahkan lokasi vault → folder `Exports` default ikut pindah.
+6. Pindahkan lokasi vault → folder `Exports` default ikut pindah.
 
 - [ ] Lolos
 
@@ -529,12 +586,22 @@ crash, tidak total negatif.
 
 ## 12. Jendela, menu, dan hal-hal Electron
 
-1. **Klik kanan** di mana saja → menu konteks (Reload, Inspect di dev).
-2. **Menu native** → File → New Invoice; Settings; navigasi.
+1. **Klik kanan** di mana saja → menu konteks (Reload, Inspect element di dev).
+2. **Menu native + pintasan** — uji semuanya, karena jalurnya (`menu-action` dari main ke UI)
+   terpisah dari tombol di layar dan bisa patah sendirian:
+
+   | Pintasan | Seharusnya |
+   |---|---|
+   | ⌘, | Settings terbuka |
+   | ⌘N | Editor invoice baru (dan **tergerbang** kalau Free sudah punya 3 — lihat 7.2b) |
+   | ⌘1 / ⌘2 / ⌘3 / ⌘4 | Home / Invoices / Clients / Catalog |
+   | ⌘B | Sidebar menguncup dan mengembang |
+
 3. **Maksimalkan** jendela → ada kedipan hitam sesaat (**bug yang sudah diketahui dan diparkir** —
-   celah native WKWebView/NSWindow; catat saja, jangan lapor sebagai baru).
+   celah native NSWindow; catat saja, jangan lapor sebagai baru).
 4. Ikon Dock dan nama di **About** harus "Invois", bukan "Electron".
-5. Tutup dengan ⌘Q di tengah pengetikan → yang sudah kamu simpan harus utuh saat dibuka lagi.
+5. Sidebar menguncup: keadaannya bertahan setelah app ditutup dan dibuka lagi.
+6. Tutup dengan ⌘Q di tengah pengetikan → yang sudah kamu simpan harus utuh saat dibuka lagi.
 
 - [ ] Lolos
 
