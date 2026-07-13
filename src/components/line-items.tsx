@@ -157,22 +157,39 @@ function SortableLineItem({
         />
         <div className="flex items-end gap-2">
           <Field label={t("f.qty")} className="w-14">
-            {/* A quantity is a count, so the field only accepts whole numbers.
-                `step=1` makes the browser's own validation and arrow keys agree
-                with that, `inputMode` gets the numeric keypad, and the pattern
-                stops a pasted "2.5" from ever reaching the store. The three of
-                them close the three ways a decimal could otherwise get in: the
-                stepper, the keyboard, and the clipboard. normalizeQty is the
-                backstop that also floors at 1. */}
+            {/* A quantity is a count, so the field only accepts whole numbers —
+                and the separator has to be blocked at the KEY, not cleaned up
+                afterwards.
+                <input type="number"> reports value="" for anything it considers
+                an invalid number, and "2." is invalid. So a user typing "2.5"
+                went 2 → (value "" → NaN → normalizeQty → 1) → 2: the field
+                visibly flickered to 1 under their fingers, mid-word. Sanitising
+                in onChange cannot fix that, because by then the "." has already
+                been swallowed and the value is already "".
+                Hence: refuse the keys that could start a fraction, and sanitise
+                a paste before it lands. normalizeQty stays as the backstop for
+                anything that still gets through (and floors at 1). */}
             <Input
               type="number"
               min={1}
               step={1}
               inputMode="numeric"
-              pattern="[0-9]*"
               value={item.qty}
               aria-label={t("f.qty")}
               className="bg-card"
+              onKeyDown={(e) => {
+                // "e"/"E"/"+"/"-" are legal in a number field too (exponent,
+                // sign) and are just as meaningless for a quantity.
+                if ([".", ",", "e", "E", "+", "-"].includes(e.key)) e.preventDefault();
+              }}
+              onPaste={(e) => {
+                const text = e.clipboardData.getData("text");
+                if (!/^\d+$/.test(text.trim())) {
+                  e.preventDefault();
+                  const digits = text.replace(/\D/g, "");
+                  if (digits) updateItem(item.id, { qty: normalizeQty(parseInt(digits, 10)) });
+                }
+              }}
               onChange={(e) => updateItem(item.id, { qty: normalizeQty(parseInt(e.target.value, 10)) })}
             />
           </Field>
