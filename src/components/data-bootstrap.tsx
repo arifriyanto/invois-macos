@@ -8,6 +8,7 @@ import { initDataStore, onVaultMissing } from "@/lib/data-store";
 import { initHomeDir } from "@/lib/paths";
 import { OnboardingView } from "@/components/onboarding-view";
 import { VaultMissingView } from "@/components/vault-missing-view";
+import { VaultUnsafeBanner } from "@/components/vault-unsafe-banner";
 
 type Phase = "loading" | "onboarding" | "missing" | "ready";
 
@@ -47,5 +48,12 @@ export function DataBootstrap({ children }: { children: React.ReactNode }) {
   if (phase === "missing") {
     return <VaultMissingView />;
   }
-  return <>{children}</>;
+  // The app still works in safe mode — you can read everything, export, and copy
+  // things out. It just does not write. The banner says so, permanently.
+  return (
+    <>
+      <VaultUnsafeBanner />
+      {children}
+    </>
+  );
 }

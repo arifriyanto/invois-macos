@@ -7,6 +7,7 @@ import { loadVersioned, saveVersioned, parseVersioned, type Migration } from "./
 import {
   getRaw, setRaw, ensureDefaultExportDir, takeExportDirRelocation, readVaultKey,
 } from "./data-store";
+import { readObject } from "./vault-read";
 import { useI18n } from "./i18n";
 
 const SETTINGS_KEY = "invois_settings";
@@ -250,13 +251,11 @@ function loadTemplate(): TemplateId {
   return "minimal";
 }
 function loadInvoiceDraft(): InvoiceData {
-  try {
-    const rawInv = getRaw(INVOICE_KEY);
-    // Merge over defaults so newly-added fields get sane values on old saves.
-    if (rawInv) return { ...defaultInvoice(), ...(JSON.parse(rawInv) as Partial<InvoiceData>) };
-  } catch {
-    /* ignore — fall through to a fresh invoice */
-  }
+  // Merge over defaults so newly-added fields get sane values on old saves.
+  // readObject validates the shape and puts the vault into safe mode if it is
+  // wrong, instead of quietly handing back a fresh invoice as if nothing happened.
+  const saved = readObject<Partial<InvoiceData>>(INVOICE_KEY, "Invoice draft");
+  if (saved) return { ...defaultInvoice(), ...saved };
   const today = new Date();
   const due = new Date();
   due.setDate(due.getDate() + 14);

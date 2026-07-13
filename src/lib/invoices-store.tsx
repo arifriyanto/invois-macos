@@ -1,7 +1,8 @@
 "use client";
 import * as React from "react";
 import type { InvoiceData, TemplateId } from "./types";
-import { getRaw, setRaw } from "./data-store";
+import { setRaw } from "./data-store";
+import { readArray } from "./vault-read";
 
 /** A saved invoice in the history. No "draft" state — saving = a real record. */
 export interface SavedInvoice {
@@ -121,12 +122,7 @@ const Ctx = React.createContext<InvoicesValue | null>(null);
 // Read once from the vault at provider init (client-only — the provider mounts
 // after DataBootstrap has initialized the data store).
 function loadInvoices(): SavedInvoice[] {
-  try {
-    const raw = getRaw(KEY);
-    return raw ? (JSON.parse(raw) as SavedInvoice[]) : [];
-  } catch {
-    return [];
-  }
+  return readArray<SavedInvoice>(KEY, "Invoice history");
 }
 
 export function InvoicesProvider({ children }: { children: React.ReactNode }) {

@@ -187,11 +187,71 @@ function backupName(path: string, i: number): string {
   return `${path}.bak${i}`;
 }
 
+/**
+ * The vault file is a plain, NESTED JSON document:
+ *
+ *   { "invois_history": [ { "id": "inv_9f2", … } ], "invois_settings": { … } }
+ *
+ * It used to be double-encoded — a Record<string, string> whose values were JSON
+ * *strings*, so the file was a wall of escaped quotes:
+ *
+ *   { "invois_history": "[{\"id\":\"inv_9f2\", …}]" }
+ *
+ * That was not merely ugly. It DEFEATED the backup machinery. A corrupt invoice
+ * lives inside the string, so the OUTER JSON still parses — loadVaultFile declares
+ * the file healthy, never falls back to a backup, and the failure resurfaces one
+ * layer down as an empty array. A vault of 300 invoices then looks like a brand-new
+ * empty one, and the next save writes that emptiness to disk. The format turned a
+ * loud failure into a silent one.
+ *
+ * Nested values restore JSON's best property: it fails LOUDLY. A broken invoice now
+ * breaks the whole-file parse, which is exactly what we want — that is what wakes
+ * the backups up.
+ *
+ * The in-memory API stays string→string (getRaw/setRaw are untouched), so the
+ * conversion lives here, at the disk boundary, and nowhere else.
+ */
+type VaultDoc = Record<string, unknown>;
+
+/** Disk → memory. Accepts BOTH formats: a string value is the legacy double-encoded
+ *  form and is taken as-is; anything else is re-serialized for the in-memory map. */
+function docToMem(doc: VaultDoc): Map<string, string> {
+  const m = new Map<string, string>();
+  for (const [k, v] of Object.entries(doc)) {
+    m.set(k, typeof v === "string" ? v : JSON.stringify(v));
+  }
+  return m;
+}
+
+/** Memory → disk. Always writes the new nested form. A value that somehow is not
+ *  valid JSON is stored as a string rather than dropped. */
+function memToDoc(m: Map<string, string>): VaultDoc {
+  const doc: VaultDoc = {};
+  for (const [k, v] of m) {
+    try {
+      doc[k] = JSON.parse(v);
+    } catch {
+      doc[k] = v;
+    }
+  }
+  return doc;
+}
+
+/** Where the loaded data came from — the UI needs this to be honest with the user. */
+export type VaultSource = "primary" | "backup" | "empty";
+
+let vaultSource: VaultSource = "primary";
+/** Which backup we fell back to (1..BACKUP_COUNT), if any. */
+let vaultBackupIndex = 0;
+
 async function loadVaultFile(dir: string): Promise<Map<string, string>> {
   const fs = native.fs;
   const path = vaultPath(dir);
-  const parse = (text: string) =>
-    new Map(Object.entries(JSON.parse(text) as Record<string, string>));
+  const parse = (text: string) => docToMem(JSON.parse(text) as VaultDoc);
+
+  vaultSource = "primary";
+  vaultBackupIndex = 0;
+
   try {
     if (await fs.exists(path)) return parse(await fs.readTextFile(path));
   } catch {
@@ -201,11 +261,20 @@ async function loadVaultFile(dir: string): Promise<Map<string, string>> {
   for (let i = 1; i <= BACKUP_COUNT; i++) {
     try {
       const bpath = backupName(path, i);
-      if (await fs.exists(bpath)) return parse(await fs.readTextFile(bpath));
+      if (await fs.exists(bpath)) {
+        const data = parse(await fs.readTextFile(bpath));
+        // We are NOT looking at what the user last saved. Say so, and stop writing
+        // until they decide — see markVaultUnsafe.
+        vaultSource = "backup";
+        vaultBackupIndex = i;
+        markVaultUnsafe(`vault file unreadable; loaded backup .bak${i}`);
+        return data;
+      }
     } catch {
       /* try next backup */
     }
   }
+  vaultSource = "empty";
   return new Map();
 }
 
@@ -273,7 +342,10 @@ async function writeVaultFile(dir: string, data: Map<string, string>): Promise<v
   }
   const path = vaultPath(dir);
   const tmp = `${path}.tmp`;
-  await fs.writeTextFile(tmp, JSON.stringify(Object.fromEntries(data)));
+  // Nested, indented, human-readable — see the note above memToDoc. The two spaces
+  // cost a few KB and buy a file the user can actually open and edit, which is the
+  // whole promise of the vault.
+  await fs.writeTextFile(tmp, JSON.stringify(memToDoc(data), null, 2));
 
   // Rotate: bak2→bak3, bak1→bak2, current→bak1 (best-effort).
   try {
@@ -288,17 +360,72 @@ async function writeVaultFile(dir: string, data: Map<string, string>): Promise<v
   await fs.rename(tmp, path);
 }
 
+// ---- safe mode ------------------------------------------------------------
+//
+// The rule: NEVER write a vault we could not read.
+//
+// Three ways we end up looking at data that is not what the user last saved: the
+// file was unreadable and we loaded a backup; a collection failed to validate; the
+// file is simply gone. In every one of them the old code carried on writing — and
+// because flushNow() had no dirty check and fires on `visibilitychange`, merely
+// minimising the window was enough to rewrite the vault and rotate the backups.
+// BACKUP_COUNT = 3 therefore meant "three hide/show cycles", not "three saves": a
+// user could lose everything without touching the keyboard.
+//
+// Refusing to write is only half of it. Refusing SILENTLY would be worse than the
+// bug — the user would keep working, believing they were saving. So safe mode is
+// loud: the UI subscribes via onVaultUnsafe() and says so.
+
+let vaultUnsafe = false;
+let vaultUnsafeReason = "";
+let unsafeListeners: Array<() => void> = [];
+
+/** Stop all writes and tell the UI. Called when the data we hold is not, or may
+ *  not be, what the user last saved. */
+export function markVaultUnsafe(reason: string): void {
+  if (vaultUnsafe) return;
+  vaultUnsafe = true;
+  vaultUnsafeReason = reason;
+  console.error("[vault] safe mode:", reason);
+  unsafeListeners.forEach((f) => f());
+}
+
+/** Subscribe to "the vault went unsafe". Returns an unsubscribe fn. */
+export function onVaultUnsafe(cb: () => void): () => void {
+  unsafeListeners.push(cb);
+  return () => {
+    unsafeListeners = unsafeListeners.filter((f) => f !== cb);
+  };
+}
+
+export interface VaultHealth {
+  unsafe: boolean;
+  reason: string;
+  source: VaultSource;
+  backupIndex: number;
+}
+export function getVaultHealth(): VaultHealth {
+  return { unsafe: vaultUnsafe, reason: vaultUnsafeReason, source: vaultSource, backupIndex: vaultBackupIndex };
+}
+
 // ---- flushing -------------------------------------------------------------
 
+// Set by setRaw/removeRaw. Without it, flushNow() rewrote the entire vault (and
+// rotated the backups) on every window hide, whether or not anything had changed.
+let dirty = false;
+
 function scheduleFlush(): void {
-  if (mode !== "file" || !vaultDir || vaultMissing) return;
+  if (mode !== "file" || !vaultDir || vaultMissing || vaultUnsafe) return;
   if (flushTimer) clearTimeout(flushTimer);
   flushTimer = setTimeout(() => void flushNow(), FLUSH_DELAY);
 }
 
-/** Force any pending vault write to disk now. Safe to call anytime. */
+/** Force any pending vault write to disk now. Safe to call anytime — it is a no-op
+ *  when nothing changed, and when the vault is unsafe. */
 export async function flushNow(): Promise<void> {
   if (mode !== "file" || !vaultDir || vaultMissing) return;
+  if (vaultUnsafe) return; // never overwrite what we could not read
+  if (!dirty) return; // nothing changed → nothing to write
   if (flushTimer) {
     clearTimeout(flushTimer);
     flushTimer = null;
@@ -311,8 +438,9 @@ export async function flushNow(): Promise<void> {
   }
   try {
     await writeVaultFile(vaultDir, mem);
+    dirty = false;
   } catch {
-    /* ignore — best effort */
+    /* ignore — best effort; stay dirty so the next flush retries */
   }
 }
 
@@ -376,6 +504,7 @@ export async function initDataStore(): Promise<DataStoreStatus> {
     initialized = true;
     if (await anyVaultFileExists(active.dir)) {
       mem = await loadVaultFile(active.dir);
+      dirty = false; // freshly loaded == what's on disk
       installFlushHooks();
     } else {
       // Folder moved/deleted externally — flag it so the UI can offer to locate
@@ -444,6 +573,7 @@ export async function completeOnboarding(
   // recover data even when the primary file was deleted/corrupted.
   const adopted = await anyVaultFileExists(clean);
   mem = adopted ? await loadVaultFile(clean) : new Map();
+  dirty = false;
   const id = genVaultId();
   config = {
     vaults: [{ id, name: name?.trim() || basename(clean), dir: clean }],
@@ -647,7 +777,9 @@ export function getRaw(key: string): string | null {
 
 export function setRaw(key: string, value: string): void {
   if (mode === "file") {
+    if (mem.get(key) === value) return; // no change → don't dirty the vault
     mem.set(key, value);
+    dirty = true;
     scheduleFlush();
     return;
   }
@@ -660,7 +792,9 @@ export function setRaw(key: string, value: string): void {
 
 export function removeRaw(key: string): void {
   if (mode === "file") {
+    if (!mem.has(key)) return;
     mem.delete(key);
+    dirty = true;
     scheduleFlush();
     return;
   }

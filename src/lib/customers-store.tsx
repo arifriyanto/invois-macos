@@ -1,6 +1,7 @@
 "use client";
 import * as React from "react";
-import { getRaw, setRaw } from "./data-store";
+import { setRaw } from "./data-store";
+import { readArray } from "./vault-read";
 
 export interface Customer {
   id: string;
@@ -21,12 +22,7 @@ function genId() {
 // Read once from the vault at provider init (client-only — the provider mounts
 // after DataBootstrap has initialized the data store).
 function loadCustomers(): Customer[] {
-  try {
-    const raw = getRaw(KEY);
-    return raw ? (JSON.parse(raw) as Customer[]) : [];
-  } catch {
-    return [];
-  }
+  return readArray<Customer>(KEY, "Clients");
 }
 
 interface CustomersValue {
