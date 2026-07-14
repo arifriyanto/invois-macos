@@ -407,20 +407,13 @@ salin-tempel ke Notes menghasilkan tabel rapi. Buka di Chrome **dan** Preview �
 - [x] **Lolos** — Arif, 14 Jul 2026, commit `6013bed`
 
 
-### 4.2 Font — ini soal lisensi, bukan estetika
+### 4.2 Font di build dev — DILEWATI, digantikan 12.2
 
-```bash
-npm run pdf:fonts -- "<path/ke/hasil.pdf>"
-```
+Jangan kerjakan ini. Menguji font pada build **dev** tidak membuktikan apa pun: kebocoran font Apple
+dulu hidup di **jalur cetak produksi**, dan build dev tidak melewatinya dengan cara yang sama.
+Pemeriksaan yang sesungguhnya ada di **12.2**, pada app yang benar-benar dipaket.
 
-**Seharusnya:** hanya Inter dan Roboto Mono. **Tidak boleh ada** `.SFNS`, `SFPro`, atau nama font
-Apple apa pun. Font SF boleh digambar di layar, tapi **tidak boleh disematkan** ke dokumen yang
-didistribusikan.
-
-`strings | grep BaseFont` **tidak** akan melihatnya (font-nya terkompresi di dalam stream). Pakai
-skripnya.
-
-- [ ] **Dilewati** — Arif, 14 Jul 2026
+- [ ] **Dilewati** — digantikan 12.2
 
 
 ### 4.3 PNG dan nama file
@@ -679,21 +672,25 @@ identik**.
 
 
 
-### 7.2 Dashboard
+### 7.2 Dashboard — prioritas rendah
 
-Rentang waktu (3M/6M/12M/YTD), toggle metrik bulanan (Dibayar/Ditagih/Jumlah), tooltip mengikuti
-kursor, kartu statistik.
+> **Keadaan:** vault dummy aktif (ratusan invoice), Pro menyala, app jalan (`npm run dev`).
 
-Cek satu bulan dengan tangan: total "Ditagih" bulan itu harus sama dengan jumlah total invoice
-bertanggal bulan itu di halaman Invoices.
+**Yang diuji:** apakah angka di halaman Home cocok dengan angka di halaman Invoices.
 
-> **Klik-tembus TIDAK ADA lagi. Jangan mengujinya.** `DashboardView` tidak punya satu pun handler
-> klik, dan pipanya (`invFilter` di `shell.tsx` → prop `filter` → chip filter di `invoice-history`)
-> tidak pernah terisi. Fiturnya hilang saat Recharts dicopot — batang yang bisa diklik itu elemen
-> Recharts, dan grafik penggantinya yang ditulis tangan tidak membawanya. Ini regresi yang menunggu
-> keputusan (pasang lagi, atau buang pipanya), bukan kasus uji.
+1. Home → pilih rentang **12M** → metrik **Ditagih**.
+2. Arahkan kursor ke satu batang bulan (misal Mei). Catat angkanya.
+3. Invoices → cari/urutkan sampai kamu bisa menjumlahkan invoice bertanggal Mei.
 
-- [ ] **Dilewati** — Arif, 14 Jul 2026
+**Seharusnya:** kedua angka **sama**. Kalau berbeda, dashboard memakai rumus yang berbeda dari daftar
+— dan itu bug yang sama jenisnya dengan salinan-kedua rumus uang yang sudah kita buang.
+
+Coba juga rentang 3M/6M/YTD dan metrik Dibayar/Jumlah — cukup pastikan tidak ada yang kosong atau NaN.
+
+> **Klik pada batang grafik tidak melakukan apa-apa.** Itu bukan bug yang perlu dilaporkan — fiturnya
+> hilang saat Recharts dicopot, dan sedang menunggu keputusan.
+
+- [ ] Lolos
 
 
 
@@ -843,37 +840,99 @@ Sudah diuji lewat dry-run pada 789 invoice nyata: semua total identik sebelum da
 Yang **belum** terbukti oleh data nyata: **nol** dari 789 invoice itu memakai **diskon flat** — dan itu
 justru jalur paling berbahaya. Jadi kamu harus membuat kasusnya sendiri.
 
-### 9.1 Diskon flat pada vault format lama
+### 9.1 Diskon flat pada vault format lama — YANG PALING PENTING DI FASE INI
 
-1. Tutup app.
-2. Buat vault format lama: salin sebuah vault, hapus baris `__invois`, dan ubah `priceMinor` kembali
-   jadi `price` dengan nilai desimal.
-3. Tambahkan satu invoice dengan `"discountType": "flat"`, `"discount": 50`, mata uang USD.
-4. Buka app dan adopsi vault itu.
+> **Keadaan awal:** app **TERTUTUP** (⌘Q). Pro boleh menyala atau mati, tidak berpengaruh.
 
-**Seharusnya:** diskonnya terbaca **$50,00** — bukan **$0,50**, bukan **$5.000,00**. Setelah simpan
-berikutnya, di file: `"discountValue": 5000`, dan field `"discount"` sudah tidak ada.
+**Yang diuji:** apakah migrasi format lama → format 3 menskalakan **diskon flat** dengan benar.
 
-**Kenapa ini yang paling rawan:** angka diskon yang sudah diskalakan tidak bisa dibedakan dari yang
-belum — `5000` masuk akal sebagai "$50 dalam sen" maupun "$5.000 yang belum diskalakan". Migrasinya
-dulu benar-benar menskalakan dua kali saat diuji. Penggantian nama field itulah penandanya sekarang.
+Kenapa ini yang paling penting: dry-run pada 789 invoice nyata membuktikan setiap total identik
+sebelum dan sesudah migrasi — tapi **nol** dari 789 itu memakai diskon flat. Padahal diskon flat
+adalah **satu-satunya jalur yang pernah benar-benar gagal**: ia sempat menskalakan dua kali, mengubah
+$50 jadi $5.000. Unit test menutupinya. Belum ada manusia yang melihatnya bekerja pada file sungguhan.
 
-- [ ] **Dilewati** — Arif, 14 Jul 2026
+**Langkah 1 — buat vault format lamanya.** Jangan mengedit JSON dengan tangan; ada skripnya:
+
+```bash
+cd invois-macos
+node scripts/qa-legacy-vault.mjs ~/Desktop/qa/v-lama
+```
+
+Skrip itu mencetak angka yang harus kamu lihat nanti. Ia membuat vault **tanpa** penanda `__invois`,
+dengan uang masih desimal (`"price": 19.99`) dan field lama (`"discount": 50`) — persis seperti vault
+yang dibuat build lama.
+
+**Langkah 2 — adopsi vault itu.**
+
+1. Jalankan app.
+2. DevTools Console: `localStorage.removeItem("invois_vault_config"); location.reload();`
+3. Onboarding → pilih `~/Desktop/qa/v-lama` → selesaikan. (Profilnya sudah terisi dari vault.)
+
+**Langkah 3 — baca angkanya.** Buka **Invoices**. Buka ketiga invoice satu per satu.
+
+| Invoice | Subtotal | Diskon | Pajak | **Total** |
+|---|---|---|---|---|
+| **INV-001** (flat) | $199.90 | **$50.00** | $0.00 | **$149.90** |
+| **INV-002** (persen 10%) | $199.90 | **$19.99** | $0.00 | **$179.91** |
+| **INV-003** (kontrol) | $59.97 | $0.00 | $5.10 | **$65.07** |
+
+**Bentuk kegagalan yang dicari, pada INV-001:**
+
+- Diskon **$0.50** → migrasinya **tidak** menskalakan diskon flat. Uang pelanggan hilang 99%.
+- Diskon **$5,000.00** → migrasinya menskalakan **dua kali**. Ini yang pernah terjadi.
+- INV-002 diskonnya bukan $19.99 → persen ikut diskalakan, 10% jadi 1000%.
+
+**Langkah 4 — pastikan file-nya juga benar.** Ubah apa saja di app lalu **Simpan** (supaya migrasinya
+mendarat ke disk). Lalu:
+
+```bash
+python3 -m json.tool ~/Desktop/qa/v-lama/invois-data.json | head -5
+grep -o 'discountValue": [0-9]*' ~/Desktop/qa/v-lama/invois-data.json | head -3
+grep -c '"price":' ~/Desktop/qa/v-lama/invois-data.json || echo "0 (benar: field lama sudah hilang)"
+```
+
+**Seharusnya:** baris pertama memuat `"__invois": { "format": 3 }`; ada `discountValue": 5000`; dan
+**tidak ada lagi** field `"price":` (semuanya sudah jadi `priceMinor`).
+
+- [ ] Lolos
 
 
 
 ### 9.2 Buka-lalu-tutup tidak boleh menulis apa pun
 
-Salin sebuah vault format lama. Buka app, **jangan sentuh apa pun**, tutup.
+> **Keadaan awal:** app **TERTUTUP**.
 
-**Seharusnya:** file aslinya **tidak berubah sama sekali**, dan masih bisa dibaca build kemarin.
-Migrasi terjadi di memori; ia baru mendarat ke disk saat kamu benar-benar menyimpan sesuatu.
+**Yang diuji:** membuka app tidak boleh, dengan sendirinya, mengubah file di disk. Kalau seseorang
+membuka Invois lalu langsung keluar, vault format lamanya harus masih **utuh** — dan masih bisa dibaca
+build kemarin.
 
-```bash
-md5 <vault>/invois-data.json   # sebelum dan sesudah — harus sama
-```
+1. Buat vault format lama yang baru dan bersih:
 
-- [ ] **Dilewati** — Arif, 14 Jul 2026
+   ```bash
+   node scripts/qa-legacy-vault.mjs ~/Desktop/qa/v-lama2
+   md5 ~/Desktop/qa/v-lama2/invois-data.json
+   ```
+
+   **Catat nilai md5-nya.**
+
+2. Jalankan app → DevTools: `localStorage.removeItem("invois_vault_config"); location.reload();`
+   → onboarding → pilih `~/Desktop/qa/v-lama2` → selesaikan.
+
+3. **Jangan sentuh apa pun.** Jangan buka invoice, jangan ketik, jangan klik apa-apa. Langsung **⌘Q**.
+
+4. Cek lagi:
+
+   ```bash
+   md5 ~/Desktop/qa/v-lama2/invois-data.json
+   ```
+
+**Seharusnya:** md5-nya **persis sama** dengan langkah 1.
+
+Migrasi terjadi di memori. Ia baru mendarat ke disk saat kamu benar-benar menyimpan sesuatu. Kalau
+md5-nya berubah, artinya sekadar membuka app sudah menulis ulang vault orang — dan itu berarti
+membuka app dengan build yang salah bisa merusak data tanpa satu pun tombol ditekan.
+
+- [ ] Lolos
 
 
 
@@ -915,44 +974,107 @@ menimpa sesuatu yang gagal ia baca.
 
 
 
-### 10.2 JSON sah, bentuk salah
+### 10.2 JSON sah, bentuk salah — kerusakan yang paling berbahaya
 
-Di `invois-data.json`, cari kunci `"invois_history"`. Nilainya sebuah **array** (diawali `[`). Ganti
-seluruh nilainya jadi sebuah **objek**.
+> **Keadaan awal:** app **TERTUTUP**. Pakai vault sekali-pakai:
+>
+> ```bash
+> rm -rf ~/Desktop/qa/v-rusak && cp -R ~/Desktop/qa/v-baru ~/Desktop/qa/v-rusak
+> ```
 
-Dari:
+**Yang diuji:** app menolak menulis ke vault yang **bisa di-parse tapi bentuknya salah**.
 
-```json
-  "invois_history": [ { "id": "inv-1", ... }, { "id": "inv-2", ... } ],
-```
+Ini kerusakan paling berbahaya karena ia lolos dari setiap pemeriksaan yang cuma bertanya "apakah file
+ini JSON yang sah?" — dan jawabannya **ya**. Yang salah bukan sintaksnya, tapi **bentuknya**. Tanpa
+penjagaan ini, vault berisi 300 invoice tampak seperti vault baru yang kosong, dan simpan berikutnya
+mengabadikan kekosongan itu.
 
-menjadi:
+1. Buka `~/Desktop/qa/v-rusak/invois-data.json`. Cari kunci `"invois_history"`. Nilainya sebuah
+   **array**, diawali `[`.
 
-```json
-  "invois_history": { "oops": true },
-```
+2. Ganti **seluruh nilainya** jadi sebuah **objek**. Dari:
 
-File-nya tetap **JSON yang sah** — itu justru intinya. Yang salah bukan sintaksnya, tapi **bentuknya**.
-Kerusakan seperti ini yang paling berbahaya, karena ia lolos dari semua pemeriksaan yang cuma bertanya
-"apakah file ini bisa di-parse".
+   ```json
+     "invois_history": [ { "id": "inv-1", ... }, { "id": "inv-2", ... } ],
+   ```
 
-**Seharusnya:** banner mode aman muncul; History tampak kosong **tapi tidak pernah ditulis**. Tanpa
-penjagaan ini, vault berisi 300 invoice akan tampak seperti vault baru yang kosong — dan simpan
-berikutnya mengabadikan kekosongan itu.
+   menjadi:
 
-- [ ] **Dilewati** — Arif, 14 Jul 2026 — instruksinya kabur, sudah diperjelas.
+   ```json
+     "invois_history": { "oops": true },
+   ```
+
+   Simpan. Pastikan file-nya masih JSON yang sah:
+
+   ```bash
+   python3 -m json.tool ~/Desktop/qa/v-rusak/invois-data.json > /dev/null && echo "JSON sah — bagus, memang harus begitu"
+   ```
+
+3. Catat ukurannya: `ls -l ~/Desktop/qa/v-rusak/invois-data.json`
+
+4. Jalankan app → DevTools: `localStorage.removeItem("invois_vault_config"); location.reload();`
+   → onboarding → pilih `~/Desktop/qa/v-rusak`.
+
+**Seharusnya:** **banner kuning mode aman** muncul di atas dan **tidak bisa ditutup**. Halaman Invoices
+tampak kosong.
+
+5. Sekarang buktikan ia benar-benar menolak menulis: **ubah apa pun** (ketik nama klien, tambah item),
+   tunggu ±2 detik, lalu **⌘Q**.
+
+6. `ls -l ~/Desktop/qa/v-rusak/invois-data.json`
+
+**Seharusnya:** ukurannya **persis sama** dengan langkah 3, dan `"invois_history": { "oops": true }`
+masih ada di dalamnya.
+
+**Bentuk kegagalannya:** file tertimpa dengan `"invois_history": []`. Itu berarti app baru saja
+menghapus 300 invoice orang karena satu field salah bentuk.
+
+- [ ] Lolos
 
 
 
 ### 10.3 Vault dari masa depan
 
-Ubah formatnya jadi `"format": 99` dan tambahkan field karangan.
+> **Keadaan awal:** app **TERTUTUP**. Pakai vault sekali-pakai:
+>
+> ```bash
+> rm -rf ~/Desktop/qa/v-depan && cp -R ~/Desktop/qa/v-baru ~/Desktop/qa/v-depan
+> ```
 
-**Seharusnya:** mode aman, tidak ada penulisan, field karangan itu **tetap utuh** saat kamu periksa
-lagi. App yang lebih tua tidak boleh menebak isi file dari app yang lebih baru — menebak berarti
-membuang field yang tak dikenalnya, lalu menyimpan kehilangan itu.
+**Yang diuji:** app yang lebih **tua** tidak boleh menebak isi file dari app yang lebih **baru**.
 
-- [ ] **Dilewati** — Arif, 14 Jul 2026
+Menebak berarti membuang field yang tidak dikenalnya, lalu **menyimpan kehilangan itu**. Inilah persis
+kecelakaan yang menghancurkan vault Arif pada 13 Juli: kode lama bertemu format baru, tidak paham, dan
+menyimpan kekosongannya.
+
+1. Buka `~/Desktop/qa/v-depan/invois-data.json`. Di bagian paling atas, ubah penandanya jadi format
+   **99**, dan tambahkan satu field karangan:
+
+   ```json
+   {
+     "__invois": { "format": 99 },
+     "fitur_masa_depan": "jangan hapus aku",
+     "invois_settings": { ... }
+   ```
+
+   Simpan.
+
+2. Jalankan app → reset pointer → onboarding → pilih `~/Desktop/qa/v-depan`.
+
+**Seharusnya:** banner mode aman muncul, dengan alasan yang menyebut **format 99**.
+
+3. Ubah sesuatu di app, tunggu, **⌘Q**. Lalu:
+
+   ```bash
+   grep -c "fitur_masa_depan" ~/Desktop/qa/v-depan/invois-data.json
+   ```
+
+**Seharusnya:** hasilnya **1** — field karangan itu **masih ada**. App tidak menulis apa pun.
+
+**Bentuk kegagalannya:** hasilnya `0`. Artinya app membuang field yang tidak dipahaminya, lalu
+menyimpan hasil pembuangan itu.
+
+- [ ] Lolos
 
 
 
@@ -967,35 +1089,55 @@ kosong yang lalu menyimpan kekosongan itu ke pointer.
 
 
 
-### 10.5 Backup memang ada, dan file utama tidak pernah hilang
+### 10.5 Backup ada, dan file utama tidak pernah hilang
 
-Langkahnya (ini yang tadi kurang jelas):
+> **Keadaan awal:** app **JALAN**, dengan vault yang sehat (pakai `~/Desktop/qa/v-baru`).
+> Kalau app-mu sedang dalam mode aman dari 10.1–10.3, **ganti dulu ke vault yang sehat** — mode aman
+> menolak menulis, jadi tidak akan ada backup yang terbentuk sama sekali.
 
-1. Buka sebuah invoice, ubah sesuatu, **Simpan**. Ulangi 3–4 kali, dengan jeda beberapa detik.
-2. Lihat isi folder vault: `ls -la <vault>/ <vault>/Backups/`
+**Yang diuji:** dua hal, dan yang kedua adalah utang darah.
 
-**Seharusnya ada:** `invois-data.json` (yang utama), `.bak1`, `.bak2`, `.bak3` (rotasi per simpan),
-dan `Backups/invois-YYYY-MM-DD.json` (snapshot harian — satu file per hari, bukan per simpan).
+**(a) Backup memang terbentuk.**
 
-Lalu dua hal yang harus kamu perhatikan khusus:
+1. Buka sebuah invoice, ubah sesuatu, **Simpan**. Ulangi **4 kali**, beri jeda beberapa detik.
+2. Lihat isinya:
 
-**File utamanya tidak boleh pernah hilang, bahkan sesaat.** Sulit ditangkap dengan mata, jadi cukup
-pastikan ia selalu ada setiap kali kamu melihat.
+   ```bash
+   ls -la ~/Desktop/qa/v-baru/
+   ls -la ~/Desktop/qa/v-baru/Backups/
+   ```
 
-**Meminimalkan lalu mengembalikan jendela 4–5 kali TIDAK boleh menambah atau merotasi backup.** Cek
-`ls -la` sebelum dan sesudah — `.bak1..3` harus sama persis. Dulu bisa berubah, yang artinya "3 backup"
-sebenarnya berarti "3 kali sembunyikan jendela", dan seseorang bisa kehilangan data tanpa mengetik
-apa pun.
+**Seharusnya ada:**
 
-Yang **paling penting**: file utamanya tidak boleh pernah hilang, bahkan sesaat. Rotasi **menyalin**,
-tidak memindahkan. Ini bukan kehati-hatian teoretis — pada 13 Juli 2026 versi lama kode ini memindahkan
-file utama untuk merotasinya, dan sebuah reload di celah itu mengambil satu-satunya salinan yang
-tersisa.
+| File | Apa itu |
+|---|---|
+| `invois-data.json` | yang utama |
+| `invois-data.json.bak1` `.bak2` `.bak3` | rotasi, satu per simpan |
+| `Backups/invois-2026-07-14.json` | snapshot harian — **satu file per hari**, bukan per simpan |
 
-Dan perhatikan: sekadar meminimalkan/mengembalikan jendela berkali-kali **tidak boleh** merotasi
-backup. Dulu bisa — artinya "3 backup" sebenarnya berarti "3 kali sembunyikan jendela".
+**(b) Menyembunyikan jendela TIDAK boleh merotasi backup.**
 
-- [ ] **Dilewati** — Arif, 14 Jul 2026 — instruksinya kabur, sudah diperjelas.
+1. Catat isi foldernya: `ls -la ~/Desktop/qa/v-baru/ > /tmp/sebelum.txt`
+2. **Tanpa mengubah apa pun di app**, minimalkan jendelanya lalu kembalikan. Ulangi **5 kali**.
+3. Bandingkan:
+
+   ```bash
+   ls -la ~/Desktop/qa/v-baru/ > /tmp/sesudah.txt
+   diff /tmp/sebelum.txt /tmp/sesudah.txt && echo "TIDAK BERUBAH — benar"
+   ```
+
+**Seharusnya:** `diff` tidak melaporkan apa pun.
+
+**Kenapa ini penting.** Dulu ia berubah. Penyimpanan dipicu oleh `visibilitychange`, tanpa memeriksa
+apakah ada yang benar-benar berubah — jadi tiap kali kamu menyembunyikan jendela, vault ditulis ulang
+dan backup dirotasi. Artinya "3 backup" sebenarnya berarti "3 kali sembunyikan jendela", dan seseorang
+bisa merotasi habis semua backup baiknya **tanpa mengetik satu huruf pun**.
+
+Dan yang paling utama: **file utamanya tidak boleh pernah hilang, bahkan sesaat.** Rotasi sekarang
+**menyalin**, tidak memindahkan. Versi lama memindahkannya — dan sebuah reload di celah itu mengambil
+satu-satunya salinan yang tersisa. Begitulah vault Arif mati pada 13 Juli.
+
+- [ ] Lolos
 
 
 
@@ -1100,20 +1242,46 @@ Tidak crash, tidak total negatif.
 
 ### 12.1 Pro tidak bisa dinyalakan sama sekali
 
-Buka Settings di app yang terpaket.
+> **Keadaan awal:** app **TERTUTUP**, dan `npm run dev` **dimatikan**. Kita tidak sedang menguji build
+> dev di sini — build dev berbohong tentang persis dua hal, dan ini salah satunya.
 
-**Seharusnya:** tab **Dev tidak ada.** Tidak tersembunyi — tidak ada. Dan tidak ada cara apa pun di
-dalam app untuk menjadi Pro, karena billing memang belum dipasang: `isPro` di produksi selalu `false`.
+**Yang diuji:** app yang kamu kirim ke orang **tidak punya cara apa pun untuk menjadi Pro**.
 
-Ini satu-satunya bagian dari aturan hak-beli (`docs/entitlement.md`) yang bisa diuji hari ini, dan ia
-yang paling mahal kalau salah: kalau tab Dev ikut terkirim, kita membagikan Pro gratis kepada semua
-orang.
+Ini satu-satunya bagian dari aturan hak-beli (`docs/entitlement.md`) yang punya wujud hari ini —
+billing belum ada, jadi tidak ada lagi yang bisa diuji. Dan ia yang paling mahal kalau salah: **kalau
+tab Dev ikut terkirim, kita membagikan Pro gratis kepada semua orang.**
+
+**Langkah 1 — bangun dan buka app yang sungguhan:**
+
+```bash
+cd invois-macos
+npm run pack:mac
+open dist/mac*/Invois.app
+```
+
+(Butuh beberapa menit. Ini bukan `npm run dev` — ini app yang benar-benar dipaket.)
+
+**Langkah 2 — selesaikan onboarding** ke folder mana pun yang bersih, misal `~/Desktop/qa/v-prod`.
+
+**Langkah 3 — buka Settings.**
+
+**Seharusnya:** **tab "Dev" TIDAK ADA.** Bukan tersembunyi, bukan mati — **tidak ada**. Hitung
+tabnya: harus **tujuh**, bukan delapan.
 
 Penjagaannya berlapis dua (`isDevBuild()`): `NODE_ENV` **dan** `app.isPackaged`. Uji ini yang
-membuktikan lapisan itu benar-benar bekerja, bukan cuma tertulis.
+membuktikan lapisan itu benar-benar bekerja pada app yang dipaket, bukan cuma tertulis di kode.
 
-**Sekalian buktikan gerbangnya masih berdiri:** dengan app terpaket, buat 3 invoice lalu coba yang
-keempat → harus digerbangi. Pilih template premium → harus digerbangi. Tidak ada jalan keluar.
+**Langkah 4 — buktikan gerbangnya masih berdiri.** Masih di app terpaket:
+
+- Buat dan simpan **3 invoice**. Lalu coba yang **keempat** → harus digerbangi ke dialog upgrade.
+- Buka pemilih template → pilih salah satu yang berlabel Pro → harus digerbangi.
+- Settings → Data & ekspor → Tambah bisnis → harus digerbangi.
+
+**Seharusnya:** ketiganya digerbangi, dan **tidak ada jalan keluar** di dalam app. Tidak ada toggle,
+tidak ada tombol tersembunyi.
+
+**Bentuk kegagalannya:** tab Dev muncul, atau salah satu gerbang bisa dilewati. Kalau itu terjadi,
+**jangan rilis.**
 
 - [ ] Lolos
 
@@ -1121,17 +1289,40 @@ keempat → harus digerbangi. Pilih template premium → harus digerbangi. Tidak
 
 ### 12.2 Font, dari build yang sungguhan
 
-Ekspor PDF **dari app terpaket**, lalu:
+> **Keadaan awal:** app **terpaket** dari 12.1 masih terbuka, dengan minimal satu invoice tersimpan.
+
+**Yang diuji:** tidak ada font Apple yang tersemat di PDF yang diekspor.
+
+Ini soal **lisensi**, bukan estetika. Font SF boleh **digambar di layar** — itu yang dilakukan setiap
+app macOS. Tapi ia **tidak boleh disematkan** ke dokumen yang kamu distribusikan. Setiap invoice yang
+dikirim penggunamu ke kliennya adalah dokumen yang didistribusikan.
+
+**Kenapa build dev tidak bisa menggantikan uji ini:** kebocorannya dulu hidup di **jalur cetak**.
+Jalur itu memasang template **tanpa** pembungkus preview, jadi `font-family` yang dipasang di
+pembungkus tidak ikut — dan Chromium jatuh ke `system-ui`, yang di macOS berarti SF. Kebocorannya
+tidak terlihat di layar sama sekali. Ia hanya ada di dalam file PDF-nya.
+
+**Langkah 1 — ekspor PDF dari app TERPAKET.** Buka sebuah invoice → Ekspor PDF. Catat lokasi filenya.
+
+**Langkah 2 — periksa fontnya:**
 
 ```bash
+cd invois-macos
 npm run pdf:fonts -- "<path/ke/hasil.pdf>"
 ```
 
-**Seharusnya:** hanya Inter dan Roboto Mono. Tidak ada `.SFNS` atau nama font Apple apa pun.
+**Seharusnya:** hanya **Inter** dan **RobotoMono**. Skripnya akan bilang PASS.
 
-Kebocoran font SF pertama kali ditemukan justru di jalur produksi — jalur cetak memasang template
-tanpa pembungkus preview, sehingga `font-family` yang dipasang di pembungkus itu tidak ikut. Menguji
-ini di build dev saja tidak membuktikan apa-apa.
+**Bentuk kegagalannya:** muncul `.SFNS`, `SFPro`, `SFUI`, atau nama font Apple apa pun. Itu **FAIL**,
+dan berarti setiap PDF yang dihasilkan app ini menyematkan font berlisensi Apple.
+
+> **Jangan pakai `strings | grep BaseFont` untuk memeriksa ini.** Ia tidak akan melihat apa-apa — font
+> programnya terkompresi di dalam stream PDF. Itulah sebabnya `scripts/pdf-fonts.mjs` ada: ia
+> mengembangkan setiap stream dan membaca tabel nama di dalam data font yang sesungguhnya. Kebocoran SF
+> pertama kali ditemukan justru karena `strings` bilang "bersih" dan skrip ini bilang tidak.
+
+**Langkah 3 — ulangi untuk PDF yang lebih dari 2 halaman** (tambahkan ~30 baris item). Jalur
+paginasinya berbeda.
 
 - [ ] Lolos
 
