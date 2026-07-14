@@ -16,22 +16,15 @@ Untuk `invois-macos`, dijalankan dengan `npm run dev`. Terakhir dicocokkan denga
 
 ---
 
-## Catatan uji terakhir
+## Catatan uji
 
-Centang kotaknya langsung di dokumen ini sambil kamu jalan, lalu isi tiga baris di bawah dan commit.
+Arif menguji dan menyebutkan hasilnya di chat ("1.1 lolos", "2.3 gagal, totalnya jadi …"). Claude yang
+mencentang di sini dan meng-commit-nya.
 
-Tiga baris itu yang membuat centangnya berarti: **"lolos" selalu berarti "lolos pada commit ini"**.
-Tanpa itu, centang cuma memberitahumu bahwa dulu, entah kapan, sesuatu pernah bekerja.
-
-```
-Diuji oleh   :
-Tanggal      :
-Commit       :        ← git rev-parse --short HEAD
-```
-
-Kalau nanti kamu menyentuh `data-store.ts`, kosongkan lagi centang Fase 8–10. Kalau menyentuh
-`money.ts` atau `format.ts`, kosongkan Fase 2. Bukan aturan formal — cuma kejujuran: kode yang
-mendasarinya sudah berubah, jadi centang lamanya sudah tidak membuktikan apa-apa.
+Centang berarti: **lolos pada commit yang tertulis di sebelahnya.** Kalau kode yang mendasarinya
+berubah, centangnya dikosongkan lagi — `data-store.ts` mengosongkan Fase 8–10, `money.ts` atau
+`format.ts` mengosongkan Fase 2. Bukan birokrasi, cuma jujur bahwa yang dulu terbukti sudah bukan
+kode yang sama.
 
 Dokumen ini melengkapi test otomatis, bukan menggantikannya. `npm run verify` sudah menjamin
 aritmetika uang, migrasi vault, penomoran, i18n, dan persistensi. Yang **tidak** bisa dijamin unit
@@ -141,7 +134,7 @@ titik berdenyut di Klien → Item → Simpan. File `invois-data.json` muncul di 
 `"__invois": { "format": 3 }` di paling atas dan satu klien + satu item katalog berlabel **(Sample)**
 (id-nya `sample-client` dan `sample-item`).
 
-- [ ] Lolos
+- [x] **Lolos** — Arif, 14 Jul 2026, commit `4402618`
 
 ### 1.2 Placeholder telepon ikut MATA UANG
 
