@@ -356,6 +356,25 @@ export function InvoiceProvider({ children }: { children: React.ReactNode }) {
     });
   }, []);
 
+  /**
+   * Change a setting WITHOUT writing it to the vault.
+   *
+   * There is exactly one caller: seeding the default export folder on startup.
+   * That seed used to go through setSettings — which persists — so merely OPENING
+   * the app wrote to the user's file. On a legacy vault that write also carried the
+   * format-3 migration with it, quietly converting a file the user had not touched.
+   * Arif caught it with an md5 (QA 9.2), twice.
+   *
+   * The export folder does not need persisting at all when it is the default: it is
+   * derived from the active vault, so it can be recomputed on every launch. Empty
+   * means "use the default"; a value on disk means "the user chose this one". That
+   * is a better model anyway — a persisted absolute path in a vault synced across
+   * two Macs is wrong on at least one of them.
+   */
+  const setSettingsLocal = React.useCallback((patch: Partial<BusinessSettings>) => {
+    setSettingsState((prev) => ({ ...prev, ...patch }));
+  }, []);
+
   // Apply the chosen color theme to <html data-palette> (see palettes.css).
   React.useEffect(() => {
     if (typeof document === "undefined") return;
@@ -386,7 +405,7 @@ export function InvoiceProvider({ children }: { children: React.ReactNode }) {
         if (reloc && settings.exportDir.replace(/\/+$/, "") === `${reloc.from}/Exports`) {
           const moved = await ensureDefaultExportDir();
           if (cancelled) return; // leave the hint for the next pass to apply
-          setSettings({ exportDir: moved ?? `${reloc.to}/Exports` });
+          setSettingsLocal({ exportDir: moved ?? `${reloc.to}/Exports` });
           clearExportDirRelocation();
           return;
         }
@@ -396,12 +415,12 @@ export function InvoiceProvider({ children }: { children: React.ReactNode }) {
         const vaultExports = await ensureDefaultExportDir();
         if (cancelled) return;
         if (vaultExports) {
-          setSettings({ exportDir: vaultExports });
+          setSettingsLocal({ exportDir: vaultExports }); // derived, not chosen → never written
           return;
         }
         const { downloadDir } = native.path;
         const dir = (await downloadDir()).replace(/\/+$/, "");
-        if (!cancelled && dir) setSettings({ exportDir: dir });
+        if (!cancelled && dir) setSettingsLocal({ exportDir: dir });
       } catch {
         /* plain browser: no native path API → keep empty (browser download) */
       }

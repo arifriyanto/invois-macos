@@ -100,13 +100,19 @@ export function loadVersioned<T>(
       if (m) data = m(data);
     }
 
-    // Persist the upgraded envelope so migrations run only once.
-    try {
-      setRaw(key, JSON.stringify({ v: version, data } satisfies Envelope));
-    } catch {
-      /* ignore write failure */
-    }
-
+    // NOTE: we deliberately do NOT write the upgraded envelope back here.
+    //
+    // It used to, "so migrations run only once" — which sounds thrifty and is
+    // actually a read with a side effect. A user opening the app with an older
+    // settings version had their vault written to before they touched a single
+    // control, and on a legacy vault that write dragged the money migration along
+    // with it, converting a file they never edited.
+    //
+    // Reads must be reads. The migrations are pure functions of the stored data
+    // and are keyed off the version in the envelope, so re-running them on every
+    // load is deterministic and costs microseconds. They will be persisted the
+    // moment the user actually changes something — which is the only moment we
+    // have any business writing.
     return data as T;
   } catch {
     return fallback;

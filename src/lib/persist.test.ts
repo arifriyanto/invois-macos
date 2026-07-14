@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { loadVersioned, saveVersioned, parseVersioned, type Migration } from "./persist";
+import { getRaw, setRaw } from "./data-store";
 
 // Minimal in-memory localStorage stand-in for the tests.
 class MemStorage {
@@ -116,5 +117,38 @@ describe("parseVersioned (peek — parse from raw, no write-back)", () => {
     parseVersioned(raw, 1, [(d) => ({ ...(d as object), seeded: true })], {});
     expect(spy).not.toHaveBeenCalled();
     spy.mockRestore();
+  });
+});
+
+describe("loadVersioned is a READ — it never writes", () => {
+  it("does not persist the upgraded envelope back to the store", () => {
+    // It used to, "so migrations run only once". That made a read have a side
+    // effect: a user opening the app with an older settings version had their
+    // vault written to before touching a single control — and on a legacy vault
+    // that write dragged the money migration along with it, converting a file
+    // they never edited. Arif caught it with an md5 (QA 9.2).
+    //
+    // Reads must be reads. The migration re-runs on every load instead; it is a
+    // pure function of the stored data, so that is deterministic and free.
+    setRaw("k", JSON.stringify({ v: 0, data: { a: 1 } }));
+    const before = getRaw("k");
+
+    const out = loadVersioned<{ a: number; b: number }>(
+      "k",
+      1,
+      [(d) => ({ ...(d as object), b: 2 })],
+      { a: 0, b: 0 },
+    );
+
+    expect(out).toEqual({ a: 1, b: 2 }); // migrated in memory…
+    expect(getRaw("k")).toBe(before); // …and nothing was written
+  });
+
+  it("re-runs the migration on every load, giving the same answer", () => {
+    setRaw("k", JSON.stringify({ v: 0, data: { a: 1 } }));
+    const mig = [(d: unknown) => ({ ...(d as object), b: 2 })];
+    const first = loadVersioned("k", 1, mig, {});
+    const second = loadVersioned("k", 1, mig, {});
+    expect(second).toEqual(first);
   });
 });
