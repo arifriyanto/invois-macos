@@ -20,7 +20,7 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
 import { useI18n } from "@/lib/i18n";
-import { completeOnboarding, suggestVaultDir, isDirInsideVault } from "@/lib/data-store";
+import { completeOnboarding, suggestVaultDir, isDirInsideVault, dirContainsVault } from "@/lib/data-store";
 import { persistInitialSettings, peekVaultSettings } from "@/lib/store";
 import { setBootIntent } from "@/lib/boot-intent";
 import { seedSampleData } from "@/lib/sample-data";
@@ -203,11 +203,14 @@ export function OnboardingView({ onDone }: { onDone: () => void }) {
       const home = await native.path.documentDir().catch(() => undefined);
       const picked = await open({ directory: true, multiple: false, defaultPath: home });
       if (typeof picked !== "string") return;
-      // Show the picked folder, but flag it (and block Next) when it sits inside
-      // another vault (its Backups/Exports…).
-      const nested = await isDirInsideVault(picked);
+      // Show the picked folder, but flag it (and block Next) when it nests with
+      // another vault — in EITHER direction. Checking only one direction is what
+      // let ~/Desktop/qa (the folder holding v-baru and v-adopsi) sail through the
+      // picker with no complaint, and then fail silently at Finish.
+      const inside = await isDirInsideVault(picked);
+      const contains = inside ? false : await dirContainsVault(picked);
       setDir(picked);
-      setDirError(nested ? t("ob.folderNested") : "");
+      setDirError(inside || contains ? t("ob.folderNested") : "");
     } catch {
       /* picker only available in the desktop app */
     }
@@ -269,8 +272,18 @@ export function OnboardingView({ onDone }: { onDone: () => void }) {
       // vault. An adopted (existing) vault already has the user's real data.
       if (!adopted) seedSampleData(currency);
       go(2);
-    } catch {
+    } catch (e) {
+      // Say WHY. This used to be a bare `catch { setBusy(false) }` — so when the
+      // nesting guard refused the folder, Finish simply did nothing: no error, no
+      // movement, no explanation. Arif hit it, and being refused in silence is
+      // worse than being refused: you cannot tell a rule from a broken button.
+      //
+      // Whatever went wrong, the user gets a sentence and gets sent back to the
+      // step that can fix it.
+      const nested = e instanceof Error && e.message === "folder-nested";
+      setDirError(nested ? t("ob.folderNested") : t("ob.folderFailed"));
       setBusy(false);
+      go(0); // the folder is chosen on step 1 — that is where the fix lives
     }
   };
 
