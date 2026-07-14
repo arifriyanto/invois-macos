@@ -773,6 +773,56 @@ crash, tidak total negatif.
 
 ---
 
+## Fase 12 — Build produksi (paywall & font)
+
+> **Keadaan awal:** bukan `npm run dev`. Bangun app-nya sungguhan dan buka **yang terpaket**:
+>
+> ```bash
+> npm run pack:mac
+> open dist/mac*/Invois.app
+> ```
+>
+> Semua fase di atas berjalan di build dev, dan build dev berbohong tentang dua hal: ia punya toggle
+> Pro, dan ia memuat aset lewat dev server. Dua bug produksi terakhir (kebocoran font Apple, dan tiga
+> bug yang hanya muncul setelah dipaket) tidak akan pernah terlihat di `npm run dev`.
+
+### 12.1 Pro tidak bisa dinyalakan sama sekali
+
+Buka Settings di app yang terpaket.
+
+**Seharusnya:** tab **Dev tidak ada.** Tidak tersembunyi — tidak ada. Dan tidak ada cara apa pun di
+dalam app untuk menjadi Pro, karena billing memang belum dipasang: `isPro` di produksi selalu `false`.
+
+Ini satu-satunya bagian dari aturan hak-beli (`docs/entitlement.md`) yang bisa diuji hari ini, dan ia
+yang paling mahal kalau salah: kalau tab Dev ikut terkirim, kita membagikan Pro gratis kepada semua
+orang.
+
+Penjagaannya berlapis dua (`isDevBuild()`): `NODE_ENV` **dan** `app.isPackaged`. Uji ini yang
+membuktikan lapisan itu benar-benar bekerja, bukan cuma tertulis.
+
+**Sekalian buktikan gerbangnya masih berdiri:** dengan app terpaket, buat 3 invoice lalu coba yang
+keempat → harus digerbangi. Pilih template premium → harus digerbangi. Tidak ada jalan keluar.
+
+- [ ] Lolos
+
+### 12.2 Font, dari build yang sungguhan
+
+Ekspor PDF **dari app terpaket**, lalu:
+
+```bash
+npm run pdf:fonts -- "<path/ke/hasil.pdf>"
+```
+
+**Seharusnya:** hanya Inter dan Roboto Mono. Tidak ada `.SFNS` atau nama font Apple apa pun.
+
+Kebocoran font SF pertama kali ditemukan justru di jalur produksi — jalur cetak memasang template
+tanpa pembungkus preview, sehingga `font-family` yang dipasang di pembungkus itu tidak ikut. Menguji
+ini di build dev saja tidak membuktikan apa-apa.
+
+- [ ] Lolos
+
+---
+
 ## Cara melaporkan kegagalan
 
 Sebutkan: **fase dan nomor kasusnya**, langkah persisnya, yang kamu lihat, yang kamu harapkan. Kalau
