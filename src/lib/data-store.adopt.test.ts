@@ -20,6 +20,18 @@ vi.mock("@/lib/native", () => ({
       files.set(p, c);
     },
     mkdir: async () => {},
+    // Immediate subdirectory names, derived from the flat path map.
+    readDirs: async (p: string) => {
+      const prefix = p.replace(/\/+$/, "") + "/";
+      const names = new Set<string>();
+      for (const key of files.keys()) {
+        if (!key.startsWith(prefix)) continue;
+        const rest = key.slice(prefix.length);
+        const slash = rest.indexOf("/");
+        if (slash > 0) names.add(rest.slice(0, slash));
+      }
+      return [...names];
+    },
     rename: async (from: string, to: string) => {
       const v = files.get(from);
       if (v !== undefined) {
@@ -153,6 +165,23 @@ describe("completeOnboarding — reject a folder inside a vault (on disk)", () =
   it("allows a fresh folder that isn't inside any vault", async () => {
     const ds = await import("./data-store");
     await expect(ds.completeOnboarding("/data/fresh")).resolves.toEqual({ adopted: false });
+  });
+
+  it("refuses a folder that CONTAINS vaults", async () => {
+    // Found by Arif, 14 Jul 2026, running phase 8.3 of the QA plan.
+    //
+    // Nesting is bad in both directions, and we had only ever guarded one. addVault
+    // caught the containing case via the registry; onboarding has no registry, so
+    // picking ~/Desktop/qa — the folder holding v-baru and v-adopsi — was accepted,
+    // and a third vault was created on top of the other two.
+    files.set(`/qa/v-baru/${VAULT}`, vaultBody({ invois_x: "1" }));
+    files.set(`/qa/v-adopsi/${VAULT}`, vaultBody({ invois_x: "2" }));
+
+    const ds = await import("./data-store");
+    await expect(ds.completeOnboarding("/qa")).rejects.toThrow("folder-nested");
+
+    // …and picking one of the vaults themselves still works.
+    await expect(ds.completeOnboarding("/qa/v-adopsi")).resolves.toEqual({ adopted: true });
   });
 });
 

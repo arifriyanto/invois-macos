@@ -16,6 +16,17 @@ vi.mock("@/lib/native", () => ({
       files.set(p, c);
     },
     mkdir: async () => {},
+    readDirs: async (p: string) => {
+      const prefix = p.replace(/\/+$/, "") + "/";
+      const names = new Set<string>();
+      for (const key of files.keys()) {
+        if (!key.startsWith(prefix)) continue;
+        const rest = key.slice(prefix.length);
+        const slash = rest.indexOf("/");
+        if (slash > 0) names.add(rest.slice(0, slash));
+      }
+      return [...names];
+    },
     rename: async (from: string, to: string) => {
       const v = files.get(from);
       if (v !== undefined) {

@@ -112,6 +112,20 @@ function closeAllScopes() {
 // ---------------------------------------------------------------------------
 
 // -- filesystem --
+// Immediate children of a folder, directories only. Used to refuse a folder that
+// CONTAINS a vault (the mirror of refusing one that sits inside a vault) — see
+// isDirInsideVault / folderContainsVault in data-store.ts. Deliberately one level
+// deep: a full recursive walk of, say, ~/Documents would be slow and is not worth
+// it for the case it would catch.
+ipcMain.handle("fs:readDirs", async (_e, p) => {
+  try {
+    const entries = await fs.readdir(p, { withFileTypes: true });
+    return entries.filter((e) => e.isDirectory()).map((e) => e.name);
+  } catch {
+    return [];
+  }
+});
+
 ipcMain.handle("fs:exists", async (_e, p) => {
   try {
     await fs.access(p);

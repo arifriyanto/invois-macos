@@ -17,6 +17,7 @@ contextBridge.exposeInMainWorld("invois", {
 
   fs: {
     exists: (p) => ipcRenderer.invoke("fs:exists", p),
+    readDirs: (p) => ipcRenderer.invoke("fs:readDirs", p),
     readText: (p) => ipcRenderer.invoke("fs:readText", p),
     writeText: (p, data) => ipcRenderer.invoke("fs:writeText", p, data),
     // Uint8Array survives the structured clone; main turns it back into a Buffer.

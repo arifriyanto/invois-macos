@@ -19,6 +19,8 @@ interface Bridge {
   isPackaged: boolean;
   fs: {
     exists(p: string): Promise<boolean>;
+    /** Immediate subdirectory NAMES (not paths). Empty on any error. */
+    readDirs(p: string): Promise<string[]>;
     readText(p: string): Promise<string>;
     writeText(p: string, data: string): Promise<void>;
     writeBinary(p: string, data: Uint8Array): Promise<void>;
@@ -67,6 +69,7 @@ export function isPackaged(): boolean {
 /** Drop-in for `@tauri-apps/plugin-fs`. Options args are accepted and ignored. */
 export const fs = {
   exists: (p: string) => need().fs.exists(p),
+  readDirs: (p: string) => need().fs.readDirs(p),
   readTextFile: (p: string) => need().fs.readText(p),
   writeTextFile: (p: string, data: string) => need().fs.writeText(p, data),
   writeFile: (p: string, data: Uint8Array) => need().fs.writeBinary(p, data),

@@ -647,6 +647,34 @@ export async function isDirInsideVault(dir: string): Promise<boolean> {
 }
 
 /**
+ * The mirror image: true if `dir` CONTAINS a vault (one of its subfolders is one).
+ *
+ * Nesting is bad in both directions, and we only ever guarded one of them.
+ * `addVault` caught the containing case by consulting the registry — but
+ * onboarding has no registry, so picking `~/Desktop/qa` while `qa/v-baru` and
+ * `qa/v-adopsi` were vaults was accepted, and a third vault was created on top of
+ * the other two. Found by Arif, 14 Jul 2026.
+ *
+ * Only IMMEDIATE children are checked. A full recursive walk of, say, ~/Documents
+ * would be slow enough to notice, and this is not a security boundary — it is a
+ * guard rail against an easy mistake. A vault buried three levels down will still
+ * slip through, and that is a trade we are making on purpose rather than by
+ * accident.
+ */
+export async function dirContainsVault(dir: string): Promise<boolean> {
+  const clean = dir.replace(/\/+$/, "");
+  try {
+    const children = await native.fs.readDirs(clean);
+    for (const name of children) {
+      if (await anyVaultFileExists(`${clean}/${name}`)) return true;
+    }
+  } catch {
+    /* can't read it → don't block the user over it */
+  }
+  return false;
+}
+
+/**
  * Finish onboarding: adopt `dir` as the first business/vault and switch the
  * backend to file mode. If the folder ALREADY holds an Invois vault (e.g. the
  * user reinstalled and picked their old data folder), its data is ADOPTED —
@@ -660,9 +688,11 @@ export async function completeOnboarding(
   name?: string
 ): Promise<{ adopted: boolean }> {
   const clean = dir.replace(/\/+$/, "");
-  // Refuse a folder inside another vault (its Backups/Exports subfolder, etc.) —
-  // it would create a nested, stray empty vault. Mirrors the addVault guard.
-  if (await isDirInsideVault(clean)) {
+  // Refuse nesting in BOTH directions: a folder inside another vault (its
+  // Backups/Exports subfolder), and a folder that contains one (picking ~/Desktop/qa
+  // while qa/v-baru is already a vault). Either way you end up with vaults inside
+  // vaults, recursive backups, and no clear answer to "which file is my data".
+  if ((await isDirInsideVault(clean)) || (await dirContainsVault(clean))) {
     throw new Error("folder-nested");
   }
   // Adopt if the folder holds a vault file OR any surviving backup — matches
@@ -755,7 +785,7 @@ export async function addVault(dir: string, name?: string): Promise<string> {
     const vd = v.dir.replace(/\/+$/, "");
     return clean.startsWith(vd + "/") || vd.startsWith(clean + "/");
   });
-  if (nestedInRegistered || (await isDirInsideVault(clean))) {
+  if (nestedInRegistered || (await isDirInsideVault(clean)) || (await dirContainsVault(clean))) {
     throw new Error("folder-nested");
   }
   if (!(await vaultExistsIn(clean))) {
@@ -830,16 +860,38 @@ export async function recoverVaultLocation(dir: string): Promise<boolean> {
   return true;
 }
 
-/** One-shot: the {from,to} vault folders from the last recovery relocation, so
- *  the settings store can follow a default export folder to the new location. */
-export function takeExportDirRelocation(): { from: string; to: string } | null {
+/**
+ * The {from,to} vault folders from the last recovery relocation, so the settings
+ * store can follow a DEFAULT export folder to the new location.
+ *
+ * This used to be a single `take()` that read the hint and deleted it in one go.
+ * That was a bug, and a nasty one to see: React StrictMode invokes effects TWICE
+ * in development. The first invocation consumed the hint, awaited the filesystem
+ * — and by the time it came back, StrictMode's cleanup had already flipped its
+ * `cancelled` flag, so the result was thrown away. The second invocation found
+ * nothing left to do. The hint was spent without ever being applied, and the
+ * export folder silently stayed pointing at the vault's old home.
+ *
+ * So: reading and clearing are separate now. Read it, apply it, and only then say
+ * you are done with it. A one-shot token that can be consumed by work that gets
+ * discarded is not a one-shot token; it is a leak.
+ */
+export function peekExportDirRelocation(): { from: string; to: string } | null {
   try {
     const raw = localStorage.getItem(EXPORT_RELOCATE_KEY);
     if (!raw) return null;
-    localStorage.removeItem(EXPORT_RELOCATE_KEY);
     return JSON.parse(raw) as { from: string; to: string };
   } catch {
     return null;
+  }
+}
+
+/** Call once the relocation above has actually been applied. */
+export function clearExportDirRelocation(): void {
+  try {
+    localStorage.removeItem(EXPORT_RELOCATE_KEY);
+  } catch {
+    /* ignore */
   }
 }
 

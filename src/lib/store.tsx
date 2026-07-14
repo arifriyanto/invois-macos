@@ -5,9 +5,10 @@ import type { BusinessSettings, InvoiceData, LineItem, TemplateId } from "./type
 import { TEMPLATES, PREMIUM_TEMPLATES } from "./format";
 import { loadVersioned, saveVersioned, parseVersioned, type Migration } from "./persist";
 import {
-  getRaw, setRaw, ensureDefaultExportDir, takeExportDirRelocation, readVaultKey,
+  getRaw, setRaw, ensureDefaultExportDir, peekExportDirRelocation, clearExportDirRelocation, readVaultKey,
 } from "./data-store";
 import { readObject } from "./vault-read";
+import { normalizeQty, safeMinor } from "./money";
 import { useI18n } from "./i18n";
 
 const SETTINGS_KEY = "invois_settings";
@@ -256,12 +257,45 @@ function loadTemplate(): TemplateId {
   }
   return "minimal";
 }
+/**
+ * Clean the line items of an invoice that came off disk.
+ *
+ * calcTotals already refuses to trust them (safeQty/safeMinor), so the ARITHMETIC
+ * was never wrong. The DISPLAY was: a hand-edited vault with `qty: 2.5` and
+ * `priceMinor: -100` showed 2.5 and -$1.00 in the editor while the subtotal was
+ * quietly computed from 2 and 0. The screen and the maths disagreed, and the
+ * screen is what the user checks.
+ *
+ * An app that silently computes something other than what it is showing you is
+ * worse than one that shows a wrong number honestly. So the values are normalised
+ * once, here, at the boundary where they enter the app — and from then on what you
+ * see is what is added up.
+ */
+export function sanitizeInvoice(inv: InvoiceData): InvoiceData {
+  return {
+    ...inv,
+    items: Array.isArray(inv.items)
+      ? inv.items.map((i) => ({ ...i, qty: normalizeQty(i.qty), priceMinor: safeMinor(i.priceMinor) }))
+      : [],
+    // discountValue's unit depends on discountType (see types.ts). A PERCENTAGE
+    // may legitimately be fractional — 7.5% is a real discount — so it is only
+    // clamped, never truncated. A flat amount is money, so it gets the integer
+    // treatment. Truncating both with the same helper would silently turn 7.5%
+    // into 7%.
+    discountValue:
+      inv.discountType === "pct"
+        ? Math.max(0, Math.min(100, Number(inv.discountValue) || 0))
+        : safeMinor(inv.discountValue),
+    taxRate: Math.max(0, Math.min(100, Number(inv.taxRate) || 0)),
+  };
+}
+
 function loadInvoiceDraft(): InvoiceData {
   // Merge over defaults so newly-added fields get sane values on old saves.
   // readObject validates the shape and puts the vault into safe mode if it is
   // wrong, instead of quietly handing back a fresh invoice as if nothing happened.
   const saved = readObject<Partial<InvoiceData>>(INVOICE_KEY, "Invoice draft");
-  if (saved) return { ...defaultInvoice(), ...saved };
+  if (saved) return sanitizeInvoice({ ...defaultInvoice(), ...saved });
   const today = new Date();
   const due = new Date();
   due.setDate(due.getDate() + 14);
@@ -341,12 +375,22 @@ export function InvoiceProvider({ children }: { children: React.ReactNode }) {
         // Vault was just relocated (recovery): if the export folder was the
         // DEFAULT one inside the OLD vault, follow it to the new vault. A custom
         // folder the user picked elsewhere is left untouched.
-        const reloc = takeExportDirRelocation();
+        //
+        // PEEK, apply, THEN clear. Consuming the hint up front looks tidier and is
+        // wrong: StrictMode runs this effect twice in dev, the first pass would
+        // eat the hint and then discard its own result (its `cancelled` flag is
+        // already true by the time the await returns), and the second pass would
+        // find nothing to do. The export folder then quietly stayed at the old
+        // path — which is exactly what Arif saw.
+        const reloc = peekExportDirRelocation();
         if (reloc && settings.exportDir.replace(/\/+$/, "") === `${reloc.from}/Exports`) {
           const moved = await ensureDefaultExportDir();
-          if (!cancelled) setSettings({ exportDir: moved ?? `${reloc.to}/Exports` });
+          if (cancelled) return; // leave the hint for the next pass to apply
+          setSettings({ exportDir: moved ?? `${reloc.to}/Exports` });
+          clearExportDirRelocation();
           return;
         }
+        if (reloc) clearExportDirRelocation(); // not a default folder → nothing to follow
 
         if (settings.exportDir) return;
         const vaultExports = await ensureDefaultExportDir();
@@ -384,7 +428,10 @@ export function InvoiceProvider({ children }: { children: React.ReactNode }) {
     setInvoice((prev) => ({ ...prev, client: { ...prev.client, ...patch } }));
   }, []);
 
+  // Sanitised on the way in, same as the draft: what the editor shows must be what
+  // calcTotals adds up. See sanitizeInvoice.
   const loadInvoice = React.useCallback((data: InvoiceData, tpl?: TemplateId) => {
+    data = sanitizeInvoice(data);
     setInvoice(data);
     if (tpl) setTemplate(tpl);
   }, [setTemplate]);

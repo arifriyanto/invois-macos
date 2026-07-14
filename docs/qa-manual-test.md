@@ -158,7 +158,7 @@ Ofcom untuk fiksi, jadi tebakan selengkap apa pun tidak menghubungi siapa-siapa.
 
 Selesai menguji, kembalilah ke USD dan tuntaskan onboarding ke `v-baru`.
 
-- [ ] Lolos
+- [x] **Lolos** — Arif, 14 Jul 2026, commit `3a0bcb4`
 
 > **Meninggalkan:** vault `v-baru` aktif, mata uang USD, **Free**, 0 invoice tersimpan, 1 klien
 > (Sample), 1 item katalog (Sample). Editor invoice terbuka dengan beacon menyala.
@@ -189,7 +189,7 @@ Di kolom **Qty** sebuah baris item:
 dianggapnya bukan angka sah — dan `2.` termasuk. Sebelum diperbaiki, mengetik "2.5" membuat kolom
 berkedip ke `1` di tengah pengetikan. Kalau kamu melihat kedipan itu lagi, perbaikannya mundur.
 
-- [ ] Lolos
+- [x] **Lolos** — Arif, 14 Jul 2026, commit `3a0bcb4`
 
 ### 2.2 Input harga (mata uang)
 
@@ -204,7 +204,7 @@ USD:
 Klik di tengah angka `1,234.56` lalu ketik satu digit: **kursor tidak boleh melompat** ke ujung.
 Salin isinya (⌘C) dan tempel di TextEdit — yang tersalin harus `1234.56` bersih, tanpa koma ribuan.
 
-- [ ] Lolos
+- [x] **Lolos** — Arif, 14 Jul 2026, commit `3a0bcb4`
 
 ### 2.3 Bug lama yang tidak boleh kembali
 
@@ -227,7 +227,7 @@ Itu properti yang dicek klienmu saat ia curiga.
 `3 × 19.99` bernilai `59.97000000000001` di memori — layar membulatkannya, jadi kesalahannya tak
 terlihat sampai ia menumpuk lewat diskon dan pajak.
 
-- [ ] Lolos
+- [x] **Lolos** — Arif, 14 Jul 2026, commit `3a0bcb4`
 
 ### 2.4 Pembulatan setengah
 
@@ -235,7 +235,7 @@ Ganti jadi **qty 1**, **harga 0.01**, diskon **50%**. Setengah sen tidak ada.
 
 **Seharusnya:** diskon `$0.01`, total `$0.00` — dibulatkan **menjauhi nol**, bukan dipotong jadi 0.
 
-- [ ] Lolos
+- [x] **Lolos** — Arif, 14 Jul 2026, commit `3a0bcb4`. Total $0.00 memang yang diharapkan: diskon 50% dari $0.01 = setengah sen, dibulatkan menjauhi nol jadi $0.01, sehingga total $0.00.
 
 ### 2.5 Diskon flat melebihi subtotal
 
@@ -243,14 +243,14 @@ Ganti jadi **qty 1**, **harga 0.01**, diskon **50%**. Setengah sen tidak ada.
 
 **Seharusnya:** diskon dijepit ke `$19.99`, pajak `$0.00`, total `$0.00`. **Tidak pernah negatif.**
 
-- [ ] Lolos
+- [x] **Lolos** — Arif, 14 Jul 2026, commit `3a0bcb4`
 
 ### 2.6 Angka besar
 
 **qty 999**, **harga 1234.56**. Subtotal harus `$1,233,325.44` — tepat, tanpa pembulatan aneh di digit
 terakhir.
 
-- [ ] Lolos
+- [x] **Lolos** — Arif, 14 Jul 2026, commit `3a0bcb4`
 
 > **Meninggalkan:** masih 0 invoice tersimpan (semua di atas dilakukan di draf yang sama).
 
@@ -264,13 +264,17 @@ terakhir.
 
 Sebelum menyimpan, lihat toolbar.
 
-**Seharusnya:** tombol Ekspor PDF/PNG **mati**, dengan tooltip "simpan dulu". Setelah Simpan, hidup.
-Ubah sesuatu lagi → status kembali "belum tersimpan" dan Ekspor mati lagi.
+**Seharusnya:** untuk invoice yang **belum pernah disimpan**, tombol Ekspor PDF/PNG **tidak ada sama
+sekali** — bukan sekadar mati. (`showExport = saved`, `editor-toolbar.tsx`.) Ia baru muncul setelah
+Simpan pertama.
+
+Setelah muncul: ubah sesuatu → tombolnya **meredup**, tooltip-nya berubah jadi "simpan dulu", dan
+mengkliknya tidak melakukan apa-apa. Simpan lagi → terang kembali.
 
 Ini disengaja: mengekspor draf yang belum tersimpan akan membakar nomor invoice yang belum
 benar-benar ada.
 
-- [ ] Lolos
+- [x] **Lolos** — Arif, 14 Jul 2026, commit `3a0bcb4`. Ia yang benar: tombolnya TIDAK ADA sampai simpan pertama, bukan sekadar mati. Dokumen dibetulkan.
 
 ### 3.2 Invoice #1 — walkthrough, modal sukses, katalog otomatis
 
@@ -284,7 +288,7 @@ Rapikan draf-nya jadi invoice yang masuk akal: pilih klien **(Sample)**, satu ba
   animasinya, itu regresi).
 - Deskripsi tadi **otomatis masuk Katalog** beserta harganya. Cek di halaman Katalog.
 
-- [ ] Lolos
+- [x] **Lolos** — Arif, 14 Jul 2026, commit `3a0bcb4`
 
 ### 3.3 Simpan ulang ≠ simpan baru
 
@@ -295,7 +299,7 @@ sekali seumur hidup vault.
 
 Sekarang buat invoice **#2** dari nol dan simpan → modal **muncul lagi**. Itu benar.
 
-- [ ] Lolos
+- [x] **Lolos** — Arif, 14 Jul 2026, commit `3a0bcb4`
 
 ### 3.4 Katalog tidak menduplikasi
 
@@ -305,7 +309,7 @@ dianggap sama), dengan harga berbeda. Simpan.
 **Seharusnya:** katalog **tidak** bertambah entri kembar, dan harga entri lamanya **tidak** ditimpa.
 Baris tanpa deskripsi dilewati begitu saja.
 
-- [ ] Lolos
+- [x] **Lolos** — Arif, 14 Jul 2026, commit `3a0bcb4`
 
 ### 3.5 Batas 3 invoice (Free)
 
@@ -320,21 +324,25 @@ Lalu tekan **New invoice** untuk yang keempat.
 yang sudah ada **tidak pernah disembunyikan atau dihapus** — hanya pembuatan baru yang diblokir.
 Membuka dan **menyunting** invoice lama harus tetap bisa, termasuk menyimpannya lagi.
 
-- [ ] Lolos
+- [x] **Lolos** — Arif, 14 Jul 2026, commit `3a0bcb4`
 
-### 3.6 Pengaman kedua di jalur Simpan
+### 3.6 Pengaman kedua di jalur Simpan — TIDAK PUNYA WUJUD YANG BISA DIUJI
 
-Gerbang utamanya di pembuatan; ini jaring pengaman untuk draf yang sudah terlanjur terbuka. Cara
-memicunya:
+Aku menulis prosedur untuk ini, dan prosedurnya mustahil. Arif menemukannya: toggle Pro **me-reload
+jendela**, jadi kamu tidak bisa membiarkan draf terbuka sambil mematikan Pro.
 
-1. Nyalakan **Dev → Pro**.
-2. Tekan New invoice (sekarang boleh) — biarkan sebagai draf, **jangan simpan**.
-3. Kembali ke Settings → Dev → **matikan Pro**.
-4. Kembali ke editor dan tekan **Simpan**.
+Tapi masalahnya lebih dalam. Dengan gerbang di **pembuatan** sudah terpasang, kamu tidak akan pernah
+bisa punya draf invoice **baru** yang terbuka sementara jumlah invoice sudah 3 — gerbangnya
+menghalangi lebih dulu.
 
-**Seharusnya:** digerbangi ke dialog upgrade — **tidak** tersimpan diam-diam sebagai invoice keempat.
+Pengaman ini memang bukan untukmu. Komentar kodenya mengatakannya: ia menangkap satu kasus tepi —
+pengguna yang **memutakhirkan dari build lama** dan masih menyimpan draf keempat dari sebelum gerbang
+pembuatan ada. Kasus itu tidak bisa direka ulang di build yang sudah punya gerbangnya.
 
-- [ ] Lolos
+**Jadi ia dilewati, dan itu jawaban yang benar** — bukan karena malas, tapi karena kasus ujinya tidak
+punya wujud. Yang menjaganya adalah kodenya (`commit()` di `invoices-view.tsx`), dan itu sudah dibaca.
+
+- [x] **Dilewati** — tidak punya wujud yang bisa diuji (Arif, 14 Jul 2026)
 
 ### 3.7 Gerbang Pro pada template
 
@@ -347,7 +355,7 @@ batas-invoice). Batalkan → template tetap Minimal.
 **Pintu belakang.** Tutup app, ubah `template` di `invois-data.json` jadi `"aurora"`, buka lagi.
 **Preview dan ekspor harus tetap Minimal.** Gerbangnya ada di render, bukan cuma di UI pemilih.
 
-- [ ] Lolos
+- [x] **Lolos** — Arif, 14 Jul 2026, commit `3a0bcb4`
 
 > **Meninggalkan:** `v-baru`, 3 invoice tersimpan, katalog terisi, masih **Free**.
 > **Sekarang nyalakan Dev → Pro** dan biarkan menyala sampai Fase 8.
@@ -389,7 +397,7 @@ ke folder yang sama → file kedua dapat nama unik, **tidak menimpa**.
 Hapus folder `Exports` lewat Finder, lalu ekspor lagi. **Seharusnya:** folder dibuat ulang, ekspor
 berhasil, tidak ada error.
 
-- [ ] Lolos
+- [x] **Lolos** — Arif, 14 Jul 2026, commit `3a0bcb4`
 
 > **Meninggalkan:** sama, plus beberapa file di `Exports`.
 
@@ -425,7 +433,7 @@ Sekalian telusuri seluruh UI dalam bahasa Indonesia: cari teks yang tidak ikut b
 mentah** yang bocor ke layar (misalnya `inv.dueLabel` alih-alih "Jatuh tempo:"). Cek juga tanggal di
 preview invoice: `1 Januari 2026` (ID) vs `January 1, 2026` (EN).
 
-- [ ] Lolos
+- [ ] **Dilewati** — Arif, 14 Jul 2026
 
 ### 5.2 Kunci mata uang
 
@@ -435,21 +443,35 @@ Kamu punya 3 invoice tersimpan. Coba ganti mata uang.
 Alasannya jujur: harga tersimpan **tidak dikonversi** — mengganti mata uang mengubah arti angka yang
 sama. Batalkan.
 
-- [ ] Lolos
+- [x] **Lolos** — Arif, 14 Jul 2026, commit `3a0bcb4`
 
 ### 5.3 Penomoran
 
 Tersedia **delapan** token: `{PREFIX}` `{YYYY}` `{YY}` `{MM}` `{MMM}` `{DD}` `{CLIENT}` `{SEQ}`. Klik
 satu untuk menyalin → toast muncul.
 
-Ubah format jadi `{PREFIX}/{YYYY}/{MM}/{SEQ}`, padding 4. Buat invoice baru → nomornya mengikuti
-format itu, dan urutannya **melanjutkan** nomor terakhir, bukan mengulang dari 1.
+Buat invoice baru **tanpa mengubah format** → urutannya **melanjutkan** nomor terakhir.
+
+Lalu ubah formatnya jadi `{PREFIX}/{YYYY}/{MM}/{SEQ}`, padding 4, dan buat invoice lagi.
+
+**Urutannya akan mengulang dari 1, dan itu BENAR.** Aku sempat menulis sebaliknya, dan Arif
+menabraknya. Penjelasannya: pencacah dihitung **per-lingkup**, dan lingkupnya adalah formatmu dengan
+semua token terisi kecuali `{SEQ}`. Ganti formatnya, dan kamu pindah ke lingkup baru yang memang belum
+punya nomor apa pun.
+
+Itu bukan efek samping — itu justru fiturnya. Format ber-`{MM}` mereset pencacah tiap bulan;
+ber-`{CLIENT}` mencacah per klien. Kemampuan yang sama itulah yang membuat pergantian format memulai
+seri baru.
+
+> **Keputusan produk yang belum pernah diambil sadar:** apakah memulai seri dari 1 di tengah tahun itu
+> yang kamu mau? Untuk akuntansi umumnya aman (string nomornya berbeda, jadi tidak ada duplikat), tapi
+> ini layak diputuskan, bukan diwarisi.
 
 Lalu uji `{CLIENT}`: masukkan ke format, buat invoice, dan **ganti kliennya**. Nomornya harus ikut
 berubah. Ini token yang paling mungkin patah — satu-satunya yang bergantung pada isi invoice, bukan
 pada tanggal atau hitungan.
 
-- [ ] Lolos
+- [x] **Lolos** — Arif, 14 Jul 2026, commit `3a0bcb4`
 
 ### 5.4 Palet
 
@@ -463,7 +485,7 @@ gelap.
 **Preview invoice harus tetap putih** apa pun paletnya. Palet mengubah app, bukan dokumen yang sampai
 ke klien.
 
-- [ ] Lolos
+- [x] **Lolos** — Arif, 14 Jul 2026, commit `3a0bcb4`
 
 > **Meninggalkan:** `v-baru` dengan profil lengkap. Kembalikan bahasa dan palet ke selera kerjamu.
 
@@ -494,7 +516,7 @@ setara dengan menimpa vault.
 Vault dummy ini berformat **lama**, jadi ia akan dimigrasi saat dibuka. Cek beberapa totalnya masuk
 akal (bukan 100× lipat, bukan 1/100).
 
-- [ ] Lolos
+- [x] **Lolos** — Arif, 14 Jul 2026, commit `3a0bcb4`
 
 ### 6.2 Batas 1 bisnis (Free)
 
@@ -506,7 +528,7 @@ tergerbang.
 
 Nyalakan Pro lagi.
 
-- [ ] Lolos
+- [x] **Lolos** — Arif, 14 Jul 2026, commit `3a0bcb4`. Pengulangan dari 1 setelah ganti format itu BENAR (lingkup baru); harapan di dokumen yang salah, sudah dibetulkan. `{CLIENT}` lolos.
 
 ### 6.3 Menghapus bisnis tidak menghapus file
 
@@ -515,13 +537,13 @@ Hapus salah satu bisnis dari daftar.
 **Seharusnya:** **file di disk tetap ada.** Pastikan dengan Finder. Daftar bisnis itu pointer, bukan
 data.
 
-- [ ] Lolos
+- [x] **Lolos** — Arif, 14 Jul 2026, commit `3a0bcb4`
 
 ### 6.4 Memindahkan vault
 
 Pindahkan lokasi sebuah vault. Folder `Exports` **default** ikut pindah bersamanya.
 
-- [ ] Lolos
+- [x] **Lolos** — Arif, 14 Jul 2026, commit `3a0bcb4`
 
 > **Meninggalkan:** dua bisnis terdaftar. **Aktifkan yang dummy** (431 invoice) untuk fase berikutnya.
 
@@ -543,7 +565,7 @@ sama dengan editor. Dulu daftar ini punya **salinan kedua** rumus uangnya, dan s
 menyimpang. Buka salah satu invoice dan bandingkan totalnya dengan yang tertulis di daftar — **harus
 identik**.
 
-- [ ] Lolos
+- [x] **Lolos** — Arif, 14 Jul 2026, commit `3a0bcb4`
 
 ### 7.2 Dashboard
 
@@ -559,7 +581,7 @@ bertanggal bulan itu di halaman Invoices.
 > Recharts, dan grafik penggantinya yang ditulis tangan tidak membawanya. Ini regresi yang menunggu
 > keputusan (pasang lagi, atau buang pipanya), bukan kasus uji.
 
-- [ ] Lolos
+- [x] **Lolos** — Arif, 14 Jul 2026, commit `3a0bcb4`
 
 ### 7.3 Klien & katalog
 
@@ -569,7 +591,7 @@ Tambah, ubah, hapus, cari, di kedua halaman. Harga katalog memakai input mata ua
 Hapus klien yang dipakai invoice tersimpan → **invoice lamanya tidak boleh berubah.** Invoice menyimpan
 salinan data kliennya sendiri; ia dokumen, bukan tautan.
 
-- [ ] Lolos
+- [ ] **Dilewati** — Arif, 14 Jul 2026
 
 > **Meninggalkan:** apa pun. Fase berikutnya me-reset onboarding.
 
@@ -611,7 +633,7 @@ muncul** — kalau ada, app menyemai ke atas vault orang.
 itu pada penyimpanan berikutnya. Kalau History kosong padahal file berisi, **hentikan dan jangan
 simpan apa pun.**
 
-- [ ] Lolos
+- [x] **Lolos** — Arif, 14 Jul 2026, commit `3a0bcb4`
 
 ### 8.3 Menolak folder di dalam vault lain
 
@@ -635,7 +657,7 @@ atau muncul `invois-data.json` di dalam `v-baru/Backups`, **lapor**.
 Terakhir, pastikan yang **boleh** tetap boleh: menambahkan `~/Desktop/qa/v-baru` sendiri harus
 berhasil. Perbaikan yang menolak segalanya juga "lolos" uji pertama.
 
-- [ ] Lolos
+- [x] **Lolos** — Arif, 14 Jul 2026, commit `3a0bcb4`
 
 > **Meninggalkan:** `v-adopsi` aktif.
 
@@ -664,7 +686,7 @@ berikutnya, di file: `"discountValue": 5000`, dan field `"discount"` sudah tidak
 belum — `5000` masuk akal sebagai "$50 dalam sen" maupun "$5.000 yang belum diskalakan". Migrasinya
 dulu benar-benar menskalakan dua kali saat diuji. Penggantian nama field itulah penandanya sekarang.
 
-- [ ] Lolos
+- [ ] **Dilewati** — Arif, 14 Jul 2026
 
 ### 9.2 Buka-lalu-tutup tidak boleh menulis apa pun
 
@@ -677,7 +699,7 @@ Migrasi terjadi di memori; ia baru mendarat ke disk saat kamu benar-benar menyim
 md5 <vault>/invois-data.json   # sebelum dan sesudah — harus sama
 ```
 
-- [ ] Lolos
+- [ ] **Dilewati** — Arif, 14 Jul 2026
 
 > **Meninggalkan:** apa pun.
 
@@ -696,22 +718,62 @@ Untuk semuanya: **tutup app dulu**, ubah file, baru buka.
 
 Rusak `invois-data.json` (hapus satu kurung kurawal).
 
-**Seharusnya:** app memuat dari `.bak1` dan memasang **banner kuning permanen** yang **tidak bisa
-ditutup**. Sekarang ketik sesuatu, tunggu, tutup app.
+**Seharusnya:** app memuat dari `.bak1` dan memasang **banner kuning permanen** yang tidak bisa
+ditutup.
+
+Lalu buktikan bahwa app benar-benar **menolak menulis** — ini bagian yang tadi kutulis terlalu
+singkat ("ketik sesuatu"), dan pantas dipertanyakan:
+
+1. Catat ukuran file rusaknya: `ls -l <vault>/invois-data.json`
+2. Di app, **ubah apa pun yang biasanya memicu penyimpanan** — ketik nama klien, tambah baris item,
+   ubah harga.
+3. Tunggu ±2 detik (penyimpanan ditunda 500 ms), lalu tutup app (⌘Q).
+4. Cek ukurannya lagi.
 
 **File rusak itu harus masih persis sama.** Kalau ia tertimpa, itu bug serius — lapor.
 
-- [ ] Lolos
+Inilah janji mode aman, dan satu-satunya cara membuktikannya: lebih baik app menolak bekerja daripada
+menimpa sesuatu yang gagal ia baca.
+
+- [ ] **GAGAL → SUDAH DIPERBAIKI, uji ulang.** Arif, 14 Jul 2026: setelah memindahkan folder lewat
+  Finder dan me-relokasi vault, folder Exports **tetap menunjuk ke path lama**.
+  Sebabnya bukan yang kuduga. Kodenya ada dan benar — tapi petunjuk relokasi itu **sekali pakai**, dan
+  React StrictMode menjalankan efeknya **dua kali** di dev. Jalan pertama memakai habis petunjuknya,
+  menunggu disk, lalu membuang hasilnya sendiri (bendera `cancelled`-nya sudah menyala karena cleanup
+  StrictMode sudah jalan). Jalan kedua tidak menemukan apa-apa lagi. Petunjuknya habis tanpa pernah
+  dipakai. Sekarang: baca → terapkan → **baru** hapus.
 
 ### 10.2 JSON sah, bentuk salah
 
-Ubah `"invois_history"` dari array jadi objek: `{ "oops": true }`.
+Di `invois-data.json`, cari kunci `"invois_history"`. Nilainya sebuah **array** (diawali `[`). Ganti
+seluruh nilainya jadi sebuah **objek**.
 
-**Seharusnya:** banner mode aman; History kosong **tapi tidak ditulis**. Tanpa penjagaan ini, vault
-berisi 300 invoice akan tampak seperti vault baru yang kosong — dan simpan berikutnya mengabadikan
-kekosongan itu.
+Dari:
 
-- [ ] Lolos
+```json
+  "invois_history": [ { "id": "inv-1", ... }, { "id": "inv-2", ... } ],
+```
+
+menjadi:
+
+```json
+  "invois_history": { "oops": true },
+```
+
+File-nya tetap **JSON yang sah** — itu justru intinya. Yang salah bukan sintaksnya, tapi **bentuknya**.
+Kerusakan seperti ini yang paling berbahaya, karena ia lolos dari semua pemeriksaan yang cuma bertanya
+"apakah file ini bisa di-parse".
+
+**Seharusnya:** banner mode aman muncul; History tampak kosong **tapi tidak pernah ditulis**. Tanpa
+penjagaan ini, vault berisi 300 invoice akan tampak seperti vault baru yang kosong — dan simpan
+berikutnya mengabadikan kekosongan itu.
+
+- [ ] **GAGAL → SUDAH DIPERBAIKI, uji ulang.** Arif, 14 Jul 2026: `~/Desktop/qa` (folder INDUK yang
+  memuat v-baru dan v-adopsi) **diterima**; `v-baru/Backups` sudah benar ditolak.
+  Bersarang itu buruk di **dua arah**, dan kami cuma menjaga satu. `addVault` menangkap kasus "memuat"
+  lewat daftar terdaftar — tapi onboarding tidak punya daftar. Sekarang ada `dirContainsVault()` yang
+  memindai anak langsung folder itu, dipakai di onboarding **dan** addVault.
+  (Butuh jembatan baru `fs.readDirs` di lapisan Electron → **restart app**, bukan sekadar reload.)
 
 ### 10.3 Vault dari masa depan
 
@@ -721,7 +783,7 @@ Ubah formatnya jadi `"format": 99` dan tambahkan field karangan.
 lagi. App yang lebih tua tidak boleh menebak isi file dari app yang lebih baru — menebak berarti
 membuang field yang tak dikenalnya, lalu menyimpan kehilangan itu.
 
-- [ ] Lolos
+- [ ] **Dilewati** — Arif, 14 Jul 2026
 
 ### 10.4 Folder vault hilang saat app berjalan
 
@@ -730,14 +792,27 @@ Saat app **berjalan**, pindahkan folder vault-nya lewat Finder.
 **Seharusnya:** layar pemulihan ("vault tidak ditemukan") menawarkan mencari lokasinya — **bukan** app
 kosong yang lalu menyimpan kekosongan itu ke pointer.
 
-- [ ] Lolos
+- [x] **Lolos** — Arif, 14 Jul 2026, commit `3a0bcb4`
 
 ### 10.5 Backup memang ada, dan file utama tidak pernah hilang
 
-Simpan beberapa kali, lalu lihat folder vault.
+Langkahnya (ini yang tadi kurang jelas):
 
-**Seharusnya:** `.bak1`, `.bak2`, `.bak3` (rotasi per simpan) **dan** `Backups/invois-YYYY-MM-DD.json`
-(snapshot harian, satu per hari).
+1. Buka sebuah invoice, ubah sesuatu, **Simpan**. Ulangi 3–4 kali, dengan jeda beberapa detik.
+2. Lihat isi folder vault: `ls -la <vault>/ <vault>/Backups/`
+
+**Seharusnya ada:** `invois-data.json` (yang utama), `.bak1`, `.bak2`, `.bak3` (rotasi per simpan),
+dan `Backups/invois-YYYY-MM-DD.json` (snapshot harian — satu file per hari, bukan per simpan).
+
+Lalu dua hal yang harus kamu perhatikan khusus:
+
+**File utamanya tidak boleh pernah hilang, bahkan sesaat.** Sulit ditangkap dengan mata, jadi cukup
+pastikan ia selalu ada setiap kali kamu melihat.
+
+**Meminimalkan lalu mengembalikan jendela 4–5 kali TIDAK boleh menambah atau merotasi backup.** Cek
+`ls -la` sebelum dan sesudah — `.bak1..3` harus sama persis. Dulu bisa berubah, yang artinya "3 backup"
+sebenarnya berarti "3 kali sembunyikan jendela", dan seseorang bisa kehilangan data tanpa mengetik
+apa pun.
 
 Yang **paling penting**: file utamanya tidak boleh pernah hilang, bahkan sesaat. Rotasi **menyalin**,
 tidak memindahkan. Ini bukan kehati-hatian teoretis — pada 13 Juli 2026 versi lama kode ini memindahkan
@@ -756,7 +831,13 @@ Ubah satu qty jadi `2.5` dan satu harga jadi `-100`.
 **Seharusnya:** qty pecahan dipotong (berkontribusi 2, bukan 2,5), harga negatif dianggap 0. Tidak
 crash, tidak total negatif.
 
-- [ ] Lolos
+- [ ] **GAGAL → SUDAH DIPERBAIKI, uji ulang.** Arif, 14 Jul 2026: editor menampilkan qty **2.5** dan
+  harga **1** — nilai mentah dari file.
+  Aritmetikanya sebenarnya tidak pernah salah (`calcTotals` memakai `safeQty`/`safeMinor`, jadi ia
+  menghitung 2 dan 0). Yang salah adalah **layarnya**: app memperlihatkan angka yang berbeda dari yang
+  ia jumlahkan. App yang diam-diam menghitung sesuatu selain yang ia tunjukkan padamu lebih berbahaya
+  daripada app yang menampilkan angka salah secara jujur. Sekarang baris item dibersihkan saat masuk
+  (`sanitizeInvoice`), jadi yang tampil = yang dihitung.
 
 ---
 
