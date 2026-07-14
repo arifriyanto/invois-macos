@@ -14,6 +14,25 @@ Untuk `invois-macos`, dijalankan dengan `npm run dev`. Terakhir dicocokkan denga
 > salah, format masa depan, folder hilang, rotasi backup). Itu justru bagian tempat kegagalan paling
 > mahal bersembunyi — jadi seseorang tetap harus mengerjakannya. Orang itu kamu.
 
+---
+
+## Catatan uji terakhir
+
+Centang kotaknya langsung di dokumen ini sambil kamu jalan, lalu isi tiga baris di bawah dan commit.
+
+Tiga baris itu yang membuat centangnya berarti: **"lolos" selalu berarti "lolos pada commit ini"**.
+Tanpa itu, centang cuma memberitahumu bahwa dulu, entah kapan, sesuatu pernah bekerja.
+
+```
+Diuji oleh   :
+Tanggal      :
+Commit       :        ← git rev-parse --short HEAD
+```
+
+Kalau nanti kamu menyentuh `data-store.ts`, kosongkan lagi centang Fase 8–10. Kalau menyentuh
+`money.ts` atau `format.ts`, kosongkan Fase 2. Bukan aturan formal — cuma kejujuran: kode yang
+mendasarinya sudah berubah, jadi centang lamanya sudah tidak membuktikan apa-apa.
+
 Dokumen ini melengkapi test otomatis, bukan menggantikannya. `npm run verify` sudah menjamin
 aritmetika uang, migrasi vault, penomoran, i18n, dan persistensi. Yang **tidak** bisa dijamin unit
 test adalah semua yang menyentuh disk sungguhan, jendela sungguhan, dan mesin cetak Chromium — dan
@@ -822,20 +841,6 @@ ini di build dev saja tidak membuktikan apa-apa.
 - [ ] Lolos
 
 ---
-
-## Mencatat hasil
-
-**Jangan mencentang kotak di dokumen ini.** Dokumen ini **spesifikasi** — ia menyatakan apa yang
-seharusnya benar, bukan apa yang kebetulan benar kemarin. Kotak `- [ ]` di tiap kasus adalah daftar
-periksa saat kamu berjalan, bukan tempat menyimpan bukti.
-
-Hasil ditulis di **`docs/qa-runs/`**, satu file per sesi, disalin dari `_template.md`. Alasannya satu
-kalimat: **"lolos" tidak pernah berdiri sendiri — yang ada hanya "lolos pada commit ini, di build
-ini."** Centang tanpa commit hanya memberitahumu bahwa dulu, entah kapan, sesuatu pernah bekerja. Itu
-nyaris tak berguna, tapi terasa seperti jaminan — dan itu kombinasi yang berbahaya.
-
-Baca `docs/qa-runs/README.md` untuk prosedurnya, termasuk kapan hasil lama jadi basi (singkatnya:
-sentuh `data-store.ts`, dan Fase 8–10 kembali jadi "belum diuji", tak peduli kemarin lolos).
 
 ## Cara melaporkan kegagalan
 
