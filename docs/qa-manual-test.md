@@ -894,7 +894,7 @@ grep -c '"price":' ~/Desktop/qa/v-lama/invois-data.json || echo "0 (benar: field
 **Seharusnya:** baris pertama memuat `"__invois": { "format": 3 }`; ada `discountValue": 5000`; dan
 **tidak ada lagi** field `"price":` (semuanya sudah jadi `priceMinor`).
 
-- [ ] Lolos
+- [x] **Lolos** — Arif, 14 Jul 2026, commit `2073f8d`. Migrasi diskon flat bekerja pada file sungguhan: $50 tetap $50 (bukan $0.50, bukan $5.000). Ini jalur yang **nol** dari 789 invoice nyata pernah menyentuhnya.
 
 
 
@@ -1101,7 +1101,7 @@ menyimpan kekosongannya.
 **Bentuk kegagalannya:** hasilnya `0`. Artinya app membuang field yang tidak dipahaminya, lalu
 menyimpan hasil pembuangan itu.
 
-- [ ] Lolos
+- [x] **Lolos** — Arif, 14 Jul 2026, commit `2073f8d`. Banner muncul, field karangan tetap utuh (hasil grep = 1).
 
 
 
