@@ -36,15 +36,30 @@ const Ctx = React.createContext<CatalogValue | null>(null);
 export function CatalogProvider({ children }: { children: React.ReactNode }) {
   const [items, setItems] = React.useState<CatalogItem[]>(loadCatalog);
 
-  // Persist on change, skipping the initial mount (data was just loaded).
-  const firstRun = React.useRef(true);
+  // Persist on change — and NOTHING on load.
+  //
+  // This used to be a `firstRun` ref: skip the first effect run, write on every
+  // one after. React StrictMode invokes effects TWICE in development — run, clean
+  // up, run again — so the first invocation flipped the flag and the second one
+  // WROTE. Merely opening the app persisted this collection, and on a legacy vault
+  // that write dragged the format-3 migration along with it, converting a file the
+  // user had never touched. Arif caught it with an md5 (QA 9.2), three times.
+  //
+  // A one-shot boolean is not a guard against work that can be replayed. So we hold
+  // the value we LOADED and compare against it: identical means the user has changed
+  // nothing, whatever React did to our effects. That is idempotent by construction,
+  // which is exactly what StrictMode is asking for.
+  const loaded = React.useRef<string | null>(null);
   React.useEffect(() => {
-    if (firstRun.current) {
-      firstRun.current = false;
+    const next = JSON.stringify(items);
+    if (loaded.current === null) {
+      loaded.current = next; // what came off disk — nothing to save yet
       return;
     }
+    if (next === loaded.current) return; // unchanged → the vault stays untouched
     try {
-      setRaw(KEY, JSON.stringify(items));
+      setRaw(KEY, next);
+      loaded.current = next;
     } catch {
       /* ignore */
     }

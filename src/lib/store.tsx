@@ -333,16 +333,30 @@ export function InvoiceProvider({ children }: { children: React.ReactNode }) {
   // Production is always false; a dev-only Settings toggle can flip it (readDevPro).
   const [isPro] = React.useState(readDevPro);
 
-  // Persist the invoice draft on every change, skipping the initial mount so we
-  // never clobber a saved draft with the just-loaded values.
-  const firstRun = React.useRef(true);
+  // Persist the invoice draft on change — and NOTHING on load.
+  //
+  // This was the last writer, and the worst of them. It used to skip the first
+  // effect run with a `firstRun` ref, but React StrictMode invokes effects TWICE
+  // in development: the first run flipped the flag, the second one WROTE. And a
+  // legacy vault has no draft key at all, so what got written was a brand-new
+  // empty draft — a key that had never existed, appearing in the file because the
+  // user opened the app. That write carried the format-3 migration with it and
+  // converted the whole file.
+  //
+  // A one-shot boolean cannot guard work that can be replayed. Hold the value we
+  // LOADED and compare: identical means the user has changed nothing, no matter
+  // how many times React decides to run this. Idempotent by construction.
+  const loadedDraft = React.useRef<string | null>(null);
   React.useEffect(() => {
-    if (firstRun.current) {
-      firstRun.current = false;
+    const next = JSON.stringify(invoice);
+    if (loadedDraft.current === null) {
+      loadedDraft.current = next; // as loaded (or freshly created) — not ours to save
       return;
     }
+    if (next === loadedDraft.current) return; // unchanged → the vault stays untouched
     try {
-      setRaw(INVOICE_KEY, JSON.stringify(invoice));
+      setRaw(INVOICE_KEY, next);
+      loadedDraft.current = next;
     } catch {
       /* ignore */
     }
