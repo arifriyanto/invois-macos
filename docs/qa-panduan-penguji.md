@@ -33,8 +33,15 @@ dibuang, misalnya di Desktop, beri nama `uji-invois`.
 
 Selama panduan ini, **jangan pakai folder yang berisi data yang kamu sayangi.**
 
-Kalau nanti kamu ingin mengulang dari awal, minta bantuan Arif untuk mereset — ada satu langkah kecil
-yang perlu dia lakukan.
+**Satu hal penting sebelum mulai:** Bagian 1 sampai 3 harus dikerjakan sebagai pengguna **gratis**.
+Kalau aplikasi yang kamu terima sudah dalam mode **Pro**, beberapa pengujian tidak akan berjalan sama
+sekali — dan celakanya, ia akan tampak seolah-olah lolos.
+
+Cara memastikan: buka **Settings**, cari tab **Dev**, dan pastikan tombol **Pro** dalam keadaan
+**mati**. Kalau kamu tidak menemukan tab itu, tanyakan ke Arif.
+
+Kalau nanti kamu ingin mengulang dari awal, minta bantuan Arif untuk mereset — dan ingatkan dia untuk
+**mematikan Pro juga**, karena mereset data saja tidak otomatis mengembalikanmu ke versi gratis.
 
 ---
 
@@ -221,6 +228,9 @@ tertimpa.
 - [ ] Ada yang aneh: ______________________
 
 ### 3.5 Batas 3 faktur di versi gratis
+
+> **Periksa dulu:** Settings → tab Dev → tombol **Pro** harus **mati**. Kalau menyala, pengujian ini
+> dan dua berikutnya tidak akan terjadi sama sekali — dan akan tampak lolos padahal tidak diuji.
 
 Versi gratis hanya boleh menyimpan **3 faktur**. Sekarang kamu punya 2. Buat dan simpan faktur
 **ketiga** — masih boleh.

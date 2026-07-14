@@ -50,8 +50,35 @@ location.reload();
 ```
 
 Ini **tidak** menghapus file vault-mu — hanya melupakan lokasinya. Vault lamanya masih di disk dan
-bisa diadopsi ulang. (Kalau kamu ingin app benar-benar lupa segalanya, termasuk toggle Pro dan
-keadaan sidebar: `localStorage.clear()`.)
+bisa diadopsi ulang.
+
+**Tapi perhatikan: reset pointer TIDAK mengembalikanmu ke Free.** App menyimpan lima hal di
+localStorage, dan perintah di atas hanya menyentuh satu:
+
+| Kunci | Isinya | Terhapus oleh perintah di atas? |
+|---|---|---|
+| `invois_vault_config` | lokasi vault (pointer) | **ya** |
+| `invois_dev_pro` | status Pro | **tidak** |
+| `invois_lang` | bahasa UI | **tidak** |
+| `invois_sidebar_collapsed` | sidebar menguncup | **tidak** |
+| `invois_exportdir_relocate` | petunjuk sementara saat vault dipindah | **tidak** |
+
+Ini bukan sekadar ketidaknyamanan. Kalau kamu mengulang rencana ini dari atas sementara Pro masih
+menyala, **tiga kasus uji jadi tidak bisa gagal**: batas 3 invoice (3.5), pengaman jalur simpan (3.6),
+dan gerbang template (3.7) tidak akan pernah terpicu — dan semuanya akan tampak "lolos". Uji yang
+tidak bisa gagal lebih buruk daripada tidak ada uji, karena ia memberi rasa aman palsu.
+
+Jadi untuk memulai bersih sebagai pengguna baru yang **Free**:
+
+```js
+localStorage.clear();
+location.reload();
+```
+
+Itu menghapus kelimanya. (Bahasa akan kembali ke English — itu default-nya.)
+
+Perhatikan juga: **bahasa dan status Pro melekat pada mesin, bukan pada vault.** Berpindah bisnis
+tidak mengubah keduanya.
 
 **Melihat isi vault.** Selama pengujian, ini teman terbaikmu:
 
@@ -73,8 +100,12 @@ pengguna **Free**.
 
 ## Fase 1 — Pemasangan pertama (Free)
 
-> **Keadaan awal:** tidak ada vault terdaftar. Kalau app-mu sudah pernah dipakai, hapus pointer-nya
-> dulu (Fase 0).
+> **Keadaan awal:** tidak ada vault terdaftar, dan **kamu harus Free**.
+>
+> **Pastikan dulu.** Buka Settings → Dev dan lihat toggle Pro-nya. Kalau menyala, matikan — atau
+> mulai bersih dengan `localStorage.clear()`. Reset pointer saja **tidak cukup**: Pro disimpan di
+> kunci terpisah dan akan selamat. Kalau Pro menyala di sini, Fase 3.5–3.7 akan "lolos" tanpa pernah
+> benar-benar diuji.
 
 ### 1.1 Onboarding vault baru
 
@@ -265,6 +296,9 @@ Baris tanpa deskripsi dilewati begitu saja.
 - [ ] Lolos
 
 ### 3.5 Batas 3 invoice (Free)
+
+> **Periksa dulu:** Settings → Dev → toggle Pro harus **mati**. Kalau menyala, tiga kasus berikut
+> tidak akan terpicu sama sekali dan akan tampak lolos.
 
 `FREE_INVOICE_LIMIT = 3`. Sekarang kamu punya 2. Buat dan simpan **invoice #3** — masih boleh.
 
