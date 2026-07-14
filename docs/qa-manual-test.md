@@ -134,7 +134,9 @@ titik berdenyut di Klien → Item → Simpan. File `invois-data.json` muncul di 
 `"__invois": { "format": 3 }` di paling atas dan satu klien + satu item katalog berlabel **(Sample)**
 (id-nya `sample-client` dan `sample-item`).
 
-- [x] **Lolos** — Arif, 14 Jul 2026, commit `4402618`
+- [x] **Lolos** — Arif, 14 Jul 2026, commit `6013bed`
+
+
 
 ### 1.2 Placeholder telepon ikut MATA UANG
 
@@ -158,7 +160,9 @@ Ofcom untuk fiksi, jadi tebakan selengkap apa pun tidak menghubungi siapa-siapa.
 
 Selesai menguji, kembalilah ke USD dan tuntaskan onboarding ke `v-baru`.
 
-- [x] **Lolos** — Arif, 14 Jul 2026, commit `3a0bcb4`
+- [x] **Lolos** — Arif, 14 Jul 2026, commit `6013bed`
+
+
 
 > **Meninggalkan:** vault `v-baru` aktif, mata uang USD, **Free**, 0 invoice tersimpan, 1 klien
 > (Sample), 1 item katalog (Sample). Editor invoice terbuka dengan beacon menyala.
@@ -189,7 +193,9 @@ Di kolom **Qty** sebuah baris item:
 dianggapnya bukan angka sah — dan `2.` termasuk. Sebelum diperbaiki, mengetik "2.5" membuat kolom
 berkedip ke `1` di tengah pengetikan. Kalau kamu melihat kedipan itu lagi, perbaikannya mundur.
 
-- [x] **Lolos** — Arif, 14 Jul 2026, commit `3a0bcb4`
+- [x] **Lolos** — Arif, 14 Jul 2026, commit `6013bed`
+
+
 
 ### 2.2 Input harga (mata uang)
 
@@ -204,7 +210,9 @@ USD:
 Klik di tengah angka `1,234.56` lalu ketik satu digit: **kursor tidak boleh melompat** ke ujung.
 Salin isinya (⌘C) dan tempel di TextEdit — yang tersalin harus `1234.56` bersih, tanpa koma ribuan.
 
-- [x] **Lolos** — Arif, 14 Jul 2026, commit `3a0bcb4`
+- [x] **Lolos** — Arif, 14 Jul 2026, commit `6013bed`
+
+
 
 ### 2.3 Bug lama yang tidak boleh kembali
 
@@ -227,7 +235,9 @@ Itu properti yang dicek klienmu saat ia curiga.
 `3 × 19.99` bernilai `59.97000000000001` di memori — layar membulatkannya, jadi kesalahannya tak
 terlihat sampai ia menumpuk lewat diskon dan pajak.
 
-- [x] **Lolos** — Arif, 14 Jul 2026, commit `3a0bcb4`
+- [x] **Lolos** — Arif, 14 Jul 2026, commit `6013bed`
+
+
 
 ### 2.4 Pembulatan setengah
 
@@ -235,7 +245,9 @@ Ganti jadi **qty 1**, **harga 0.01**, diskon **50%**. Setengah sen tidak ada.
 
 **Seharusnya:** diskon `$0.01`, total `$0.00` — dibulatkan **menjauhi nol**, bukan dipotong jadi 0.
 
-- [x] **Lolos** — Arif, 14 Jul 2026, commit `3a0bcb4`. Total $0.00 memang yang diharapkan: diskon 50% dari $0.01 = setengah sen, dibulatkan menjauhi nol jadi $0.01, sehingga total $0.00.
+- [x] **Lolos** — Arif, 14 Jul 2026, commit `6013bed`. Total $0.00 memang yang diharapkan: 50% dari $0.01 = setengah sen → dibulatkan menjauhi nol jadi $0.01 → total $0.00.
+
+
 
 ### 2.5 Diskon flat melebihi subtotal
 
@@ -243,14 +255,18 @@ Ganti jadi **qty 1**, **harga 0.01**, diskon **50%**. Setengah sen tidak ada.
 
 **Seharusnya:** diskon dijepit ke `$19.99`, pajak `$0.00`, total `$0.00`. **Tidak pernah negatif.**
 
-- [x] **Lolos** — Arif, 14 Jul 2026, commit `3a0bcb4`
+- [x] **Lolos** — Arif, 14 Jul 2026, commit `6013bed`
+
+
 
 ### 2.6 Angka besar
 
 **qty 999**, **harga 1234.56**. Subtotal harus `$1,233,325.44` — tepat, tanpa pembulatan aneh di digit
 terakhir.
 
-- [x] **Lolos** — Arif, 14 Jul 2026, commit `3a0bcb4`
+- [x] **Lolos** — Arif, 14 Jul 2026, commit `6013bed`
+
+
 
 > **Meninggalkan:** masih 0 invoice tersimpan (semua di atas dilakukan di draf yang sama).
 
@@ -274,7 +290,9 @@ mengkliknya tidak melakukan apa-apa. Simpan lagi → terang kembali.
 Ini disengaja: mengekspor draf yang belum tersimpan akan membakar nomor invoice yang belum
 benar-benar ada.
 
-- [x] **Lolos** — Arif, 14 Jul 2026, commit `3a0bcb4`. Ia yang benar: tombolnya TIDAK ADA sampai simpan pertama, bukan sekadar mati. Dokumen dibetulkan.
+- [x] **Lolos** — Arif, 14 Jul 2026, commit `6013bed`. Arif yang benar: tombolnya TIDAK ADA sampai simpan pertama, bukan sekadar mati. Dokumen dibetulkan.
+
+
 
 ### 3.2 Invoice #1 — walkthrough, modal sukses, katalog otomatis
 
@@ -288,7 +306,9 @@ Rapikan draf-nya jadi invoice yang masuk akal: pilih klien **(Sample)**, satu ba
   animasinya, itu regresi).
 - Deskripsi tadi **otomatis masuk Katalog** beserta harganya. Cek di halaman Katalog.
 
-- [x] **Lolos** — Arif, 14 Jul 2026, commit `3a0bcb4`
+- [x] **Lolos** — Arif, 14 Jul 2026, commit `6013bed`
+
+
 
 ### 3.3 Simpan ulang ≠ simpan baru
 
@@ -299,7 +319,9 @@ sekali seumur hidup vault.
 
 Sekarang buat invoice **#2** dari nol dan simpan → modal **muncul lagi**. Itu benar.
 
-- [x] **Lolos** — Arif, 14 Jul 2026, commit `3a0bcb4`
+- [x] **Lolos** — Arif, 14 Jul 2026, commit `6013bed`
+
+
 
 ### 3.4 Katalog tidak menduplikasi
 
@@ -309,7 +331,9 @@ dianggap sama), dengan harga berbeda. Simpan.
 **Seharusnya:** katalog **tidak** bertambah entri kembar, dan harga entri lamanya **tidak** ditimpa.
 Baris tanpa deskripsi dilewati begitu saja.
 
-- [x] **Lolos** — Arif, 14 Jul 2026, commit `3a0bcb4`
+- [x] **Lolos** — Arif, 14 Jul 2026, commit `6013bed`
+
+
 
 ### 3.5 Batas 3 invoice (Free)
 
@@ -324,7 +348,9 @@ Lalu tekan **New invoice** untuk yang keempat.
 yang sudah ada **tidak pernah disembunyikan atau dihapus** — hanya pembuatan baru yang diblokir.
 Membuka dan **menyunting** invoice lama harus tetap bisa, termasuk menyimpannya lagi.
 
-- [x] **Lolos** — Arif, 14 Jul 2026, commit `3a0bcb4`
+- [x] **Lolos** — Arif, 14 Jul 2026, commit `6013bed`
+
+
 
 ### 3.6 Pengaman kedua di jalur Simpan — TIDAK PUNYA WUJUD YANG BISA DIUJI
 
@@ -342,7 +368,9 @@ pembuatan ada. Kasus itu tidak bisa direka ulang di build yang sudah punya gerba
 **Jadi ia dilewati, dan itu jawaban yang benar** — bukan karena malas, tapi karena kasus ujinya tidak
 punya wujud. Yang menjaganya adalah kodenya (`commit()` di `invoices-view.tsx`), dan itu sudah dibaca.
 
-- [x] **Dilewati** — tidak punya wujud yang bisa diuji (Arif, 14 Jul 2026)
+- [ ] **Dilewati — tidak punya wujud yang bisa diuji.** Arif, 14 Jul 2026. Lihat penjelasan di atas.
+
+
 
 ### 3.7 Gerbang Pro pada template
 
@@ -355,7 +383,9 @@ batas-invoice). Batalkan → template tetap Minimal.
 **Pintu belakang.** Tutup app, ubah `template` di `invois-data.json` jadi `"aurora"`, buka lagi.
 **Preview dan ekspor harus tetap Minimal.** Gerbangnya ada di render, bukan cuma di UI pemilih.
 
-- [x] **Lolos** — Arif, 14 Jul 2026, commit `3a0bcb4`
+- [x] **Lolos** — Arif, 14 Jul 2026, commit `6013bed`
+
+
 
 > **Meninggalkan:** `v-baru`, 3 invoice tersimpan, katalog terisi, masih **Free**.
 > **Sekarang nyalakan Dev → Pro** dan biarkan menyala sampai Fase 8.
@@ -374,6 +404,9 @@ Ekspor satu invoice 1 halaman. Lalu tambahkan ~30 baris item pada satu invoice d
 **Seharusnya:** teks bisa diseleksi; menyeret di satu sel tabel tidak menyeret seluruh baris;
 salin-tempel ke Notes menghasilkan tabel rapi. Buka di Chrome **dan** Preview — keduanya harus baik.
 
+- [x] **Lolos** — Arif, 14 Jul 2026, commit `6013bed`
+
+
 ### 4.2 Font — ini soal lisensi, bukan estetika
 
 ```bash
@@ -387,17 +420,25 @@ didistribusikan.
 `strings | grep BaseFont` **tidak** akan melihatnya (font-nya terkompresi di dalam stream). Pakai
 skripnya.
 
+- [ ] **Dilewati** — Arif, 14 Jul 2026
+
+
 ### 4.3 PNG dan nama file
 
 Ekspor PNG — cek ketajaman teks, tidak ada tepi terpotong. Lalu ekspor invoice yang **sama** dua kali
 ke folder yang sama → file kedua dapat nama unik, **tidak menimpa**.
+
+- [x] **Lolos** — Arif, 14 Jul 2026, commit `6013bed`
+
 
 ### 4.4 Folder ekspor memulihkan diri
 
 Hapus folder `Exports` lewat Finder, lalu ekspor lagi. **Seharusnya:** folder dibuat ulang, ekspor
 berhasil, tidak ada error.
 
-- [x] **Lolos** — Arif, 14 Jul 2026, commit `3a0bcb4`
+- [x] **Lolos** — Arif, 14 Jul 2026, commit `6013bed`
+
+
 
 > **Meninggalkan:** sama, plus beberapa file di `Exports`.
 
@@ -433,7 +474,9 @@ Sekalian telusuri seluruh UI dalam bahasa Indonesia: cari teks yang tidak ikut b
 mentah** yang bocor ke layar (misalnya `inv.dueLabel` alih-alih "Jatuh tempo:"). Cek juga tanggal di
 preview invoice: `1 Januari 2026` (ID) vs `January 1, 2026` (EN).
 
-- [ ] **Dilewati** — Arif, 14 Jul 2026
+- [x] **Lolos** — Arif, 14 Jul 2026, commit `6013bed`
+
+
 
 ### 5.2 Kunci mata uang
 
@@ -443,7 +486,9 @@ Kamu punya 3 invoice tersimpan. Coba ganti mata uang.
 Alasannya jujur: harga tersimpan **tidak dikonversi** — mengganti mata uang mengubah arti angka yang
 sama. Batalkan.
 
-- [x] **Lolos** — Arif, 14 Jul 2026, commit `3a0bcb4`
+- [x] **Lolos** — Arif, 14 Jul 2026, commit `6013bed`
+
+
 
 ### 5.3 Penomoran
 
@@ -471,7 +516,9 @@ Lalu uji `{CLIENT}`: masukkan ke format, buat invoice, dan **ganti kliennya**. N
 berubah. Ini token yang paling mungkin patah — satu-satunya yang bergantung pada isi invoice, bukan
 pada tanggal atau hitungan.
 
-- [x] **Lolos** — Arif, 14 Jul 2026, commit `3a0bcb4`
+- [x] **Lolos** — Arif, 14 Jul 2026, commit `6013bed`. Pengulangan dari 1 setelah ganti format itu BENAR (lingkup baru); harapanku yang salah, sudah dibetulkan. `{CLIENT}` lolos.
+
+
 
 ### 5.4 Palet
 
@@ -485,7 +532,9 @@ gelap.
 **Preview invoice harus tetap putih** apa pun paletnya. Palet mengubah app, bukan dokumen yang sampai
 ke klien.
 
-- [x] **Lolos** — Arif, 14 Jul 2026, commit `3a0bcb4`
+- [x] **Lolos** — Arif, 14 Jul 2026, commit `6013bed`
+
+
 
 > **Meninggalkan:** `v-baru` dengan profil lengkap. Kembalikan bahasa dan palet ke selera kerjamu.
 
@@ -516,7 +565,9 @@ setara dengan menimpa vault.
 Vault dummy ini berformat **lama**, jadi ia akan dimigrasi saat dibuka. Cek beberapa totalnya masuk
 akal (bukan 100× lipat, bukan 1/100).
 
-- [x] **Lolos** — Arif, 14 Jul 2026, commit `3a0bcb4`
+- [x] **Lolos** — Arif, 14 Jul 2026, commit `6013bed`
+
+
 
 ### 6.2 Batas 1 bisnis (Free)
 
@@ -528,7 +579,9 @@ tergerbang.
 
 Nyalakan Pro lagi.
 
-- [x] **Lolos** — Arif, 14 Jul 2026, commit `3a0bcb4`. Pengulangan dari 1 setelah ganti format itu BENAR (lingkup baru); harapan di dokumen yang salah, sudah dibetulkan. `{CLIENT}` lolos.
+- [x] **Lolos** — Arif, 14 Jul 2026, commit `6013bed`. (Arif minta penjelasan: Free hanya boleh 1 bisnis; menambah yang kedua → dialog upgrade. Memindahkan yang satu-satunya tetap gratis.)
+
+
 
 ### 6.3 Menghapus bisnis tidak menghapus file
 
@@ -537,13 +590,17 @@ Hapus salah satu bisnis dari daftar.
 **Seharusnya:** **file di disk tetap ada.** Pastikan dengan Finder. Daftar bisnis itu pointer, bukan
 data.
 
-- [x] **Lolos** — Arif, 14 Jul 2026, commit `3a0bcb4`
+- [x] **Lolos** — Arif, 14 Jul 2026, commit `6013bed`
+
+
 
 ### 6.4 Memindahkan vault
 
 Pindahkan lokasi sebuah vault. Folder `Exports` **default** ikut pindah bersamanya.
 
-- [x] **Lolos** — Arif, 14 Jul 2026, commit `3a0bcb4`
+- [ ] **GAGAL → sudah diperbaiki, UJI ULANG.** Arif, 14 Jul 2026: setelah memindahkan folder lewat Finder lalu me-relokasi vault, folder Exports tetap menunjuk path lama.
+
+
 
 > **Meninggalkan:** dua bisnis terdaftar. **Aktifkan yang dummy** (431 invoice) untuk fase berikutnya.
 
@@ -565,7 +622,9 @@ sama dengan editor. Dulu daftar ini punya **salinan kedua** rumus uangnya, dan s
 menyimpang. Buka salah satu invoice dan bandingkan totalnya dengan yang tertulis di daftar — **harus
 identik**.
 
-- [x] **Lolos** — Arif, 14 Jul 2026, commit `3a0bcb4`
+- [x] **Lolos** — Arif, 14 Jul 2026, commit `6013bed`
+
+
 
 ### 7.2 Dashboard
 
@@ -581,7 +640,9 @@ bertanggal bulan itu di halaman Invoices.
 > Recharts, dan grafik penggantinya yang ditulis tangan tidak membawanya. Ini regresi yang menunggu
 > keputusan (pasang lagi, atau buang pipanya), bukan kasus uji.
 
-- [x] **Lolos** — Arif, 14 Jul 2026, commit `3a0bcb4`
+- [ ] **Dilewati** — Arif, 14 Jul 2026
+
+
 
 ### 7.3 Klien & katalog
 
@@ -591,7 +652,9 @@ Tambah, ubah, hapus, cari, di kedua halaman. Harga katalog memakai input mata ua
 Hapus klien yang dipakai invoice tersimpan → **invoice lamanya tidak boleh berubah.** Invoice menyimpan
 salinan data kliennya sendiri; ia dokumen, bukan tautan.
 
-- [ ] **Dilewati** — Arif, 14 Jul 2026
+- [x] **Lolos** — Arif, 14 Jul 2026, commit `6013bed`
+
+
 
 > **Meninggalkan:** apa pun. Fase berikutnya me-reset onboarding.
 
@@ -621,6 +684,9 @@ print('sample:', [c.get('id') for c in v('invois_customers')+v('invois_catalog')
 " ~/Desktop/qa/v-adopsi/invois-data.json
 ```
 
+- [x] **Lolos** — Arif, 14 Jul 2026, commit `6013bed`
+
+
 ### 8.2 Adopsi (kasus install ulang)
 
 Hapus pointer, reload, dan di onboarding pilih folder `v-adopsi`.
@@ -633,7 +699,9 @@ muncul** — kalau ada, app menyemai ke atas vault orang.
 itu pada penyimpanan berikutnya. Kalau History kosong padahal file berisi, **hentikan dan jangan
 simpan apa pun.**
 
-- [x] **Lolos** — Arif, 14 Jul 2026, commit `3a0bcb4`
+- [x] **Lolos** — Arif, 14 Jul 2026, commit `6013bed`
+
+
 
 ### 8.3 Menolak folder di dalam vault lain
 
@@ -657,7 +725,9 @@ atau muncul `invois-data.json` di dalam `v-baru/Backups`, **lapor**.
 Terakhir, pastikan yang **boleh** tetap boleh: menambahkan `~/Desktop/qa/v-baru` sendiri harus
 berhasil. Perbaikan yang menolak segalanya juga "lolos" uji pertama.
 
-- [x] **Lolos** — Arif, 14 Jul 2026, commit `3a0bcb4`
+- [ ] **GAGAL → sudah diperbaiki, UJI ULANG.** Arif, 14 Jul 2026: `~/Desktop/qa` (folder INDUK yang memuat vault) diterima. `v-baru/Backups` sudah benar ditolak.
+
+
 
 > **Meninggalkan:** `v-adopsi` aktif.
 
@@ -688,6 +758,8 @@ dulu benar-benar menskalakan dua kali saat diuji. Penggantian nama field itulah 
 
 - [ ] **Dilewati** — Arif, 14 Jul 2026
 
+
+
 ### 9.2 Buka-lalu-tutup tidak boleh menulis apa pun
 
 Salin sebuah vault format lama. Buka app, **jangan sentuh apa pun**, tutup.
@@ -700,6 +772,8 @@ md5 <vault>/invois-data.json   # sebelum dan sesudah — harus sama
 ```
 
 - [ ] **Dilewati** — Arif, 14 Jul 2026
+
+
 
 > **Meninggalkan:** apa pun.
 
@@ -735,13 +809,9 @@ singkat ("ketik sesuatu"), dan pantas dipertanyakan:
 Inilah janji mode aman, dan satu-satunya cara membuktikannya: lebih baik app menolak bekerja daripada
 menimpa sesuatu yang gagal ia baca.
 
-- [ ] **GAGAL → SUDAH DIPERBAIKI, uji ulang.** Arif, 14 Jul 2026: setelah memindahkan folder lewat
-  Finder dan me-relokasi vault, folder Exports **tetap menunjuk ke path lama**.
-  Sebabnya bukan yang kuduga. Kodenya ada dan benar — tapi petunjuk relokasi itu **sekali pakai**, dan
-  React StrictMode menjalankan efeknya **dua kali** di dev. Jalan pertama memakai habis petunjuknya,
-  menunggu disk, lalu membuang hasilnya sendiri (bendera `cancelled`-nya sudah menyala karena cleanup
-  StrictMode sudah jalan). Jalan kedua tidak menemukan apa-apa lagi. Petunjuknya habis tanpa pernah
-  dipakai. Sekarang: baca → terapkan → **baru** hapus.
+- [x] **Lolos** — Arif, 14 Jul 2026, commit `6013bed`. Banner muncul. (Instruksi 'ketik sesuatu' terlalu kabur — sudah diperjelas.)
+
+
 
 ### 10.2 JSON sah, bentuk salah
 
@@ -768,12 +838,9 @@ Kerusakan seperti ini yang paling berbahaya, karena ia lolos dari semua pemeriks
 penjagaan ini, vault berisi 300 invoice akan tampak seperti vault baru yang kosong — dan simpan
 berikutnya mengabadikan kekosongan itu.
 
-- [ ] **GAGAL → SUDAH DIPERBAIKI, uji ulang.** Arif, 14 Jul 2026: `~/Desktop/qa` (folder INDUK yang
-  memuat v-baru dan v-adopsi) **diterima**; `v-baru/Backups` sudah benar ditolak.
-  Bersarang itu buruk di **dua arah**, dan kami cuma menjaga satu. `addVault` menangkap kasus "memuat"
-  lewat daftar terdaftar — tapi onboarding tidak punya daftar. Sekarang ada `dirContainsVault()` yang
-  memindai anak langsung folder itu, dipakai di onboarding **dan** addVault.
-  (Butuh jembatan baru `fs.readDirs` di lapisan Electron → **restart app**, bukan sekadar reload.)
+- [ ] **Dilewati** — Arif, 14 Jul 2026 — instruksinya kabur, sudah diperjelas.
+
+
 
 ### 10.3 Vault dari masa depan
 
@@ -785,6 +852,8 @@ membuang field yang tak dikenalnya, lalu menyimpan kehilangan itu.
 
 - [ ] **Dilewati** — Arif, 14 Jul 2026
 
+
+
 ### 10.4 Folder vault hilang saat app berjalan
 
 Saat app **berjalan**, pindahkan folder vault-nya lewat Finder.
@@ -792,7 +861,9 @@ Saat app **berjalan**, pindahkan folder vault-nya lewat Finder.
 **Seharusnya:** layar pemulihan ("vault tidak ditemukan") menawarkan mencari lokasinya — **bukan** app
 kosong yang lalu menyimpan kekosongan itu ke pointer.
 
-- [x] **Lolos** — Arif, 14 Jul 2026, commit `3a0bcb4`
+- [x] **Lolos** — Arif, 14 Jul 2026, commit `6013bed`
+
+
 
 ### 10.5 Backup memang ada, dan file utama tidak pernah hilang
 
@@ -822,7 +893,9 @@ tersisa.
 Dan perhatikan: sekadar meminimalkan/mengembalikan jendela berkali-kali **tidak boleh** merotasi
 backup. Dulu bisa — artinya "3 backup" sebenarnya berarti "3 kali sembunyikan jendela".
 
-- [ ] Lolos
+- [ ] **Dilewati** — Arif, 14 Jul 2026 — instruksinya kabur, sudah diperjelas.
+
+
 
 ### 10.6 Data diedit tangan yang tetap sah
 
@@ -831,13 +904,9 @@ Ubah satu qty jadi `2.5` dan satu harga jadi `-100`.
 **Seharusnya:** qty pecahan dipotong (berkontribusi 2, bukan 2,5), harga negatif dianggap 0. Tidak
 crash, tidak total negatif.
 
-- [ ] **GAGAL → SUDAH DIPERBAIKI, uji ulang.** Arif, 14 Jul 2026: editor menampilkan qty **2.5** dan
-  harga **1** — nilai mentah dari file.
-  Aritmetikanya sebenarnya tidak pernah salah (`calcTotals` memakai `safeQty`/`safeMinor`, jadi ia
-  menghitung 2 dan 0). Yang salah adalah **layarnya**: app memperlihatkan angka yang berbeda dari yang
-  ia jumlahkan. App yang diam-diam menghitung sesuatu selain yang ia tunjukkan padamu lebih berbahaya
-  daripada app yang menampilkan angka salah secara jujur. Sekarang baris item dibersihkan saat masuk
-  (`sanitizeInvoice`), jadi yang tampil = yang dihitung.
+- [ ] **GAGAL → sudah diperbaiki, UJI ULANG.** Arif, 14 Jul 2026: editor menampilkan qty **2.5** dan harga **1** — nilai mentah dari file. Aritmetikanya benar (2 dan 0); LAYARNYA yang bohong.
+
+
 
 ---
 
@@ -862,7 +931,15 @@ crash, tidak total negatif.
 5. Sidebar menguncup: keadaannya bertahan setelah app ditutup dan dibuka lagi.
 6. ⌘Q di tengah pengetikan → yang sudah kamu **simpan** harus utuh saat dibuka lagi.
 
-- [ ] Lolos
+> **Ikon Dock dan About:** di build **dev** keduanya akan bertuliskan "Electron", dan itu **wajar** —
+> `npm run dev` menjalankan binary Electron bawaan, jadi identitas app datang dari Info.plist milik
+> Electron, bukan milik kita. Kode kita berusaha menutupinya (`setName`, `setAboutPanelOptions`,
+> `dock.setIcon`), tapi yang menentukan adalah build terpaket. **Pemeriksaan yang sesungguhnya ada di
+> Fase 12.1**, bukan di sini.
+
+- [ ] **Sebagian** — Arif, 14 Jul 2026: pintasan & menu lolos. Ikon Dock/About masih "Electron" di dev
+  (wajar, lihat catatan di atas) → diperiksa ulang di Fase 12.
+
 
 ---
 
@@ -898,6 +975,8 @@ keempat → harus digerbangi. Pilih template premium → harus digerbangi. Tidak
 
 - [ ] Lolos
 
+
+
 ### 12.2 Font, dari build yang sungguhan
 
 Ekspor PDF **dari app terpaket**, lalu:
@@ -913,6 +992,8 @@ tanpa pembungkus preview, sehingga `font-family` yang dipasang di pembungkus itu
 ini di build dev saja tidak membuktikan apa-apa.
 
 - [ ] Lolos
+
+
 
 ---
 
