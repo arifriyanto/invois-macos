@@ -651,7 +651,7 @@ memakai habis petunjuknya, menunggu disk, lalu membuang hasilnya sendiri (bender
 sudah menyala karena cleanup StrictMode sudah jalan). Jalan kedua tidak menemukan apa-apa lagi.
 Sekarang: **baca → terapkan → baru hapus.**
 
-- [ ] **GAGAL → sudah diperbaiki, UJI ULANG.** Arif, 14 Jul 2026: setelah memindahkan folder lewat Finder lalu me-relokasi vault, folder Exports tetap menunjuk path lama.
+- [x] **Lolos** — Arif, 14 Jul 2026, commit `6e52c5d`. Sempat GAGAL (folder Exports tetap di path lama; petunjuk relokasi sekali-pakai dimakan habis oleh StrictMode yang menjalankan effect dua kali). Diperbaiki: baca → terapkan → baru hapus.
 
 
 
@@ -827,7 +827,7 @@ ls ~/Desktop/qa/invois-data.json
 
 → harus **"No such file"**. Kalau file itu ada, app menulis vault ke folder induk — lapor.
 
-- [ ] **GAGAL → sudah diperbaiki, UJI ULANG.** Arif, 14 Jul 2026: `~/Desktop/qa` (folder INDUK yang memuat vault) diterima. `v-baru/Backups` sudah benar ditolak.
+- [x] **Lolos** — Arif, 14 Jul 2026, commit `6e52c5d`. Sempat GAGAL dua kali: (1) folder INDUK yang memuat vault diterima — penjaganya cuma memeriksa satu arah; (2) setelah dijaga, ia menolak **dalam diam** — `catch` menelan errornya, jadi Finish sekadar tidak melakukan apa-apa. Keduanya diperbaiki.
 
 
 
@@ -1046,7 +1046,7 @@ jujur — yang pertama tidak bisa kamu tangkap dengan mata. Sekarang baris item 
 
 Tidak crash, tidak total negatif.
 
-- [ ] **GAGAL → sudah diperbaiki, UJI ULANG.** Arif, 14 Jul 2026: editor menampilkan qty **2.5** dan harga **1** — nilai mentah dari file. Aritmetikanya benar (2 dan 0); LAYARNYA yang bohong.
+- [x] **Lolos** — Arif, 14 Jul 2026, commit `6e52c5d`. Sempat GAGAL: editor menampilkan qty 2.5 dan harga 1, sementara subtotal diam-diam dihitung dari 2 dan 0. Aritmetikanya tidak pernah salah; LAYARNYA yang bohong. Diperbaiki dengan `sanitizeInvoice` di batas masuk.
 
 
 
