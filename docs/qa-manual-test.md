@@ -26,6 +26,60 @@ berubah, centangnya dikosongkan lagi — `data-store.ts` mengosongkan Fase 8–1
 `format.ts` mengosongkan Fase 2. Bukan birokrasi, cuma jujur bahwa yang dulu terbukti sudah bukan
 kode yang sama.
 
+---
+
+## Ronde 2 — apa yang masih harus diuji (14 Jul 2026)
+
+Ronde pertama sudah selesai: **35 lolos, 8 dilewati, 9 bug nyata ditemukan dan diperbaiki**. Yang
+tersisa cuma enam kasus.
+
+**Kamu TIDAK perlu mengulang dari Fase 1.** Keenamnya berdiri sendiri — masing-masing membangun
+keadaannya sendiri. Yang perlu dibersihkan hanya folder kerjanya, karena sisa ronde pertama
+(`v-rusak` yang masih rusak, `v-reloc-pindah`, `qa2`, …) adalah sumber kebingungan, bukan sumber bug.
+
+### Bersihkan dan siapkan ulang
+
+```bash
+rm -rf ~/Desktop/qa ~/Desktop/qa2
+mkdir -p ~/Desktop/qa
+cd invois-macos && npm run verify
+```
+
+Lalu **⌘Q dan `npm run dev` dari awal** — bukan ⌘R. Perbaikan terakhir menyentuh `data-store.ts`.
+
+Sekarang buat tiga vault yang dibutuhkan:
+
+| Vault | Cara membuatnya | Dipakai oleh |
+|---|---|---|
+| `~/Desktop/qa/v-sehat` | Jalankan app → onboarding ke folder itu → buat & simpan **2–3 invoice** | **10.5**, dan sumber salinan untuk 10.2 |
+| `~/Desktop/qa/v-rusak` | `cp -R ~/Desktop/qa/v-sehat ~/Desktop/qa/v-rusak` (setelah v-sehat jadi) | **10.2** |
+| `~/Desktop/qa/v-lama2` | `node scripts/qa-legacy-vault.mjs ~/Desktop/qa/v-lama2` | **9.2** |
+
+### Urutannya
+
+| | Kasus | Kenapa sekarang |
+|---|---|---|
+| 1 | **9.2** | Prosedurnya **berubah** — tidak lewat onboarding lagi (onboarding menulis profil, jadi uji lamanya tidak bisa dijatuhkan) |
+| 2 | **10.2** | Banner mode aman yang tadi **diam** |
+| 3 | **10.5** | Belum pernah benar-benar dijalankan. **Pakai `v-sehat`** — vault yang rusak menolak menulis, jadi tidak akan ada backup terbentuk sama sekali, dan kamu akan mengira itu bug |
+| 4 | **12.1** | Butuh `npm run pack:mac` |
+| 5 | **12.2** | Sama, lanjutan dari 12.1 |
+| 6 | **7.2** | Opsional, prioritas rendah |
+
+Fase 11 (ikon Dock & About) akan terjawab sendiri di **12.1** — build terpaket yang menentukan.
+
+### Sebelum rilis: satu lari bersih
+
+Centang-centang di dokumen ini tersebar di **enam commit berbeda**. Itu bagus untuk **menemukan** bug,
+dan memang menemukan sembilan. Tapi itu **tidak membuktikan app-nya pernah utuh sekali pun** pada satu
+keadaan kode yang sama.
+
+Jadi setelah keenam kasus di atas selesai dan tidak ada lagi yang berubah, jalankan **semua fase sekali
+lagi, dari nol, pada satu commit.** Bukan sekarang — kalau ada yang gagal lagi, kodenya berubah lagi,
+dan lari bersihnya jadi sia-sia.
+
+---
+
 Dokumen ini melengkapi test otomatis, bukan menggantikannya. `npm run verify` sudah menjamin
 aritmetika uang, migrasi vault, penomoran, i18n, dan persistensi. Yang **tidak** bisa dijamin unit
 test adalah semua yang menyentuh disk sungguhan, jendela sungguhan, dan mesin cetak Chromium — dan
@@ -1006,7 +1060,7 @@ menimpa sesuatu yang gagal ia baca.
 > **Keadaan awal:** app **TERTUTUP**. Pakai vault sekali-pakai:
 >
 > ```bash
-> rm -rf ~/Desktop/qa/v-rusak && cp -R ~/Desktop/qa/v-baru ~/Desktop/qa/v-rusak
+> rm -rf ~/Desktop/qa/v-rusak && cp -R ~/Desktop/qa/v-sehat ~/Desktop/qa/v-rusak
 > ```
 
 **Yang diuji:** app menolak menulis ke vault yang **bisa di-parse tapi bentuknya salah**.
@@ -1065,7 +1119,7 @@ menghapus 300 invoice orang karena satu field salah bentuk.
 > **Keadaan awal:** app **TERTUTUP**. Pakai vault sekali-pakai:
 >
 > ```bash
-> rm -rf ~/Desktop/qa/v-depan && cp -R ~/Desktop/qa/v-baru ~/Desktop/qa/v-depan
+> rm -rf ~/Desktop/qa/v-depan && cp -R ~/Desktop/qa/v-sehat ~/Desktop/qa/v-depan
 > ```
 
 **Yang diuji:** app yang lebih **tua** tidak boleh menebak isi file dari app yang lebih **baru**.
@@ -1119,19 +1173,19 @@ kosong yang lalu menyimpan kekosongan itu ke pointer.
 ### 10.5 Backup ada, dan file utama tidak pernah hilang
 
 > **Keadaan awal:** app **JALAN**, dengan vault yang sehat (pakai `~/Desktop/qa/v-baru`).
-> Kalau app-mu sedang dalam mode aman dari 10.1–10.3, **ganti dulu ke vault yang sehat** — mode aman
+> **WAJIB pakai vault yang SEHAT** (`~/Desktop/qa/v-sehat`). Kalau app-mu sedang dalam mode aman, mode aman
 > menolak menulis, jadi tidak akan ada backup yang terbentuk sama sekali.
 
 **Yang diuji:** dua hal, dan yang kedua adalah utang darah.
 
-**(a) Backup memang terbentuk.**
+**(a) Backup memang terbentuk.** (Pakai `~/Desktop/qa/v-sehat`.)
 
 1. Buka sebuah invoice, ubah sesuatu, **Simpan**. Ulangi **4 kali**, beri jeda beberapa detik.
 2. Lihat isinya:
 
    ```bash
-   ls -la ~/Desktop/qa/v-baru/
-   ls -la ~/Desktop/qa/v-baru/Backups/
+   ls -la ~/Desktop/qa/v-sehat/
+   ls -la ~/Desktop/qa/v-sehat/Backups/
    ```
 
 **Seharusnya ada:**
@@ -1144,12 +1198,12 @@ kosong yang lalu menyimpan kekosongan itu ke pointer.
 
 **(b) Menyembunyikan jendela TIDAK boleh merotasi backup.**
 
-1. Catat isi foldernya: `ls -la ~/Desktop/qa/v-baru/ > /tmp/sebelum.txt`
+1. Catat isi foldernya: `ls -la ~/Desktop/qa/v-sehat/ > /tmp/sebelum.txt`
 2. **Tanpa mengubah apa pun di app**, minimalkan jendelanya lalu kembalikan. Ulangi **5 kali**.
 3. Bandingkan:
 
    ```bash
-   ls -la ~/Desktop/qa/v-baru/ > /tmp/sesudah.txt
+   ls -la ~/Desktop/qa/v-sehat/ > /tmp/sesudah.txt
    diff /tmp/sebelum.txt /tmp/sesudah.txt && echo "TIDAK BERUBAH — benar"
    ```
 
