@@ -19,8 +19,14 @@ const VALID_TEMPLATES: string[] = [...TEMPLATES, ...PREMIUM_TEMPLATES].map((t) =
 
 // Dev-only Pro override. Real entitlement will come from the StoreKit receipt;
 // until billing lands, Pro is OFF in production. In a DEV build only, a flag
-// toggled from Settings → Preferences ("Pro mode (dev)") flips it locally so
-// both the free and Pro experiences can be tested without editing code.
+// toggled from Settings → Dev flips it locally so both the free and Pro
+// experiences can be tested without editing code.
+//
+// The rule for the real thing, decided 13 Jul 2026 (see docs/entitlement.md):
+// the app is FREE until an entitlement is PROVEN, and the only proof is a fresh
+// purchase or a restore from the user's Apple ID. A boolean we store on their
+// machine is not proof — it is a note anyone can write. So this key must never
+// grow up into the production mechanism.
 export const DEV_PRO_KEY = "invois_dev_pro";
 /**
  * True only while developing — gates the Developer section in Settings and the
@@ -277,7 +283,19 @@ export function InvoiceProvider({ children }: { children: React.ReactNode }) {
   const [upgradeOpen, setUpgradeOpen] = React.useState(false);
   const [upgradeContext, setUpgradeContext] =
     React.useState<"template" | "general" | "invoiceLimit" | "vaultLimit">("template");
-  // TODO(billing): derive from the real StoreKit entitlement once billing lands.
+  // TODO(billing): derive from the real StoreKit entitlement. See docs/entitlement.md.
+  //
+  // This is read ONCE, synchronously, with no setter and no subscription — and
+  // that shape is a trap waiting for billing. StoreKit answers ASYNCHRONOUSLY:
+  // the app opens as Free, asks the App Store whether this Apple ID owns Pro, and
+  // the answer lands a moment later. With `useState` and no way to set it, that
+  // answer has nowhere to go — the check would succeed and the UI would never
+  // hear about it.
+  //
+  // So when billing lands this must become reactive (a real state machine:
+  // unchecked → free | pro), not a boolean frozen at mount. Do not build the
+  // entitlement check on top of this line; replace the line.
+  //
   // Production is always false; a dev-only Settings toggle can flip it (readDevPro).
   const [isPro] = React.useState(readDevPro);
 
