@@ -428,7 +428,7 @@ export function InvoiceProvider({ children }: { children: React.ReactNode }) {
     return () => {
       cancelled = true;
     };
-  }, [settings.exportDir, setSettings]);
+  }, [settings.exportDir, setSettings, setSettingsLocal]);
 
   const setTemplate = React.useCallback((t: TemplateId) => {
     setTemplateState(t);

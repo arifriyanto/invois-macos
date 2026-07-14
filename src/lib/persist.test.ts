@@ -54,7 +54,19 @@ describe("loadVersioned", () => {
     expect(loadVersioned("k", 3, migrations, {})).toEqual({ step: 3 });
   });
 
-  it("persists the upgraded envelope so a migration runs only once", () => {
+  it("re-runs the migration on every load, and writes NOTHING", () => {
+    // This test used to assert the opposite: that loadVersioned wrote the upgraded
+    // envelope back so the migration "ran only once". That made a READ have a side
+    // effect — opening the app with an older settings version rewrote the user's
+    // vault before they touched a control, and on a legacy vault that write dragged
+    // the money migration along with it, converting a file they never edited.
+    // Arif caught it with an md5 (QA 9.2).
+    //
+    // So the expectation is deliberately inverted. The migration runs on every
+    // load, which is fine: it is a pure function of the stored data, keyed off the
+    // version in the envelope, so the answer is always the same and costs
+    // microseconds. It gets persisted the moment the user actually changes
+    // something — the only moment we have any business writing.
     mem.setItem("k", JSON.stringify({ n: 0 }));
     let runs = 0;
     const migrations: Migration[] = [
@@ -63,10 +75,14 @@ describe("loadVersioned", () => {
         return { ...(d as object), seeded: true };
       },
     ];
+    const before = mem.getItem("k");
+
     loadVersioned("k", 1, migrations, {});
     loadVersioned("k", 1, migrations, {});
-    expect(runs).toBe(1);
-    expect(loadVersioned("k", 1, migrations, {})).toEqual({ n: 0, seeded: true });
+
+    expect(runs).toBe(2); // ran again — on purpose
+    expect(mem.getItem("k")).toBe(before); // and the store was never touched
+    expect(loadVersioned("k", 1, migrations, {})).toEqual({ n: 0, seeded: true }); // same answer
   });
 
   it("returns data as-is when stored by a newer version", () => {
