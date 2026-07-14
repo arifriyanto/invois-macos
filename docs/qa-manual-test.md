@@ -594,9 +594,62 @@ data.
 
 
 
-### 6.4 Memindahkan vault
+### 6.4 Memindahkan vault — folder Exports harus ikut
 
-Pindahkan lokasi sebuah vault. Folder `Exports` **default** ikut pindah bersamanya.
+**Prasyarat:** vault yang folder ekspornya masih **default**, yaitu `<vault>/Exports`. Kalau kamu
+pernah menggantinya ke folder lain, ia **memang tidak akan ikut pindah** — itu disengaja (folder
+pilihanmu sendiri tidak boleh dipindah-pindah app diam-diam). Karena itu langkah 1–3 membuat vault
+baru yang bersih.
+
+1. **Tutup app** sepenuhnya (⌘Q). Lalu:
+
+   ```bash
+   mkdir -p ~/Desktop/qa/v-reloc
+   ```
+
+2. Jalankan app. Di DevTools Console:
+
+   ```js
+   localStorage.removeItem("invois_vault_config");
+   location.reload();
+   ```
+
+3. Onboarding → pilih `~/Desktop/qa/v-reloc` → isi profil → selesai.
+
+4. Buka **Settings → Data & ekspor**. Catat isi kolom folder ekspor. **Harus** berbunyi:
+
+   ```
+   ~/Desktop/qa/v-reloc/Exports
+   ```
+
+   Kalau bukan itu, hentikan — prasyaratnya tidak terpenuhi.
+
+5. **Tutup app** (⌘Q). Lalu pindahkan foldernya:
+
+   ```bash
+   mv ~/Desktop/qa/v-reloc ~/Desktop/qa/v-reloc-pindah
+   ```
+
+6. Jalankan app lagi. Layar **"vault tidak ditemukan"** muncul.
+
+7. Klik tombol untuk mencari lokasinya → pilih `~/Desktop/qa/v-reloc-pindah`. App memuat ulang.
+
+8. Buka **Settings → Data & ekspor** lagi dan baca kolom folder ekspor.
+
+**Seharusnya sekarang berbunyi:**
+
+```
+~/Desktop/qa/v-reloc-pindah/Exports
+```
+
+**Bentuk kegagalannya (yang Arif lihat):** ia masih berbunyi `~/Desktop/qa/v-reloc/Exports` — menunjuk
+folder yang sudah tidak ada.
+
+Sebabnya bukan yang kuduga. Kodenya ada dan benar, tapi petunjuk relokasinya **sekali pakai** dan
+dibaca di dalam React effect — dan StrictMode menjalankan effect **dua kali** di dev. Jalan pertama
+memakai habis petunjuknya, menunggu disk, lalu membuang hasilnya sendiri (bendera `cancelled`-nya
+sudah menyala karena cleanup StrictMode sudah jalan). Jalan kedua tidak menemukan apa-apa lagi.
+Sekarang: **baca → terapkan → baru hapus.**
 
 - [ ] **GAGAL → sudah diperbaiki, UJI ULANG.** Arif, 14 Jul 2026: setelah memindahkan folder lewat Finder lalu me-relokasi vault, folder Exports tetap menunjuk path lama.
 
@@ -724,6 +777,55 @@ atau muncul `invois-data.json` di dalam `v-baru/Backups`, **lapor**.
 
 Terakhir, pastikan yang **boleh** tetap boleh: menambahkan `~/Desktop/qa/v-baru` sendiri harus
 berhasil. Perbaikan yang menolak segalanya juga "lolos" uji pertama.
+
+---
+
+#### Uji ulang 8.3 — langkah persisnya
+
+> **PENTING: tutup app dan jalankan `npm run dev` dari awal.** Perbaikan ini menambah jembatan baru di
+> lapisan Electron (`fs.readDirs`). Sekadar ⌘R **tidak cukup** — proses main-nya tidak ikut dimuat ulang.
+
+**Siapkan:** pastikan `~/Desktop/qa` berisi minimal satu folder vault.
+
+```bash
+ls -d ~/Desktop/qa/*/           # harus ada v-baru, v-adopsi, dst.
+ls ~/Desktop/qa/invois-data.json 2>/dev/null || echo "bersih: tidak ada vault di folder induk"
+```
+
+**(a) Lewat onboarding.** DevTools Console:
+
+```js
+localStorage.removeItem("invois_vault_config");
+location.reload();
+```
+
+Onboarding langkah 1 → Browse → pilih **`~/Desktop/qa`** (folder INDUK-nya, bukan v-baru).
+
+→ **Harus DITOLAK.** Ini yang sebelumnya diterima.
+
+**(b) Masih di onboarding:** pilih `~/Desktop/qa/v-baru` → **harus DITERIMA.**
+
+**(c) Lewat Settings.** Settings → Data & ekspor → Tambah bisnis → pilih `~/Desktop/qa` →
+**harus DITOLAK.**
+
+**(d)** Tambah bisnis → `~/Desktop/qa/v-baru/Backups` → **harus DITOLAK** (ini sudah benar sebelumnya).
+
+**(e)** Tambah bisnis → folder kosong yang benar-benar terpisah, misalnya:
+
+```bash
+mkdir -p ~/Desktop/qa2
+```
+
+→ **harus DITERIMA.** Perbaikan yang menolak segalanya juga akan "lolos" (a)–(d); langkah ini yang
+membuktikan ia tidak asal menolak.
+
+**Terakhir, pastikan tidak ada yang tertulis diam-diam:**
+
+```bash
+ls ~/Desktop/qa/invois-data.json
+```
+
+→ harus **"No such file"**. Kalau file itu ada, app menulis vault ke folder induk — lapor.
 
 - [ ] **GAGAL → sudah diperbaiki, UJI ULANG.** Arif, 14 Jul 2026: `~/Desktop/qa` (folder INDUK yang memuat vault) diterima. `v-baru/Backups` sudah benar ditolak.
 
@@ -897,12 +999,52 @@ backup. Dulu bisa — artinya "3 backup" sebenarnya berarti "3 kali sembunyikan 
 
 
 
-### 10.6 Data diedit tangan yang tetap sah
+### 10.6 Data diedit tangan yang tetap sah — layar harus JUJUR
 
-Ubah satu qty jadi `2.5` dan satu harga jadi `-100`.
+Kerusakan di sini bukan pada aritmetikanya. `calcTotals` sudah lama tidak mempercayai nilai dari disk.
+Yang diuji: apakah **yang tampil di layar sama dengan yang dijumlahkan**.
 
-**Seharusnya:** qty pecahan dipotong (berkontribusi 2, bukan 2,5), harga negatif dianggap 0. Tidak
-crash, tidak total negatif.
+1. **Tutup app** (⌘Q).
+
+2. Buka `<vault>/invois-data.json` di editor teks. Cari `"invois_history"`, ambil **invoice pertama**,
+   lalu **baris item pertama** di dalamnya. Bentuknya kira-kira:
+
+   ```json
+   "items": [
+     { "id": "item-1-abc", "desc": "Audit halaman arahan", "qty": 1, "priceMinor": 15000 }
+   ]
+   ```
+
+3. Ubah **dua angka** itu saja, jadi persis:
+
+   ```json
+   "items": [
+     { "id": "item-1-abc", "desc": "Audit halaman arahan", "qty": 2.5, "priceMinor": -100 }
+   ]
+   ```
+
+   Simpan file. (Perhatikan: file-nya tetap JSON yang sah. Yang salah adalah **nilainya**.)
+
+4. Jalankan app. Buka invoice itu dari daftar **Invoices**.
+
+**Seharusnya, di editor:**
+
+| Kolom | Harus menampilkan |
+|---|---|
+| Qty | **2** — bukan 2.5 |
+| Harga | **kosong / $0.00** — bukan 1, bukan -1 |
+| Amount baris itu | **$0.00** |
+| Subtotal | konsisten dengan yang di atas |
+
+**Bentuk kegagalannya (yang Arif lihat):** kolom Qty menampilkan `2.5` dan Harga menampilkan `1`,
+sementara subtotalnya diam-diam dihitung dari `2` dan `0`.
+
+Aritmetikanya tidak pernah salah. **Layarnya yang bohong.** App yang diam-diam menjumlahkan sesuatu
+selain yang ia tunjukkan padamu lebih berbahaya daripada app yang menampilkan angka salah secara
+jujur — yang pertama tidak bisa kamu tangkap dengan mata. Sekarang baris item dibersihkan saat masuk
+(`sanitizeInvoice`), jadi yang tampil = yang dihitung.
+
+Tidak crash, tidak total negatif.
 
 - [ ] **GAGAL → sudah diperbaiki, UJI ULANG.** Arif, 14 Jul 2026: editor menampilkan qty **2.5** dan harga **1** — nilai mentah dari file. Aritmetikanya benar (2 dan 0); LAYARNYA yang bohong.
 
