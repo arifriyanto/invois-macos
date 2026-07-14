@@ -10,14 +10,42 @@
 // it cannot be closed: while it is up, nothing the user does is being persisted, and
 // there is no honest UI for that except saying so.
 import * as React from "react";
+import { useSyncExternalStore } from "react";
 import { AlertTriangle, FolderOpen } from "lucide-react";
 import * as native from "@/lib/native";
-import { getVaultHealth, onVaultUnsafe, getStatus } from "@/lib/data-store";
+import { getVaultHealth, onVaultUnsafe, getVaultUnsafeVersion, getStatus } from "@/lib/data-store";
 
 export function VaultUnsafeBanner() {
-  const [health, setHealth] = React.useState(() => getVaultHealth());
-
-  React.useEffect(() => onVaultUnsafe(() => setHealth(getVaultHealth())), []);
+  // useSyncExternalStore, not useState + useEffect, and the difference is the
+  // whole bug (QA case 10.2: the banner never appeared for a wrong-SHAPE vault).
+  //
+  // A corrupt FILE is discovered inside data-store, before React renders anything
+  // — so a `useState(getVaultHealth)` initialiser already sees it. That is case
+  // 10.3, and it worked. But a wrong SHAPE is discovered LATER: a store reads its
+  // collection, `readArray("invois_history")` gets an object instead of a list,
+  // and calls markVaultUnsafe during that provider's render.
+  //
+  // This banner sits ABOVE {children} in DataBootstrap, so it renders FIRST, reads
+  // "healthy", and only then do the providers fail. Effects run after every child
+  // has rendered — so by the time a useEffect subscribed, the notification had
+  // already been broadcast to nobody. The flag was set, the vault refused to
+  // write, and the user was told nothing at all.
+  //
+  // That is the worst outcome available here: the app looks like it is working
+  // while quietly discarding everything you type.
+  //
+  // useSyncExternalStore closes the gap by design — React re-reads the snapshot
+  // immediately after subscribing, so a change that lands between render and
+  // subscribe cannot be missed. The version counter exists because the snapshot
+  // must be a stable primitive; getVaultHealth() builds a new object every call
+  // and would loop forever.
+  const version = useSyncExternalStore(
+    onVaultUnsafe,
+    getVaultUnsafeVersion,
+    getVaultUnsafeVersion // SSR: no vault, always 0
+  );
+  void version; // the subscription is the point; the value below is read fresh
+  const health = getVaultHealth();
 
   if (!health.unsafe) return null;
 

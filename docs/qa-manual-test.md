@@ -902,35 +902,62 @@ grep -c '"price":' ~/Desktop/qa/v-lama/invois-data.json || echo "0 (benar: field
 
 > **Keadaan awal:** app **TERTUTUP**.
 
-**Yang diuji:** membuka app tidak boleh, dengan sendirinya, mengubah file di disk. Kalau seseorang
-membuka Invois lalu langsung keluar, vault format lamanya harus masih **utuh** — dan masih bisa dibaca
+**Yang diuji:** membuka app tidak boleh, dengan sendirinya, mengubah file di disk.
+
+Kenapa itu janji yang penting: kalau membuka app mengonversi file ke format baru, kamu **mengambil
+jalan pulang penggunanya**. Seseorang membuka build baru, ragu, keluar, lalu kembali ke versi yang ia
+percaya — dan versi itu kini bertemu format yang tidak dikenalnya dan menolak bekerja. Kita
+memutakhirkan datanya tanpa bertanya, hanya karena ia sempat mengklik ikonnya sekali.
+
+> **Prosedur lamaku cacat, dan Arif menabraknya.** Ia menyuruh mengadopsi vault lewat **onboarding** —
+> padahal onboarding **menulis profil bisnis** ke vault. Jadi md5-nya pasti berubah, dan kamu tidak
+> bisa membedakan "app menulis karena migrasi" dari "app menulis karena onboarding". Kasus ujinya tidak
+> bisa dijatuhkan.
+>
+> Solusinya: **lewati onboarding sama sekali.** Tunjuk vault-nya langsung.
+
+**Langkah 1 — buat vault format lama yang bersih, dan catat sidik jarinya:**
+
+```bash
+node scripts/qa-legacy-vault.mjs ~/Desktop/qa/v-lama2
+md5 ~/Desktop/qa/v-lama2/invois-data.json
+```
+
+**Langkah 2 — jalankan app, lalu tunjuk vault itu LANGSUNG** (tanpa onboarding). DevTools Console:
+
+```js
+localStorage.setItem("invois_vault_config", JSON.stringify({
+  vaults: [{ id: "qa-92", name: "v-lama2", dir: "/Users/arifriyanto/Desktop/qa/v-lama2" }],
+  activeId: "qa-92",
+  onboarded: true
+}));
+location.reload();
+```
+
+App langsung masuk ke vault itu. Kamu akan melihat ketiga invoice-nya.
+
+**Langkah 3 — JANGAN SENTUH APA PUN.** Jangan buka invoice, jangan klik, jangan ketik. Langsung **⌘Q**.
+
+**Langkah 4:**
+
+```bash
+md5 ~/Desktop/qa/v-lama2/invois-data.json
+```
+
+**Seharusnya:** md5-nya **persis sama** dengan Langkah 1. File masih format lama, masih bisa dibaca
 build kemarin.
 
-1. Buat vault format lama yang baru dan bersih:
+**Bentuk kegagalannya:** md5 berubah. Artinya sekadar membuka app sudah menulis ulang vault orang.
 
-   ```bash
-   node scripts/qa-legacy-vault.mjs ~/Desktop/qa/v-lama2
-   md5 ~/Desktop/qa/v-lama2/invois-data.json
-   ```
+**Langkah 5 — dan pastikan migrasinya tetap mendarat saat memang harus.** Buka app lagi, ubah apa saja
+(misal tambah satu klien), simpan, tutup. Sekarang:
 
-   **Catat nilai md5-nya.**
+```bash
+head -3 ~/Desktop/qa/v-lama2/invois-data.json
+```
 
-2. Jalankan app → DevTools: `localStorage.removeItem("invois_vault_config"); location.reload();`
-   → onboarding → pilih `~/Desktop/qa/v-lama2` → selesaikan.
-
-3. **Jangan sentuh apa pun.** Jangan buka invoice, jangan ketik, jangan klik apa-apa. Langsung **⌘Q**.
-
-4. Cek lagi:
-
-   ```bash
-   md5 ~/Desktop/qa/v-lama2/invois-data.json
-   ```
-
-**Seharusnya:** md5-nya **persis sama** dengan langkah 1.
-
-Migrasi terjadi di memori. Ia baru mendarat ke disk saat kamu benar-benar menyimpan sesuatu. Kalau
-md5-nya berubah, artinya sekadar membuka app sudah menulis ulang vault orang — dan itu berarti
-membuka app dengan build yang salah bisa merusak data tanpa satu pun tombol ditekan.
+**Seharusnya:** sekarang memuat `"__invois": { "format": 3 }`. Migrasi menunggu suntingan sungguhan —
+lalu mendarat.
 
 - [ ] Lolos
 

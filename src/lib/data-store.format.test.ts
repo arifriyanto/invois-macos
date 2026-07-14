@@ -183,10 +183,10 @@ describe("format 2 → 3: money becomes integer minor units", () => {
     expect(loaded[0].data.items[0].priceMinor).toBe(1999);
     expect(loaded[0].data.items[0].price).toBeUndefined();
 
-    // A migration makes memory differ from disk, so the vault is dirty and the
-    // next flush must land — even though the user has not typed anything. (This
-    // is why the load sets the dirty flag: with the dirty check in place, an
-    // untouched migrated vault would otherwise never be written back.)
+    // The migration lands on the user's first REAL edit — not merely on load.
+    // Opening the app must never rewrite the file by itself (see the note above
+    // migrateMoneyToMinor's call site, and QA 9.2).
+    ds.setRaw("invois_catalog", JSON.stringify([{ id: "k1" }]));
     await ds.flushNow();
     const doc = JSON.parse(files.get(`/v/money/${VAULT}`)!) as {
       __invois: { format: number };
@@ -200,12 +200,40 @@ describe("format 2 → 3: money becomes integer minor units", () => {
     // Opening the app must not, by itself, touch the disk. If the user opens
     // Invois and quits, their format-2 file should still be there, unchanged and
     // still readable by the build they had yesterday.
+    //
+    // The FLUSH is the point of this test, and it is what the old version missed.
+    // The migration used to mark the vault dirty ("so it lands on the next
+    // save") — but quitting flushes a dirty vault, so opening the app and closing
+    // it converted the file. Arif caught it with an md5 (QA 9.2). Asserting only
+    // that completeOnboarding leaves the file alone was not enough: nothing ever
+    // called flushNow, which is exactly what quitting does.
     const original = JSON.stringify(OLD_VAULT);
     files.set(`/v/noWrite/${VAULT}`, original);
     const ds = await import("./data-store");
     await ds.completeOnboarding("/v/noWrite");
 
+    await ds.flushNow(); // ← what happens on quit
+
     expect(files.get(`/v/noWrite/${VAULT}`)).toBe(original);
+    expect(files.has(`/v/noWrite/${VAULT}.bak1`)).toBe(false); // and no rotation
+  });
+
+  it("lands the migration on the user's first real edit, not before", async () => {
+    // The other half of the same rule: memory is migrated, so the moment the user
+    // actually changes something, the migrated form is what gets written.
+    files.set(`/v/land/${VAULT}`, JSON.stringify(OLD_VAULT));
+    const ds = await import("./data-store");
+    await ds.completeOnboarding("/v/land");
+
+    ds.setRaw("invois_catalog", JSON.stringify([{ id: "k1" }])); // a real edit
+    await ds.flushNow();
+
+    const doc = JSON.parse(files.get(`/v/land/${VAULT}`)!) as {
+      __invois: { format: number };
+      invois_history: { data: { items: { priceMinor: number }[] } }[];
+    };
+    expect(doc.__invois.format).toBe(3);
+    expect(doc.invois_history[0].data.items[0].priceMinor).toBe(1999);
   });
 
   it("does not re-scale a vault already in format 3", async () => {

@@ -264,21 +264,34 @@ function docToMem(doc: VaultDoc): Map<string, string> {
   // braces on purpose: the format marker is absent from format-1 files, so it is
   // not, on its own, something to bet the user's invoices on.
   if (format < 3 && format <= VAULT_FORMAT) {
-    if (migrateMoneyToMinor(m)) {
-      // The vault on disk is now out of date. Mark it dirty so the next save
-      // persists the migrated form — but do NOT write here: a load is not the
-      // place to touch the disk, and if the app is closed without changing
-      // anything, the old file is still perfectly readable by this build.
-      migratedOnLoad = true;
-    }
+    migrateMoneyToMinor(m);
   }
 
   return m;
 }
 
-/** Set when docToMem upgraded the loaded data; initDataStore turns it into a
- *  dirty flag once the load has actually succeeded. */
-let migratedOnLoad = false;
+/**
+ * A MIGRATION DOES NOT MAKE THE VAULT DIRTY. Opening the app must never, by
+ * itself, rewrite the user's file.
+ *
+ * This used to set a `migratedOnLoad` flag which initDataStore turned into
+ * `dirty = true` — so the migrated form would "land on the next save". But the
+ * flush hooks fire on quit, and a dirty vault flushes. So merely OPENING the app
+ * and closing it again converted the file to format 3. The comment right here
+ * claimed the opposite; the code did not honour it. Arif caught it with an md5
+ * (case 9.2).
+ *
+ * Why it matters, beyond tidiness: converting on open takes away the user's
+ * retreat. Someone opens a new build, is unsure, quits, and goes back to the
+ * version they trust — and now that version meets a format it does not know and
+ * refuses to work. We would have upgraded their data without asking, on the
+ * strength of them having double-clicked the icon once.
+ *
+ * So the migration lives in memory and lands the first time the user actually
+ * changes something. It is idempotent, so re-running it on every load costs
+ * nothing and risks nothing. A vault that is opened and never edited stays
+ * exactly as it was found — which is the only honest thing for a read to do.
+ */
 
 /** Memory → disk. Always writes the current nested form, stamped with its format. A
  *  value that somehow is not valid JSON is stored as a string rather than dropped. */
@@ -308,7 +321,6 @@ async function loadVaultFile(dir: string): Promise<Map<string, string>> {
 
   vaultSource = "primary";
   vaultBackupIndex = 0;
-  migratedOnLoad = false;
 
   try {
     if (await fs.exists(path)) return parse(await fs.readTextFile(path));
@@ -462,10 +474,19 @@ let unsafeListeners: Array<() => void> = [];
 
 /** Stop all writes and tell the UI. Called when the data we hold is not, or may
  *  not be, what the user last saved. */
+/** Bumped every time the vault becomes unsafe. A stable, primitive snapshot for
+ *  useSyncExternalStore — the banner cannot subscribe to an object that is rebuilt
+ *  on every read. */
+let unsafeVersion = 0;
+export function getVaultUnsafeVersion(): number {
+  return unsafeVersion;
+}
+
 export function markVaultUnsafe(reason: string): void {
   if (vaultUnsafe) return;
   vaultUnsafe = true;
   vaultUnsafeReason = reason;
+  unsafeVersion += 1;
   console.error("[vault] safe mode:", reason);
   unsafeListeners.forEach((f) => f());
 }
@@ -584,9 +605,10 @@ export async function initDataStore(): Promise<DataStoreStatus> {
     initialized = true;
     if (await anyVaultFileExists(active.dir)) {
       mem = await loadVaultFile(active.dir);
-      // Freshly loaded == what is on disk, UNLESS the load upgraded the money
-      // fields — then memory is ahead of the file and the next save must land.
-      dirty = migratedOnLoad;
+      // Freshly loaded == what is on disk. A migration does NOT change that: it
+      // lives in memory and lands on the user's first real edit. See the note
+      // above migrateMoneyToMinor's call site.
+      dirty = false;
       installFlushHooks();
     } else {
       // Folder moved/deleted externally — flag it so the UI can offer to locate
@@ -700,7 +722,7 @@ export async function completeOnboarding(
   // recover data even when the primary file was deleted/corrupted.
   const adopted = await anyVaultFileExists(clean);
   mem = adopted ? await loadVaultFile(clean) : new Map();
-  dirty = adopted && migratedOnLoad;
+  dirty = false;
   const id = genVaultId();
   config = {
     vaults: [{ id, name: name?.trim() || basename(clean), dir: clean }],
