@@ -57,7 +57,9 @@ dengan titik desimal di dalam file, itu bug.
 1. Hapus pointer (lihat Persiapan), reload.
 2. Layar onboarding muncul: panel kiri biru dengan ilustrasi, form di kanan.
 3. Langkah 1 — pilih lokasi data. Arahkan ke `~/Desktop/qa/v-baru`.
-4. Langkah 2 — isi profil bisnis (nama, email, telepon, alamat).
+4. Langkah 2 — profil bisnis. Field-nya **hanya lima**: logo, nama bisnis, email, telepon, dan
+   **mata uang**. Tidak ada alamat di sini (alamat baru muncul di Settings), dan tidak ada pemilih
+   bahasa.
 5. Selesaikan.
 
 **Seharusnya:** app masuk ke editor invoice dengan walkthrough beacon menyala (titik berdenyut di
@@ -70,16 +72,33 @@ contoh berupa bilangan bulat tanpa titik desimal.
 
 - [ ] Lolos
 
-### 1.2 Placeholder ikut mata uang, bukan bahasa
+### 1.2 Placeholder telepon ikut MATA UANG, bukan bahasa
 
-Di langkah 2, perhatikan placeholder nomor telepon.
+Uji dalam dua bagian, karena separuhnya tidak mungkin dilakukan di onboarding: **bahasa tidak bisa
+diganti di sana.** Pemilih bahasa hanya ada di Settings → Preferensi.
 
-**Seharusnya:** kalau mata uang terdeteksi IDR, contohnya `+62 812 3456 xxxx`. Kalau USD,
-`+1 (415) 555-xxxx`. Ganti bahasa UI ke Inggris — placeholder telepon **tidak boleh ikut berubah**.
-Bahasa tidak memberi tahu apa pun tentang di mana orang tinggal; yang menentukan adalah mata uang.
+**(a) Di onboarding, langkah 2.** Ganti dropdown **mata uang** dan perhatikan placeholder telepon —
+ia harus ikut berubah:
 
-Ekor nomornya harus tetap `xxxx` — placeholder yang tampak seperti nomor asli bisa jadi milik orang
-sungguhan, dan ia dipajang di ribuan layar.
+| Mata uang | Placeholder |
+|---|---|
+| IDR | `+62 812 3456 xxxx` |
+| USD | `+1 (415) 555-xxxx` |
+| SGD | `+65 8123 xxxx` |
+| EUR | `+49 30 1234 xxxx` |
+| GBP | `+44 7700 900xxx` |
+
+Ekor nomornya harus tetap `x`. Placeholder yang tampak seperti nomor asli bisa jadi **milik orang
+sungguhan** — dan ia dipajang di ribuan layar. (GBP memakai blok 7700 900xxx, rentang yang memang
+dicadangkan Ofcom untuk fiksi, jadi tebakan selengkap apa pun tidak akan menghubungi siapa-siapa.)
+
+**(b) Setelah onboarding, di Settings.** Profil bisnis memakai placeholder yang sama. Sekarang ganti
+bahasa (Settings → Preferensi → English).
+
+**Seharusnya:** placeholder telepon **tidak berubah sedikit pun.** Bahasa tidak memberi tahu apa pun
+tentang di mana seseorang tinggal — freelancer Indonesia yang memakai UI bahasa Inggris tetap punya
+nomor Indonesia. Kalau placeholder-nya berubah jadi contoh Amerika saat kamu ganti bahasa, itu bug
+yang persis pernah ada di app ini.
 
 - [ ] Lolos
 
