@@ -1013,7 +1013,7 @@ head -3 ~/Desktop/qa/v-lama2/invois-data.json
 **Seharusnya:** sekarang memuat `"__invois": { "format": 3 }`. Migrasi menunggu suntingan sungguhan —
 lalu mendarat.
 
-- [ ] Lolos
+- [x] **Lolos** — Arif, 14 Jul 2026, commit `81c15ab`. Sempat GAGAL **tiga kali**. Tiga penulis berbeda menulis saat app dibuka: (1) migrasi menandai vault kotor; (2) folder ekspor default disimpan, dan `persist.ts` menulis balik envelope saat MEMBACA; (3) keempat store memakai bendera `firstRun` sekali-pakai — dan React StrictMode menjalankan effect **dua kali**, jadi jalan kedua menulis. Tak satu pun bisa dilihat unit test.
 
 
 
@@ -1057,60 +1057,89 @@ menimpa sesuatu yang gagal ia baca.
 
 ### 10.2 JSON sah, bentuk salah — kerusakan yang paling berbahaya
 
-> **Keadaan awal:** app **TERTUTUP**. Pakai vault sekali-pakai:
->
-> ```bash
-> rm -rf ~/Desktop/qa/v-rusak && cp -R ~/Desktop/qa/v-sehat ~/Desktop/qa/v-rusak
-> ```
+> **Keadaan awal:** app **TERTUTUP** (⌘Q).
 
-**Yang diuji:** app menolak menulis ke vault yang **bisa di-parse tapi bentuknya salah**.
+**Yang diuji:** app menolak menulis ke vault yang **bisa di-parse tapi bentuknya salah** — dan
+**mengatakannya** lewat banner.
 
 Ini kerusakan paling berbahaya karena ia lolos dari setiap pemeriksaan yang cuma bertanya "apakah file
 ini JSON yang sah?" — dan jawabannya **ya**. Yang salah bukan sintaksnya, tapi **bentuknya**. Tanpa
 penjagaan ini, vault berisi 300 invoice tampak seperti vault baru yang kosong, dan simpan berikutnya
 mengabadikan kekosongan itu.
 
-1. Buka `~/Desktop/qa/v-rusak/invois-data.json`. Cari kunci `"invois_history"`. Nilainya sebuah
-   **array**, diawali `[`.
+---
 
-2. Ganti **seluruh nilainya** jadi sebuah **objek**. Dari:
+**Langkah 1 — buat salinan yang akan dirusak.** (`v-sehat` = vault sehat yang sudah berisi invoice.)
 
-   ```json
-     "invois_history": [ { "id": "inv-1", ... }, { "id": "inv-2", ... } ],
-   ```
+```bash
+rm -rf ~/Desktop/qa/v-rusak
+cp -R ~/Desktop/qa/v-sehat ~/Desktop/qa/v-rusak
+```
 
-   menjadi:
+**Langkah 2 — rusak BENTUKNYA, bukan sintaksnya.** Jangan mengedit dengan tangan; jalankan ini:
 
-   ```json
-     "invois_history": { "oops": true },
-   ```
+```bash
+python3 - <<'EOF'
+import json, pathlib
+f = pathlib.Path.home() / "Desktop/qa/v-rusak/invois-data.json"
+d = json.load(open(f))
+print("sebelum: invois_history =", type(d["invois_history"]).__name__, "dengan", len(d["invois_history"]), "invoice")
+d["invois_history"] = {"oops": True}          # array → objek. Bentuk salah, sintaks tetap sah.
+json.dump(d, open(f, "w"), indent=2)
+print("sesudah: invois_history =", type(d["invois_history"]).__name__)
+EOF
+```
 
-   Simpan. Pastikan file-nya masih JSON yang sah:
+**Langkah 3 — buktikan file-nya masih JSON yang SAH.** Ini inti kasusnya:
 
-   ```bash
-   python3 -m json.tool ~/Desktop/qa/v-rusak/invois-data.json > /dev/null && echo "JSON sah — bagus, memang harus begitu"
-   ```
+```bash
+python3 -m json.tool ~/Desktop/qa/v-rusak/invois-data.json > /dev/null && echo "JSON SAH — dan memang harus begitu"
+```
 
-3. Catat ukurannya: `ls -l ~/Desktop/qa/v-rusak/invois-data.json`
+**Langkah 4 — catat sidik jarinya:**
 
-4. Jalankan app → DevTools: `localStorage.removeItem("invois_vault_config"); location.reload();`
-   → onboarding → pilih `~/Desktop/qa/v-rusak`.
+```bash
+md5 ~/Desktop/qa/v-rusak/invois-data.json
+```
 
-**Seharusnya:** **banner kuning mode aman** muncul di atas dan **tidak bisa ditutup**. Halaman Invoices
-tampak kosong.
+**Langkah 5 — buka vault itu.** Jalankan app, lalu di DevTools Console:
 
-5. Sekarang buktikan ia benar-benar menolak menulis: **ubah apa pun** (ketik nama klien, tambah item),
-   tunggu ±2 detik, lalu **⌘Q**.
+```js
+localStorage.setItem("invois_vault_config", JSON.stringify({
+  vaults: [{ id: "qa-102", name: "v-rusak", dir: "/Users/arifriyanto/Desktop/qa/v-rusak" }],
+  activeId: "qa-102",
+  onboarded: true
+}));
+location.reload();
+```
 
-6. `ls -l ~/Desktop/qa/v-rusak/invois-data.json`
+**YANG HARUS TERJADI — dua hal, dan keduanya wajib:**
 
-**Seharusnya:** ukurannya **persis sama** dengan langkah 3, dan `"invois_history": { "oops": true }`
-masih ada di dalamnya.
+1. **Banner kuning muncul** di atas jendela, dan **tidak bisa ditutup**. Ini yang kemarin **diam**.
+2. Halaman Invoices tampak **kosong**.
 
-**Bentuk kegagalannya:** file tertimpa dengan `"invois_history": []`. Itu berarti app baru saja
-menghapus 300 invoice orang karena satu field salah bentuk.
+Kalau banner-nya tidak muncul, itu **GAGAL** — dan gagalnya yang paling berbahaya dari semua kasus di
+dokumen ini: app menolak menyimpan sambil tidak mengatakan apa-apa. Ia tampak bekerja, sementara semua
+yang kamu ketik dibuang.
 
-- [ ] Lolos
+**Langkah 6 — buktikan ia benar-benar menolak menulis.**
+
+Ubah apa pun yang biasanya memicu penyimpanan: buat invoice baru, ketik nama klien, tambah baris item.
+Tunggu ±2 detik. Lalu **⌘Q**.
+
+**Langkah 7:**
+
+```bash
+md5 ~/Desktop/qa/v-rusak/invois-data.json
+grep -c "oops" ~/Desktop/qa/v-rusak/invois-data.json
+```
+
+**Seharusnya:** md5-nya **persis sama** dengan Langkah 4, dan `grep` menghasilkan **1** — kerusakan yang
+kamu buat masih di sana, utuh.
+
+**Bentuk kegagalannya:** md5 berubah, atau `grep` menghasilkan 0. Artinya app baru saja menimpa vault
+yang gagal ia baca — dan di dunia nyata, itu 300 invoice orang yang lenyap karena satu field salah
+bentuk.
 
 
 
