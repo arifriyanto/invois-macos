@@ -1,14 +1,13 @@
-// README.md → architecture.html
+// README.md -> architecture.html
 //
-// Satu sumber kebenaran, satu keluaran turunan. HTML-nya TIDAK boleh diedit
-// tangan: kalau isi yang sama hidup di dua file, ia akan menjadi dua isi yang
-// berbeda — itu cuma soal waktu, dan diagram yang salah lebih berbahaya daripada
-// tidak ada diagram sama sekali.
+// One source of truth, one derived output. The HTML must NOT be hand-edited: if
+// the same content lives in two files it will become two different contents — only
+// a matter of time, and a wrong diagram is more dangerous than no diagram at all.
 //
 //   node docs/architecture/build.mjs
 //
-// Mermaid dimuat dari CDN (butuh internet saat halaman DIBUKA, bukan saat
-// di-build). Itu satu-satunya ketergantungan luar di sini.
+// Mermaid loads from a CDN (needs the internet when the page is OPENED, not when
+// it is built). That is the only external dependency here.
 
 import { readFileSync, writeFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
@@ -17,9 +16,9 @@ import { fileURLToPath } from "node:url";
 const HERE = dirname(fileURLToPath(import.meta.url));
 const md = readFileSync(resolve(HERE, "README.md"), "utf8");
 
-// Render Markdown seperlunya saja — heading, tabel, paragraf, blok mermaid,
-// `code`, **tebal**, *miring*. Bukan parser Markdown umum, dan tidak berpura-pura
-// jadi itu: ia cuma perlu cukup pintar untuk file ini.
+// Render just enough Markdown — headings, tables, paragraphs, mermaid blocks,
+// `code`, **bold**, *italic*. Not a general Markdown parser, and does not pretend
+// to be one: it only has to be smart enough for this file.
 const esc = (s) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 const inline = (s) =>
   esc(s)
@@ -31,7 +30,7 @@ const inline = (s) =>
 const lines = md.split("\n");
 const out = [];
 let i = 0;
-let n = 0; // penomoran diagram, untuk id unik
+let n = 0; // diagram numbering, for unique ids
 
 while (i < lines.length) {
   const line = lines[i];
@@ -41,7 +40,7 @@ while (i < lines.length) {
     const buf = [];
     i++;
     while (i < lines.length && lines[i].trim() !== "```") buf.push(lines[i++]);
-    i++; // tutup fence
+    i++; // closing fence
     out.push(`<pre class="mermaid" id="d${++n}">${esc(buf.join("\n"))}</pre>`);
     continue;
   }
@@ -56,7 +55,7 @@ while (i < lines.length) {
         .slice(1, -1)
         .map((c) => c.trim());
     const head = cells(rows[0]);
-    const body = rows.slice(2).map(cells); // rows[1] = pemisah ---
+    const body = rows.slice(2).map(cells); // rows[1] = the --- separator
     out.push(
       `<table><thead><tr>${head.map((c) => `<th>${inline(c)}</th>`).join("")}</tr></thead><tbody>` +
         body
@@ -91,7 +90,7 @@ while (i < lines.length) {
     continue;
   }
 
-  // Paragraf: kumpulkan sampai baris kosong (Markdown melipat baris; HTML tidak)
+  // Paragraph: collect until a blank line (Markdown folds lines; HTML does not)
   const para = [];
   while (i < lines.length && lines[i].trim() !== "" && !/^[|#]|^```|^---$/.test(lines[i])) {
     para.push(lines[i++]);
