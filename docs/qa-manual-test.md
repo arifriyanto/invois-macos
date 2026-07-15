@@ -59,12 +59,12 @@ Sekarang buat tiga vault yang dibutuhkan:
 
 | | Kasus | Kenapa sekarang |
 |---|---|---|
-| 1 | **9.2** | Prosedurnya **berubah** — tidak lewat onboarding lagi (onboarding menulis profil, jadi uji lamanya tidak bisa dijatuhkan) |
-| 2 | **10.2** | Banner mode aman yang tadi **diam** |
-| 3 | **10.5** | Belum pernah benar-benar dijalankan. **Pakai `v-sehat`** — vault yang rusak menolak menulis, jadi tidak akan ada backup terbentuk sama sekali, dan kamu akan mengira itu bug |
-| 4 | **12.1** | Butuh `npm run pack:mac` |
-| 5 | **12.2** | Sama, lanjutan dari 12.1 |
-| 6 | **7.2** | Opsional, prioritas rendah |
+| 1 | **10.5** | Belum pernah benar-benar dijalankan. **Pakai `v-sehat`** — vault yang rusak menolak menulis, jadi tidak akan ada backup terbentuk sama sekali, dan kamu akan mengira itu bug |
+| 2 | **12.1** | Butuh `npm run pack:mac` |
+| 3 | **12.2** | Sama, lanjutan dari 12.1 |
+| 4 | **7.2** | Opsional, prioritas rendah |
+
+9.2 dan 10.2 sudah **lolos** (14 Jul 2026) dan tidak perlu diulang.
 
 Fase 11 (ikon Dock & About) akan terjawab sendiri di **12.1** — build terpaket yang menentukan.
 
@@ -744,7 +744,7 @@ Coba juga rentang 3M/6M/YTD dan metrik Dibayar/Jumlah — cukup pastikan tidak a
 > **Klik pada batang grafik tidak melakukan apa-apa.** Itu bukan bug yang perlu dilaporkan — fiturnya
 > hilang saat Recharts dicopot, dan sedang menunggu keputusan.
 
-- [ ] Lolos
+- [x] **Lolos** — Arif, 14 Jul 2026. Angka Home cocok dengan jumlah manual dari daftar Invoices; tidak ada rentang/metrik yang kosong atau NaN.
 
 
 
@@ -1083,11 +1083,19 @@ python3 - <<'EOF'
 import json, pathlib
 f = pathlib.Path.home() / "Desktop/qa/v-rusak/invois-data.json"
 d = json.load(open(f))
-print("sebelum: invois_history =", type(d["invois_history"]).__name__, "dengan", len(d["invois_history"]), "invoice")
+before = d.get("invois_history")
+print("sebelum:", "invois_history =", type(before).__name__ if before is not None else "(tidak ada — v-sehat belum berisi invoice)")
 d["invois_history"] = {"oops": True}          # array → objek. Bentuk salah, sintaks tetap sah.
 json.dump(d, open(f, "w"), indent=2)
-print("sesudah: invois_history =", type(d["invois_history"]).__name__)
+print("sesudah: invois_history = dict {'oops': True}")
 EOF
+```
+
+Lalu **wajib** periksa ini sebelum lanjut — kalau hasilnya bukan `1`, kerusakannya tidak jadi dan kamu
+akan menguji vault yang sehat (yang tentu saja "lolos" tanpa membuktikan apa pun):
+
+```bash
+grep -c "oops" ~/Desktop/qa/v-rusak/invois-data.json   # HARUS 1
 ```
 
 **Langkah 3 — buktikan file-nya masih JSON yang SAH.** Ini inti kasusnya:
@@ -1096,13 +1104,7 @@ EOF
 python3 -m json.tool ~/Desktop/qa/v-rusak/invois-data.json > /dev/null && echo "JSON SAH — dan memang harus begitu"
 ```
 
-**Langkah 4 — catat sidik jarinya:**
-
-```bash
-md5 ~/Desktop/qa/v-rusak/invois-data.json
-```
-
-**Langkah 5 — buka vault itu.** Jalankan app, lalu di DevTools Console:
+**Langkah 4 — buka vault itu.** Jalankan app, lalu di DevTools Console:
 
 ```js
 localStorage.setItem("invois_vault_config", JSON.stringify({
@@ -1113,33 +1115,40 @@ localStorage.setItem("invois_vault_config", JSON.stringify({
 location.reload();
 ```
 
-**YANG HARUS TERJADI — dua hal, dan keduanya wajib:**
+**YANG HARUS TERJADI — dan hanya ini yang perlu kamu nilai:**
 
-1. **Banner kuning muncul** di atas jendela, dan **tidak bisa ditutup**. Ini yang kemarin **diam**.
-2. Halaman Invoices tampak **kosong**.
+**Banner kuning muncul** di atas jendela, dan **tidak bisa ditutup**.
 
 Kalau banner-nya tidak muncul, itu **GAGAL** — dan gagalnya yang paling berbahaya dari semua kasus di
 dokumen ini: app menolak menyimpan sambil tidak mengatakan apa-apa. Ia tampak bekerja, sementara semua
 yang kamu ketik dibuang.
 
-**Langkah 6 — buktikan ia benar-benar menolak menulis.**
+Halaman Invoices akan tampak kosong, tapi **jangan menilai dari situ** — vault yang benar-benar kosong
+juga tampak begitu. Bannernya yang membedakan.
 
-Ubah apa pun yang biasanya memicu penyimpanan: buat invoice baru, ketik nama klien, tambah baris item.
-Tunggu ±2 detik. Lalu **⌘Q**.
+Di terminal `npm run dev` kamu juga akan melihat
+`[vault] safe mode: Invoice history (invois_history) is not a list` lengkap dengan stack trace. **Itu
+normal** — itu app mengumumkan dirinya masuk mode aman, bukan crash.
 
-**Langkah 7:**
+---
 
-```bash
-md5 ~/Desktop/qa/v-rusak/invois-data.json
-grep -c "oops" ~/Desktop/qa/v-rusak/invois-data.json
-```
+**Yang TIDAK perlu kamu uji dengan tangan: penolakan menulisnya.**
 
-**Seharusnya:** md5-nya **persis sama** dengan Langkah 4, dan `grep` menghasilkan **1** — kerusakan yang
-kamu buat masih di sana, utuh.
+Dulu kasus ini menyuruh penguji menekan Save, lalu membandingkan md5 sebelum/sesudah. Itu berlebihan.
+Skenario yang sama persis — vault berisi `{"invois_history": {"oops": true}}`, `setRaw`, `flushNow`,
+lalu file di disk harus **tetap** `{oops: true}` — sudah dijamin oleh tes otomatis
+`data-store.format.test.ts` → *"a collection with the wrong SHAPE puts the vault into safe mode"*, dan
+ia jalan setiap kali `npm run verify`.
 
-**Bentuk kegagalannya:** md5 berubah, atau `grep` menghasilkan 0. Artinya app baru saja menimpa vault
-yang gagal ia baca — dan di dunia nyata, itu 300 invoice orang yang lenyap karena satu field salah
-bentuk.
+Mesin sudah melihat bagian itu. Yang **tidak** bisa dilihat mesin adalah apakah **pengguna diberi tahu**
+— dan itulah, satu-satunya, alasan kasus ini ada di dokumen manual.
+
+- [x] **Lolos** — Arif, 14 Jul 2026, commit `81c15ab`. Banner muncul, log `[vault] safe mode` benar
+  (`InvoicesProvider` → `loadInvoices` → `readArray` → `markVaultUnsafe`). Sempat GAGAL diam-diam:
+  banner memakai `useState` + `useEffect`, padahal bentuk-salah baru ketahuan **saat provider render**
+  — sesudah banner render, sebelum effect subscribe. Notifikasinya disiarkan ke nol pendengar. Diganti
+  ke `useSyncExternalStore`. Uji tulisnya dipindah ke tes otomatis; kasus manual ini sekarang hanya
+  menilai bannernya.
 
 
 
@@ -1247,7 +1256,7 @@ Dan yang paling utama: **file utamanya tidak boleh pernah hilang, bahkan sesaat.
 **menyalin**, tidak memindahkan. Versi lama memindahkannya — dan sebuah reload di celah itu mengambil
 satu-satunya salinan yang tersisa. Begitulah vault Arif mati pada 13 Juli.
 
-- [ ] Lolos
+- [x] **Lolos** — Arif, 14 Jul 2026. Backup terbentuk (bak1–3 + snapshot harian), dan menyembunyikan jendela 5× tidak merotasi apa pun (`diff` bersih).
 
 
 
@@ -1331,8 +1340,7 @@ Tidak crash, tidak total negatif.
 > `dock.setIcon`), tapi yang menentukan adalah build terpaket. **Pemeriksaan yang sesungguhnya ada di
 > Fase 12.1**, bukan di sini.
 
-- [ ] **Sebagian** — Arif, 14 Jul 2026: pintasan & menu lolos. Ikon Dock/About masih "Electron" di dev
-  (wajar, lihat catatan di atas) → diperiksa ulang di Fase 12.
+- [x] **Lolos** — Arif, 14 Jul 2026. Pintasan & menu lolos di dev. Ikon Dock + About = "Invois" (bukan "Electron") dikonfirmasi di build terpaket (`pack:mac`), sesuai catatan di atas. Kedipan hitam saat maksimalkan tetap parkir (bug native yang sudah diketahui).
 
 
 ---
@@ -1393,7 +1401,7 @@ tidak ada tombol tersembunyi.
 **Bentuk kegagalannya:** tab Dev muncul, atau salah satu gerbang bisa dilewati. Kalau itu terjadi,
 **jangan rilis.**
 
-- [ ] Lolos
+- [x] **Lolos** — Arif, 14 Jul 2026, build terpaket (`pack:mac`). Tab Dev tidak ada; ketiga gerbang Pro menahan tanpa jalan keluar.
 
 
 
@@ -1434,7 +1442,7 @@ dan berarti setiap PDF yang dihasilkan app ini menyematkan font berlisensi Apple
 **Langkah 3 — ulangi untuk PDF yang lebih dari 2 halaman** (tambahkan ~30 baris item). Jalur
 paginasinya berbeda.
 
-- [ ] Lolos
+- [x] **Lolos** — Arif, 14 Jul 2026, build terpaket (`pack:mac`), `INV-2026-002.pdf`. Hanya Inter tersemat (9 subset), **nol font Apple**. Skrip: PASS. Catatan: RobotoMono tidak muncul karena invoice ini tidak memakai glyph mono — itu wajar, font hanya tersemat kalau benar-benar dipakai; yang kritis (tidak ada `.SFNS`) terpenuhi.
 
 
 

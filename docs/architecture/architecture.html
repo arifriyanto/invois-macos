@@ -1,0 +1,323 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Invois — alur aplikasi</title>
+<style>
+  :root { --fg:#0b1220; --muted:#5b6577; --border:#e3e7ee; --card:#fff; --accent:#2f5fe0; }
+  * { box-sizing: border-box }
+  body { margin:0; background:#f2f4f8; color:var(--fg);
+         font:16px/1.65 -apple-system,BlinkMacSystemFont,"Inter","Segoe UI",sans-serif;
+         -webkit-font-smoothing:antialiased }
+  main { max-width:1000px; margin:0 auto; padding:56px 24px 120px }
+  h1 { font-size:32px; letter-spacing:-.02em; margin:0 0 8px }
+  h2 { font-size:23px; letter-spacing:-.015em; margin:56px 0 14px; padding-top:8px }
+  h3 { font-size:17px; margin:32px 0 10px }
+  p { margin:14px 0; max-width:74ch }
+  hr { border:0; border-top:1px solid var(--border); margin:48px 0 }
+  code { font:13.5px ui-monospace,SFMono-Regular,Menlo,monospace;
+         background:#e8ecf3; padding:1.5px 5px; border-radius:4px }
+  a { color:var(--accent) }
+  table { border-collapse:collapse; width:100%; margin:18px 0; background:var(--card);
+          border:1px solid var(--border); border-radius:10px; overflow:hidden; font-size:14.5px }
+  th, td { text-align:left; padding:9px 13px; border-bottom:1px solid var(--border) }
+  th { background:#f7f9fc; font-size:12px; text-transform:uppercase; letter-spacing:.05em; color:var(--muted) }
+  tbody tr:last-child td { border-bottom:0 }
+  pre.mermaid { background:var(--card); border:1px solid var(--border); border-radius:14px;
+                padding:28px; margin:22px 0; overflow-x:auto; text-align:center;
+                box-shadow:0 1px 3px rgba(9,20,60,.05) }
+  em, i { color:var(--muted) }
+</style>
+</head>
+<body>
+<main>
+<h1 id="invois-—-alur-aplikasi">Invois — alur aplikasi</h1>
+<p>Enam diagram, berlapis. <b>Tidak ada satu gambar yang memuat semuanya</b>, dan itu disengaja: satu diagram "sedetail-detailnya" tidak bisa dibaca siapa pun, jadi ia berhenti dipakai dan mulai berbohong. Kedalaman di sini datang dari <b>jumlah gambar</b>, bukan dari kepadatan satu gambar.</p>
+<h2 id="cara-membaca">Cara membaca</h2>
+<table><thead><tr><th>#</th><th>Diagram</th><th>Untuk siapa</th></tr></thead><tbody><tr><td>1</td><td><a href="#1-peta-level-0">Peta level-0</a></td><td>Semua orang. Mulai dari sini</td></tr><tr><td>2</td><td><a href="#2-siklus-hidup-data">Siklus hidup data</a></td><td>Developer. <b>Yang paling berharga</b> — di sinilah bug bersembunyi</td></tr><tr><td>3</td><td><a href="#3-mesin-keadaan-vault">Mesin keadaan vault</a></td><td>Developer + desainer</td></tr><tr><td>4</td><td><a href="#4-perjalanan-pengguna">Perjalanan pengguna</a></td><td>Penguji QA + pengguna awam. Tanpa nama fungsi</td></tr><tr><td>5</td><td><a href="#5-jalur-uang">Jalur uang</a></td><td>Developer</td></tr><tr><td>6</td><td><a href="#6-batas-kepercayaan-renderer--main">Batas kepercayaan</a></td><td>Audit keamanan</td></tr></tbody></table>
+<h2 id="aturan-yang-membuat-dokumen-ini-tidak-jadi-hiasan-dinding">Aturan yang membuat dokumen ini tidak jadi hiasan dinding</h2>
+<p><b>Setiap node menyebut file dan fungsinya.</b> Bukan gaya — itu supaya kamu bisa mengecek kotaknya melawan sumbernya dalam sepuluh detik. Diagram yang tidak bisa dijatuhkan adalah kerabat dekat tes yang tidak bisa gagal: ia hanya membuat orang merasa aman.</p>
+<p><b>Sumber kebenarannya file ini.</b> <code>architecture.html</code> <b>diturunkan</b> dari sini lewat <code>node docs/architecture/build.mjs</code> — jangan mengedit HTML-nya. Satu isi di dua tempat akan menjadi dua isi yang berbeda; itu cuma soal waktu.</p>
+<p><b>Kalau kamu mengubah alurnya, ubah gambarnya di commit yang sama.</b> Diagram yang salah lebih berbahaya daripada tidak ada diagram, karena orang mempercayainya.</p>
+<hr>
+<h2 id="1-peta-level-0">1. Peta level-0</h2>
+<p>Satu layar. Apa saja lapisannya, dan siapa boleh bicara dengan siapa.</p>
+<pre class="mermaid" id="d1">flowchart TB
+    subgraph R["RENDERER — Chromium, tanpa akses Node"]
+        UI["Komponen UI&lt;br/&gt;&lt;i&gt;src/components/&lt;/i&gt;"]
+        STORES["Store React (4)&lt;br/&gt;&lt;i&gt;store · invoices · customers · catalog&lt;/i&gt;"]
+        LIB["Logika murni, bisa diuji&lt;br/&gt;&lt;i&gt;money · format · view · vault-migrate&lt;/i&gt;"]
+        DS["dataStore — satu-satunya pintu ke disk&lt;br/&gt;&lt;i&gt;src/lib/data-store.ts&lt;/i&gt;"]
+    end
+
+    BRIDGE["contextBridge: window.invois&lt;br/&gt;&lt;i&gt;electron/preload.js — 15 handler, tidak lebih&lt;/i&gt;"]
+
+    subgraph M["MAIN — Node, punya kunci"]
+        IPC["ipcMain.handle × 15&lt;br/&gt;&lt;i&gt;electron/main.js&lt;/i&gt;"]
+    end
+
+    DISK[("Vault pilihan pengguna&lt;br/&gt;&lt;i&gt;invois-data.json&lt;/i&gt;&lt;br/&gt;+ .bak1..3 + Backups/")]
+    CFG[("localStorage&lt;br/&gt;&lt;i&gt;invois_vault_config&lt;/i&gt;&lt;br/&gt;PENUNJUK saja, bukan data")]
+
+    UI --&gt; STORES --&gt; DS
+    UI --&gt; LIB
+    STORES --&gt; LIB
+    DS --&gt;|"ipcRenderer.invoke"| BRIDGE --&gt; IPC --&gt; DISK
+    DS -.-&gt;|"di mana vault-nya?"| CFG
+
+    classDef pure fill:#dbeafe,stroke:#1e40af,color:#1e3a8a
+    classDef gate fill:#fef3c7,stroke:#b45309,color:#451a03
+    classDef disk fill:#dcfce7,stroke:#166534,color:#14532d
+    class LIB pure
+    class DS,BRIDGE gate
+    class DISK,CFG disk</pre>
+<p>Dua hal yang perlu diperhatikan, dan keduanya adalah keputusan, bukan kebetulan.</p>
+<p><b><code>data-store.ts</code> adalah satu-satunya pintu ke disk.</b> Tidak ada komponen yang menulis file. Kalau suatu hari ada, aturan "jangan pernah menimpa vault yang gagal dibaca" berhenti bisa ditegakkan dari satu tempat — dan aturan yang ditegakkan di banyak tempat adalah aturan yang akan dilupakan di salah satunya.</p>
+<p><b>Penunjuk vault tinggal di <code>localStorage</code>, datanya tidak.</b> Yang di <code>localStorage</code> cuma "vault-mu di folder mana". Semua isi sesungguhnya ada di file yang pengguna pilih dan bisa ia salin, pindahkan, dan baca sendiri.</p>
+<hr>
+<h2 id="2-siklus-hidup-data">2. Siklus hidup data</h2>
+<p>Dari app dibuka sampai byte mendarat di disk. <b>Kalau kamu cuma sempat membaca satu diagram, baca yang ini</b> — sembilan bug nyata yang ditemukan selama QA semuanya hidup di jalur ini.</p>
+<pre class="mermaid" id="d2">flowchart TD
+    START(["App dibuka"]) --&gt; BOOT["DataBootstrap&lt;br/&gt;&lt;i&gt;components/data-bootstrap.tsx&lt;/i&gt;"]
+    BOOT --&gt; INIT["initDataStore()&lt;br/&gt;&lt;i&gt;lib/data-store.ts&lt;/i&gt;"]
+    INIT --&gt; CFGQ{"invois_vault_config&lt;br/&gt;sudah ada?"}
+
+    CFGQ --&gt;|tidak| ONB["phase: onboarding&lt;br/&gt;pengguna memilih folder"]
+    ONB --&gt; COMPLETE["completeOnboarding(dir)&lt;br/&gt;tolak folder yang bersarang&lt;br/&gt;di dalam / memuat vault lain"]
+    COMPLETE --&gt; LOAD
+
+    CFGQ --&gt;|ya| GONE{"folder vault&lt;br/&gt;masih ada?"}
+    GONE --&gt;|tidak| MISSING["phase: missing&lt;br/&gt;&lt;i&gt;VaultMissingView&lt;/i&gt;"]
+    GONE --&gt;|ya| LOAD["loadVaultFile(dir)"]
+
+    LOAD --&gt; PRIMARY{"invois-data.json&lt;br/&gt;bisa di-parse?"}
+    PRIMARY --&gt;|ya| DOC["docToMem(doc)"]
+    PRIMARY --&gt;|tidak| BAK{"coba .bak1 → .bak2 → .bak3"}
+    BAK --&gt;|ada yang terbaca| BAKOK["source = backup&lt;br/&gt;&lt;b&gt;markVaultUnsafe()&lt;/b&gt;"]
+    BAK --&gt;|tidak ada| EMPTY["source = empty&lt;br/&gt;Map kosong — vault BARU,&lt;br/&gt;bukan vault rusak"]
+    BAKOK --&gt; DOC
+
+    DOC --&gt; FMT{"__invois.format ?"}
+    FMT --&gt;|"&gt; 3 (dari app lebih baru)"| UNSAFE1["&lt;b&gt;markVaultUnsafe()&lt;/b&gt;&lt;br/&gt;baca boleh, tulis TIDAK"]
+    FMT --&gt;|"&lt; 3 (vault lama)"| MIG["migrateMoneyToMinor()&lt;br/&gt;uang → satuan minor integer&lt;br/&gt;&lt;b&gt;TIDAK menandai dirty&lt;/b&gt;"]
+    FMT --&gt;|"= 3"| MEM
+    MIG --&gt; MEM
+    UNSAFE1 --&gt; MEM
+
+    MEM[("mem: Map&amp;lt;string,string&amp;gt;&lt;br/&gt;di RAM")] --&gt; HYD["4 store hidrasi&lt;br/&gt;loadVersioned() → readArray()"]
+    HYD --&gt; SHAPE{"bentuk tiap koleksi&lt;br/&gt;benar? (array?)"}
+    SHAPE --&gt;|tidak| UNSAFE2["&lt;b&gt;markVaultUnsafe()&lt;/b&gt;&lt;br/&gt;&lt;i&gt;lib/vault-read.ts&lt;/i&gt;&lt;br/&gt;bukan [] palsu"]
+    SHAPE --&gt;|ya| READY(["phase: ready — app jalan"])
+    UNSAFE2 --&gt; READY
+
+    READY --&gt; EDIT["Pengguna mengetik / menyimpan"]
+    EDIT --&gt; SETRAW["setRaw(key, json)&lt;br/&gt;mem.set + &lt;b&gt;dirty = true&lt;/b&gt;"]
+    SETRAW --&gt; SCHED["scheduleFlush()&lt;br/&gt;debounce 500 ms"]
+    SCHED --&gt; FLUSH{"flushNow()"}
+
+    HIDE["Window disembunyikan / ditutup&lt;br/&gt;&lt;i&gt;visibilitychange · beforeunload&lt;/i&gt;"] --&gt; FLUSH
+
+    FLUSH --&gt;|"vaultUnsafe?"| STOP1["BERHENTI — jangan pernah menimpa&lt;br/&gt;file yang gagal kita baca"]
+    FLUSH --&gt;|"!dirty?"| STOP2["BERHENTI — tidak ada yang berubah.&lt;br/&gt;Tanpa cek ini, sekadar me-minimize&lt;br/&gt;jendela merotasi backup"]
+    FLUSH --&gt;|"folder hilang?"| STOP3["handleVaultVanished()&lt;br/&gt;→ layar pemulihan.&lt;br/&gt;JANGAN mkdir ulang"]
+    FLUSH --&gt;|lolos| WRITE["writeVaultFile()"]
+
+    WRITE --&gt; DAILY["writeDailyBackup()&lt;br/&gt;1× per hari kalender →&lt;br/&gt;Backups/invois-YYYY-MM-DD.json&lt;br/&gt;simpan 14 hari"]
+    DAILY --&gt; TMP["tulis invois-data.json.tmp"]
+    TMP --&gt; ROT["rotasi dengan SALIN:&lt;br/&gt;bak2→bak3, bak1→bak2, utama→bak1&lt;br/&gt;&lt;b&gt;file utama tidak pernah dipindah&lt;/b&gt;"]
+    ROT --&gt; RENAME["rename(tmp → utama)&lt;br/&gt;&lt;b&gt;satu-satunya langkah destruktif,&lt;br/&gt;dan ia atomik&lt;/b&gt;"]
+    RENAME --&gt; DONE(["dirty = false"])
+
+    classDef bad fill:#fee2e2,stroke:#b91c1c,color:#450a0a
+    classDef warn fill:#fef3c7,stroke:#b45309,color:#451a03
+    classDef ok fill:#dcfce7,stroke:#166534,color:#14532d
+    class UNSAFE1,UNSAFE2,BAKOK warn
+    class STOP1,STOP2,STOP3 bad
+    class RENAME,DONE ok</pre>
+<p><b>Tiga penjaga di <code>flushNow()</code> itu bukan hiasan — masing-masing lahir dari kerusakan nyata.</b></p>
+<p><code>!dirty</code> ada karena dulu tidak ada, dan <code>flushNow</code> menyala pada <code>visibilitychange</code>. Artinya sekadar <b>me-minimize jendela</b> menulis ulang vault dan merotasi backup. <code>BACKUP_COUNT = 3</code> jadi berarti "tiga kali sembunyi/tampil", bukan "tiga kali simpan" — pengguna bisa kehilangan segalanya tanpa menyentuh keyboard.</p>
+<p><code>vaultUnsafe</code> ada karena menulis vault yang gagal dibaca berarti mengabadikan kekosongan yang tidak pernah ada.</p>
+<p>Dan <code>rename(tmp → utama)</code> adalah satu-satunya langkah destruktif karena kode lama merotasi dengan <b>memindahkan</b> file utama (<code>rename(utama, .bak1)</code>) lalu baru memindahkan tmp ke tempatnya. Di antara dua langkah itu <b>vault tidak ada</b>. Apa pun yang menyela di sana — quit, crash, reload dev-server — membawa serta satu-satunya salinan pengguna. Itu bukan teori: itu terjadi pada 13 Juli 2026.</p>
+<hr>
+<h2 id="3-mesin-keadaan-vault">3. Mesin keadaan vault</h2>
+<p>Vault punya lima keadaan. Hari ini UI hanya membedakan tiga di antaranya — dan itulah pokok redesign banner yang sedang menunggu.</p>
+<pre class="mermaid" id="d3">stateDiagram-v2
+    [*] --&gt; BelumOnboarding
+
+    BelumOnboarding --&gt; Sehat: pilih folder&lt;br/&gt;completeOnboarding()
+
+    Sehat --&gt; Hilang: folder dihapus / dipindah&lt;br/&gt;(terdeteksi saat boot ATAU saat flush)
+    Hilang --&gt; Sehat: recoverVaultLocation()&lt;br/&gt;atau switchVault()
+
+    Sehat --&gt; DariBackup: file utama gagal di-parse,&lt;br/&gt;.bak terbaca
+    Sehat --&gt; BentukSalah: JSON sah, tapi koleksi&lt;br/&gt;bukan array (readArray)
+    Sehat --&gt; MasaDepan: __invois.format &gt; 3
+
+    state "Sehat" as Sehat
+    state "Hilang — folder tidak ada" as Hilang
+    state "Dari backup — PUNYA data" as DariBackup
+    state "Bentuk salah — TIDAK punya data" as BentukSalah
+    state "Dari app lebih baru — data baik-baik saja" as MasaDepan
+
+    note right of Sehat
+        Tulis: BOLEH
+        UI: normal
+    end note
+
+    note right of Hilang
+        Tulis: TIDAK (vaultMissing)
+        UI: VaultMissingView — halaman penuh
+        SUDAH ADA hari ini
+    end note
+
+    note right of DariBackup
+        Tulis: TIDAK (vaultUnsafe)
+        Data: ADA, dari .bak1
+        UI sekarang: strip amber
+        UI usulan: strip + daftar TERISI,
+        dilabeli "from backup"
+    end note
+
+    note right of BentukSalah
+        Tulis: TIDAK (vaultUnsafe)
+        Data: TIDAK ADA
+        UI sekarang: strip amber — dan di
+        belakangnya app berkata "No invoices
+        yet, create your first invoice"
+        UI usulan: HALAMAN PENUH
+    end note
+
+    note right of MasaDepan
+        Tulis: TIDAK (vaultUnsafe)
+        BUKAN kerusakan. Filenya sehat.
+        UI usulan: halaman penuh BIRU,
+        "Check for updates" — JANGAN tawarkan
+        restore backup, itu justru membuang
+        data barunya sendiri
+    end note</pre>
+<p>Ketiga keadaan bawah dibedakan oleh <code>getVaultHealth().source</code> — <b>kode sudah tahu bedanya, UI-nya yang belum memakai informasi itu.</b> Ketiganya digambar sebagai satu strip amber yang sama.</p>
+<hr>
+<h2 id="4-perjalanan-pengguna">4. Perjalanan pengguna</h2>
+<p>Untuk penguji dan pengguna awam. Tidak ada nama fungsi di sini — ini yang <b>dilihat</b> orang, bukan yang dijalankan mesin.</p>
+<pre class="mermaid" id="d4">flowchart TD
+    A(["Buka Invois&lt;br/&gt;pertama kali"]) --&gt; B["Pilih folder untuk&lt;br/&gt;menyimpan data"]
+    B --&gt; C["Isi nama &amp; detail bisnis"]
+    C --&gt; D["Selesai — app siap.&lt;br/&gt;Sudah ada 1 klien &amp; 1 item contoh"]
+
+    D --&gt; E["Buat invoice baru"]
+    E --&gt; F{"Sudah punya&lt;br/&gt;3 invoice?"}
+    F --&gt;|"Ya, dan masih Free"| G["Popup upgrade ke Pro"]
+    F --&gt;|Belum| H["Editor invoice terbuka"]
+    G -.-&gt;|batal| D
+
+    H --&gt; I["Pilih klien&lt;br/&gt;(atau buat baru)"]
+    I --&gt; J["Tambah item: nama, jumlah, harga"]
+    J --&gt; K["Jumlah HARUS bilangan bulat.&lt;br/&gt;Titik dan koma ditolak di kolom Qty"]
+    K --&gt; L["Diskon &amp; pajak — opsional"]
+    L --&gt; M["Pilih template"]
+    M --&gt; N{"Template&lt;br/&gt;premium?"}
+    N --&gt;|"Ya, dan masih Free"| O["Popup upgrade.&lt;br/&gt;Preview tetap boleh dilihat,&lt;br/&gt;tapi yang diekspor tetap Minimal"]
+    N --&gt;|Tidak| P["Tekan SIMPAN"]
+    O -.-&gt; P
+
+    P --&gt; Q["Nomor invoice ditetapkan&lt;br/&gt;(INV-001, INV-002, …)"]
+    Q --&gt; R["Tombol PDF &amp; PNG MUNCUL.&lt;br/&gt;Sebelum disimpan, tombolnya tidak ada —&lt;br/&gt;bukan sekadar mati"]
+    R --&gt; S["Ekspor PDF / PNG"]
+    S --&gt; T["File mendarat di&lt;br/&gt;folder-vault-mu/Exports/"]
+    T --&gt; U["Tandai LUNAS saat klien membayar"]
+    U --&gt; V(["Selesai"])
+
+    classDef pro fill:#fef3c7,stroke:#b45309,color:#451a03
+    class G,O pro</pre>
+<p><b>Kenapa Simpan menggerbangi Ekspor.</b> Nomor invoice ditetapkan pada saat disimpan. Kalau ekspor boleh mendahului simpan, PDF yang sudah dikirim ke klien bisa memuat nomor yang kemudian dipakai invoice lain — dan nomor invoice adalah satu hal yang tidak boleh bertabrakan.</p>
+<hr>
+<h2 id="5-jalur-uang">5. Jalur uang</h2>
+<p>Uang adalah <b>bilangan bulat satuan terkecil</b> dari ujung ke ujung. Diagram ini menunjukkan di mana — dan <b>hanya</b> di mana — ia boleh menjadi desimal.</p>
+<pre class="mermaid" id="d5">flowchart LR
+    TYPE["Pengguna mengetik&lt;br/&gt;19,99"] --&gt; IN["CurrencyInput&lt;br/&gt;teks → 1999&lt;br/&gt;&lt;i&gt;toMinor()&lt;/i&gt;"]
+    IN --&gt; SAN["sanitizeInvoice()&lt;br/&gt;&lt;i&gt;lib/store.tsx&lt;/i&gt;&lt;br/&gt;apa yang DITAMPILKAN =&lt;br/&gt;apa yang DIJUMLAH"]
+    SAN --&gt; STORE[("Vault: 1999&lt;br/&gt;priceMinor")]
+
+    STORE --&gt; CALC["calcTotals()&lt;br/&gt;&lt;i&gt;lib/format.ts&lt;/i&gt;"]
+
+    subgraph CALC_IN["Di dalam calcTotals — semuanya integer"]
+        SUB["subtotal = Σ qty × priceMinor&lt;br/&gt;&lt;b&gt;tidak ada pembulatan.&lt;/b&gt;&lt;br/&gt;Integer × integer = integer"]
+        DISC["diskon:&lt;br/&gt;pct → roundHalf() ← pembulatan 1&lt;br/&gt;flat → safeMinor()"]
+        TAX["pajak → roundHalf() ← pembulatan 2"]
+        TOT["total = subtotal − diskon + pajak"]
+        SUB --&gt; DISC --&gt; TAX --&gt; TOT
+    end
+
+    CALC --&gt; CALC_IN
+    TOT --&gt; FMT["formatMoney(1999, USD)&lt;br/&gt;→ '$19.99'&lt;br/&gt;&lt;i&gt;Intl.NumberFormat di-cache&lt;br/&gt;per mata uang — 68× lebih cepat&lt;/i&gt;"]
+    FMT --&gt; SCREEN["Layar"]
+    FMT --&gt; PDF["PDF (printToPDF — vektor)&lt;br/&gt;PNG (html2canvas — raster)"]
+
+    classDef round fill:#fef3c7,stroke:#b45309,color:#451a03
+    classDef edge fill:#dbeafe,stroke:#1e40af,color:#1e3a8a
+    class DISC,TAX round
+    class IN,FMT edge</pre>
+<p><b>Hanya ada dua titik pembulatan di seluruh aplikasi</b>, dan keduanya dipaksa oleh persentase: 10% dari 5.999 adalah 599,9, dan koin itu tidak ada. Subtotal tidak butuh pembulatan sama sekali — itulah imbalan dari memaksa qty jadi bilangan bulat.</p>
+<p><b>Desimal hanya hidup di dua tepi:</b> kolom input, dan formatter. Kalau kamu menemukan <code>price / 100</code> di tempat lain mana pun, ada yang salah.</p>
+<hr>
+<h2 id="6-batas-kepercayaan-renderer-main">6. Batas kepercayaan (renderer → main)</h2>
+<p>Untuk audit. Yang berjalan di sebelah kiri <b>tidak punya akses Node</b>; yang di kanan punya kunci rumah.</p>
+<pre class="mermaid" id="d6">flowchart LR
+    subgraph REN["RENDERER — tidak dipercaya"]
+        APP["Kode app&lt;br/&gt;React + lib"]
+    end
+
+    subgraph PRE["PRELOAD — dunia terisolasi"]
+        BR["contextBridge.exposeInMainWorld('invois')&lt;br/&gt;&lt;b&gt;Permukaan native SELURUHNYA:&lt;/b&gt;&lt;br/&gt;fs(8) · dialog(1) · path(3)&lt;br/&gt;shell(1) · pdf(1) · window · menu"]
+    end
+
+    subgraph MAIN["MAIN — Node penuh"]
+        H["ipcMain.handle × 15"]
+        FS["node:fs"]
+        DLG["dialog.showOpenDialog&lt;br/&gt;+ security-scoped bookmark (MAS)"]
+        PDF["contents.printToPDF()"]
+        SH["shell.openPath / openExternal"]
+    end
+
+    APP --&gt;|"window.invois.*"| BR
+    BR --&gt;|"ipcRenderer.invoke"| H
+    H --&gt; FS &amp; DLG &amp; PDF &amp; SH
+
+    GUARD1["contextIsolation: true&lt;br/&gt;nodeIntegration: false&lt;br/&gt;sandbox: true"]
+    GUARD2["setWindowOpenHandler → hanya https:// keluar&lt;br/&gt;will-navigate → hanya app:// atau localhost:3000&lt;br/&gt;preload TIDAK PERNAH menempel di jendela lain"]
+    GUARD3["protokol app:// → file.startsWith(root)&lt;br/&gt;menolak path traversal (403)"]
+    GAP["&lt;b&gt;CELAH:&lt;/b&gt; 15 handler fs menerima path APA PUN&lt;br/&gt;dari renderer tanpa validasi. Renderer adalah&lt;br/&gt;kode kita sendiri, jadi ini terbatas — tapi ia&lt;br/&gt;bukan penjaga, ia cuma pengandaian"]
+
+    REN -.- GUARD1
+    MAIN -.- GUARD2
+    MAIN -.- GUARD3
+    H -.- GAP
+
+    classDef good fill:#dcfce7,stroke:#166534,color:#14532d
+    classDef bad fill:#fee2e2,stroke:#b91c1c,color:#450a0a
+    class GUARD1,GUARD2,GUARD3 good
+    class GAP bad</pre>
+<p>Yang sudah benar: <code>contextIsolation</code>, <code>nodeIntegration: false</code>, <code>sandbox: true</code>, penjaga navigasi, dan protokol <code>app://</code> yang menolak path traversal.</p>
+<p>Yang belum: **handler <code>fs:*</code> menerima path apa pun.<b> Renderer memang kode kita sendiri, jadi risikonya terbatas hari ini — tapi "renderer tidak akan mengirim path jahat" adalah </b>pengandaian**, bukan penjaga. Satu XSS lewat konten invoice atau logo yang di-import, dan pengandaian itu runtuh. Perbaikan yang murah: batasi <code>fs:*</code> ke direktori vault dan folder ekspor.</p>
+<hr>
+<p><i>Digambar 14 Juli 2026 dengan membaca kode, bukan dari ingatan. Setiap nama file dan fungsi di atas diverifikasi ada — lihat <code>build.mjs</code> untuk memperbarui <code>architecture.html</code>.</i></p>
+</main>
+<script type="module">
+  import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs";
+  mermaid.initialize({
+    startOnLoad: true,
+    theme: "base",
+    themeVariables: {
+      fontFamily: '-apple-system, BlinkMacSystemFont, "Inter", sans-serif',
+      fontSize: "14px",
+      primaryColor: "#f2f4f8",
+      primaryTextColor: "#0b1220",
+      primaryBorderColor: "#c3ccdb",
+      lineColor: "#8792a6",
+    },
+    flowchart: { curve: "basis", useMaxWidth: true },
+  });
+</script>
+</body>
+</html>

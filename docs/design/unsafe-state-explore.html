@@ -1,0 +1,382 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Invois — eksplorasi keadaan "vault tak terbaca"</title>
+<style>
+  :root{
+    --bg:#eef1f6; --card:#ffffff; --fg:#0b1220; --muted:#6b7280; --border:#e5e7eb;
+    --sidebar:#f6f7f9; --primary:#2f5fe0; --gold:#f2c04e;
+    --amber-bg:#fffbeb; --amber-border:#fcd34d; --amber-fg:#451a03; --amber-ico:#b45309; --amber-body:#78350f;
+    --red-bg:#fef2f2; --red-border:#fecaca; --red-fg:#450a0a; --red-ico:#b91c1c;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:#e7eaf0;color:var(--fg);
+       font:14px/1.5 -apple-system,BlinkMacSystemFont,"Inter","Segoe UI",sans-serif;
+       -webkit-font-smoothing:antialiased}
+  .wrap{max-width:1180px;margin:0 auto;padding:40px 24px 120px}
+
+  h1{font-size:26px;letter-spacing:-.02em;margin:0 0 6px}
+  .lede{color:var(--muted);max-width:62ch;margin:0 0 32px;font-size:14.5px}
+  h2{font-size:12px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);
+     margin:56px 0 14px;font-weight:600}
+  .note{background:#fff;border:1px solid var(--border);border-left:3px solid var(--primary);
+        border-radius:10px;padding:14px 16px;margin:14px 0 0;font-size:13.5px;max-width:74ch;color:#374151}
+  .note b{color:var(--fg)}
+  .verdict{border-left-color:var(--gold)}
+  .verdict.no{border-left-color:#dc2626}
+  .verdict.yes{border-left-color:#16a34a}
+
+  /* ── jendela tiruan ───────────────────────────────────────────── */
+  .win{position:relative;width:100%;height:420px;border-radius:12px;overflow:hidden;
+       background:var(--bg);box-shadow:0 18px 44px rgba(9,20,60,.18);border:1px solid #d8dde6;
+       display:flex;font-size:13px}
+  .lights{position:absolute;top:14px;left:14px;z-index:99;display:flex;gap:8px}
+  .lights i{width:12px;height:12px;border-radius:99px;display:block}
+  .l1{background:#ff5f57}.l2{background:#febc2e}.l3{background:#28c840}
+
+  .side{width:190px;flex:none;background:var(--sidebar);border-right:1px solid var(--border);
+        padding:52px 10px 10px;display:flex;flex-direction:column;gap:2px}
+  .nav{display:flex;align-items:center;gap:9px;padding:7px 9px;border-radius:7px;color:#4b5563}
+  .nav.on{background:#fff;color:var(--fg);font-weight:500;box-shadow:0 1px 2px rgba(0,0,0,.06)}
+  .dot{width:15px;height:15px;border-radius:4px;background:#d1d5db;flex:none}
+  .nav.on .dot{background:var(--primary)}
+
+  .main{flex:1;min-width:0;display:flex;flex-direction:column}
+  .tbar{height:40px;flex:none;background:var(--sidebar);border-bottom:1px solid var(--border);
+        display:flex;align-items:center;justify-content:center;font-weight:600;font-size:14px;
+        letter-spacing:-.01em;position:relative}
+  .body{flex:1;padding:18px;overflow:hidden}
+  .h{font-size:17px;font-weight:600;letter-spacing:-.01em;margin:0 0 12px}
+  .tbl{background:#fff;border:1px solid var(--border);border-radius:10px;overflow:hidden}
+  .tr{display:flex;gap:12px;padding:9px 12px;border-bottom:1px solid #f1f3f6;color:#4b5563}
+  .tr:last-child{border-bottom:0}
+  .tr.hd{background:#fafbfc;font-weight:600;color:#6b7280;font-size:11.5px;
+         text-transform:uppercase;letter-spacing:.05em}
+  .tr b{color:var(--fg);font-weight:500}
+  .c1{width:96px;flex:none}.c2{flex:1}.c3{width:82px;flex:none;text-align:right}
+  .empty{display:flex;flex-direction:column;align-items:center;justify-content:center;
+         height:210px;color:#9ca3af;gap:8px;text-align:center;
+         border:1px dashed var(--border);border-radius:10px;background:#fff}
+  .btn{display:inline-flex;align-items:center;gap:6px;height:30px;padding:0 11px;border-radius:7px;
+       border:1px solid var(--border);background:#fff;font-size:12.5px;font-weight:500;color:var(--fg);
+       cursor:pointer;white-space:nowrap}
+  .btn.pri{background:var(--primary);border-color:var(--primary);color:#fff}
+  .btn.amb{background:var(--amber-fg);border-color:var(--amber-fg);color:#fff}
+  .btn.gho{background:transparent;border-color:transparent;color:var(--amber-body);
+           text-decoration:underline;text-underline-offset:2px;padding:0 4px}
+
+  /* ── banner ─────────────────────────────────────────────────── */
+  .ban{background:var(--amber-bg);border-bottom:1px solid var(--amber-border);color:var(--amber-fg);
+       display:flex;align-items:flex-start;gap:11px;padding:11px 14px}
+  .ban.top{position:absolute;inset:0 0 auto;z-index:60;padding-left:92px}
+  .ban .ico{flex:none;width:17px;height:17px;margin-top:1px;color:var(--amber-ico)}
+  .ban .t{font-weight:600;font-size:13px}
+  .ban .s{font-size:12px;color:var(--amber-body);margin-top:2px;line-height:1.45}
+  .ban .acts{margin-left:auto;display:flex;gap:6px;flex:none;align-items:center}
+  .mono{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:11.5px}
+  .chip{display:inline-flex;align-items:center;gap:5px;height:22px;padding:0 8px;border-radius:99px;
+        background:#fff;border:1px solid var(--amber-border);font-size:11px;font-weight:600;
+        color:var(--amber-fg)}
+
+  svg.i{width:100%;height:100%;fill:none;stroke:currentColor;stroke-width:2;
+        stroke-linecap:round;stroke-linejoin:round}
+
+  /* ── layar penuh (varian C) ─────────────────────────────────── */
+  .full{position:absolute;inset:0;z-index:70;display:flex;flex-direction:column;
+        align-items:center;justify-content:center;gap:18px;padding:24px;
+        background:linear-gradient(160deg,#b45309 0%,#7c2d12 100%)}
+  .full .card{width:100%;max-width:400px;background:#fff;border-radius:16px;padding:22px;
+              box-shadow:0 20px 50px rgba(60,20,9,.35)}
+  .full h3{margin:0 0 6px;font-size:17px;letter-spacing:-.01em}
+  .full p{margin:0;color:var(--muted);font-size:12.8px;line-height:1.55}
+  .path{margin-top:12px;background:#f6f7f9;border:1px solid var(--border);border-radius:8px;
+        padding:7px 9px;color:#6b7280}
+  .stack{display:flex;flex-direction:column;gap:7px;margin-top:14px}
+  .stack .btn{height:34px;justify-content:center;width:100%}
+
+  /* ── grid perbandingan ──────────────────────────────────────── */
+  .row{display:grid;grid-template-columns:1fr;gap:0}
+  .cap{display:flex;align-items:baseline;gap:10px;margin:0 0 10px}
+  .cap .k{font-size:15px;font-weight:600;letter-spacing:-.01em}
+  .cap .v{font-size:12.5px;color:var(--muted)}
+  .tag{font-size:10.5px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;
+       padding:2px 7px;border-radius:99px;background:#e5e7eb;color:#4b5563}
+  .tag.now{background:#dbeafe;color:#1e40af}
+  .tag.rec{background:#dcfce7;color:#166534}
+
+  details{margin-top:8px}
+  summary{cursor:pointer;font-size:12px;color:var(--amber-body);font-weight:500}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<h1>Vault tak terbaca — eksplorasi lokasi, tata letak, dan isi</h1>
+<p class="lede">
+  Keadaan yang digambarkan: file data bisa dibuka, tapi salah bentuk. App <b>menolak menulis</b> agar tidak
+  menimpa data yang gagal ia baca. Konsekuensinya keras — setiap daftar di app tampak kosong, dan setiap
+  yang diketik pengguna dibuang. Pertanyaan desainnya: seberapa besar suara yang pantas untuk itu.
+</p>
+
+<div class="note">
+  <b>Ketimpangan yang jadi titik tolak.</b> Saat folder vault <i>hilang</i>, app menampilkan satu halaman
+  penuh: ilustrasi, tombol "Locate folder", daftar vault lain (<span class="mono">vault-missing-view.tsx</span>).
+  Saat vault <i>tak terbaca</i> — keadaan yang lebih berbahaya, karena app tetap tampak hidup dan berbohong
+  lewat daftar kosong — ia hanya mendapat strip setinggi 44px. Yang lebih berbahaya justru diberi suara
+  yang lebih pelan.
+</div>
+
+<!-- ══════════════ A ══════════════ -->
+<h2>Lokasi</h2>
+<div class="cap"><span class="tag now">Sekarang</span><span class="k">A · Strip di atas title bar</span>
+  <span class="v">menutupi title bar, inset kiri 92px untuk traffic lights</span></div>
+<div class="win">
+  <div class="lights"><i class="l1"></i><i class="l2"></i><i class="l3"></i></div>
+  <div class="ban top">
+    <span class="ico"><svg class="i" viewBox="0 0 24 24"><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z"/><path d="M12 9v4M12 17h.01"/></svg></span>
+    <div style="min-width:0">
+      <div class="t">Data file could not be read.</div>
+      <div class="s">Nothing you change is being saved right now, on purpose: writing would overwrite the
+        file we could not read. Your original file has not been deleted.
+        <span style="opacity:.7">(Invoice history (invois_history) is not a list)</span></div>
+    </div>
+    <div class="acts"><button class="btn">📂 Open folder</button></div>
+  </div>
+  <div class="side" style="padding-top:96px">
+    <div class="nav"><span class="dot"></span>Home</div>
+    <div class="nav on"><span class="dot"></span>Invoices</div>
+    <div class="nav"><span class="dot"></span>Clients</div>
+    <div class="nav"><span class="dot"></span>Settings</div>
+  </div>
+  <div class="main">
+    <div class="tbar" style="margin-top:56px">Invois</div>
+    <div class="body">
+      <div class="h">Invoices</div>
+      <div class="empty">
+        <div style="font-size:13px">No invoices yet</div>
+        <div style="font-size:12px">Create your first invoice to get started.</div>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="note verdict no">
+  <b>Masalahnya bukan estetika, tapi kontradiksi.</b> Banner berkata "tidak ada yang disimpan", sementara
+  10cm di bawahnya app berkata <i>"No invoices yet — create your first invoice to get started."</i> App
+  <b>mengundang pengguna melakukan pekerjaan yang akan ia buang</b>. Selama isi jendela tidak ikut berubah,
+  banner sebagus apa pun sedang berdebat melawan app-nya sendiri — dan yang dipercaya orang adalah yang
+  memenuhi layar. Juga: alasan teknis <span class="mono">invois_history is not a list</span> ditodongkan ke
+  wajah pengguna, dan satu-satunya tombolnya, "Open folder", tidak memperbaiki apa pun.
+</div>
+
+<!-- ══════════════ B ══════════════ -->
+<div class="cap" style="margin-top:44px"><span class="tag">B</span><span class="k">Strip di bawah title bar</span>
+  <span class="v">title bar utuh, banner mendorong konten turun</span></div>
+<div class="win">
+  <div class="lights"><i class="l1"></i><i class="l2"></i><i class="l3"></i></div>
+  <div class="side">
+    <div class="nav"><span class="dot"></span>Home</div>
+    <div class="nav on"><span class="dot"></span>Invoices</div>
+    <div class="nav"><span class="dot"></span>Clients</div>
+    <div class="nav"><span class="dot"></span>Settings</div>
+  </div>
+  <div class="main">
+    <div class="tbar">Invois <span class="chip" style="position:absolute;right:10px">⚠ Read-only</span></div>
+    <div class="ban">
+      <span class="ico"><svg class="i" viewBox="0 0 24 24"><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z"/><path d="M12 9v4M12 17h.01"/></svg></span>
+      <div style="min-width:0">
+        <div class="t">Invois can't read your data file, so nothing is being saved.</div>
+        <div class="s">Your file is still there, untouched. Restoring the most recent backup usually fixes this.</div>
+      </div>
+      <div class="acts">
+        <button class="btn amb">Restore a backup</button>
+        <button class="btn gho">Details</button>
+      </div>
+    </div>
+    <div class="body">
+      <div class="h">Invoices</div>
+      <div class="empty">
+        <div style="font-size:13px">No invoices yet</div>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="note verdict">
+  <b>Menang di rapi, kalah di jujur.</b> Title bar tetap utuh (tidak ada lagi akal-akalan inset 92px, tidak ada
+  <span class="mono">drag-region</span> yang harus dipertahankan), dan banner mendorong konten alih-alih
+  menindihnya — jadi tak ada yang tertutup. Tapi kontradiksi dari A masih persis di sana: daftar kosong
+  yang menipu itu tetap tayang. Yang ditambahkannya cuma pil <b>Read-only</b> di title bar, dan itu memang
+  berguna: ia bertahan meski banner tergulir keluar layar. Ini perbaikan tata letak, bukan perbaikan makna.
+</div>
+
+<!-- ══════════════ C ══════════════ -->
+<div class="cap" style="margin-top:44px"><span class="tag rec">Rekomendasi</span>
+  <span class="k">C · Halaman penuh, sejajar dengan "vault hilang"</span>
+  <span class="v">app tidak dibuka sama sekali</span></div>
+<div class="win">
+  <div class="lights"><i class="l1"></i><i class="l2"></i><i class="l3"></i></div>
+  <div class="full">
+    <svg viewBox="0 0 200 96" style="width:190px;height:auto" fill="none" aria-hidden>
+      <rect x="58" y="20" width="84" height="62" rx="8" fill="rgba(255,255,255,.10)" stroke="#fff" stroke-width="2.5"/>
+      <path d="M58 36h84" stroke="#fff" stroke-width="2.5"/>
+      <path d="M74 52h30M74 64h44" stroke="rgba(255,255,255,.45)" stroke-width="3" stroke-linecap="round"/>
+      <path d="M104 52h22" stroke="rgba(255,255,255,.2)" stroke-width="3" stroke-linecap="round"/>
+      <circle cx="142" cy="70" r="18" fill="#7c2d12"/>
+      <circle cx="142" cy="70" r="15" fill="none" stroke="#f2c04e" stroke-width="2.5"/>
+      <path d="M142 63v8M142 76h.01" stroke="#f2c04e" stroke-width="2.6" stroke-linecap="round"/>
+      <path d="M20 78 Q40 60 52 66" stroke="rgba(255,255,255,.25)" stroke-width="2" stroke-dasharray="2 6" stroke-linecap="round"/>
+    </svg>
+    <div class="card">
+      <h3>Invois can't read this data file</h3>
+      <p>The file opened, but its contents aren't in a shape Invois understands. To protect it, Invois hasn't
+         changed a single byte, and it won't save anything until this is sorted out.</p>
+      <div class="path mono">~/Documents/Invois/invois-data.json</div>
+      <div class="stack">
+        <button class="btn pri">↺ Restore the most recent backup (13 Jul, 4 invoices)</button>
+        <button class="btn">📂 Show the file in Finder</button>
+        <button class="btn">Open a different vault</button>
+      </div>
+      <details><summary style="margin-top:12px;color:var(--muted)">Technical details</summary>
+        <div class="mono" style="margin-top:6px;color:var(--muted)">invois_history is an object, expected a list</div>
+      </details>
+    </div>
+  </div>
+  <div class="side"><div class="nav"><span class="dot"></span></div></div>
+  <div class="main"><div class="tbar"></div></div>
+</div>
+<div class="note verdict yes">
+  <b>Ini yang kupilih, dan alasannya bukan soal tampilan.</b> Dalam keadaan ini app <b>tidak punya data</b>.
+  Setiap layar di baliknya — daftar invoice, klien, dashboard — hanya bisa menampilkan kekosongan yang tidak
+  benar. Membiarkannya tayang berarti menyuruh pengguna membaca angka yang salah. Menutupnya bukan sikap
+  dramatis; itu satu-satunya sikap yang jujur.
+  <br><br>
+  Ia juga <b>menyamakan derajat</b> dengan "folder hilang", yang sudah berupa halaman penuh — dua-duanya
+  "vault ini tidak bisa dipakai sekarang", jadi dua-duanya pantas mendapat perlakuan yang sama. Dan ia
+  memberi <b>jalan keluar yang sesungguhnya</b>: pulihkan backup. App sudah punya <span class="mono">.bak1…bak3</span>;
+  hari ini pengguna tidak pernah ditawari memakainya. Warnanya amber-gelap, bukan biru brand — ini bukan
+  sambutan, ini kabar buruk.
+  <br><br>
+  <b>Harganya, dan aku tidak menyembunyikannya:</b> pengguna kehilangan akses baca ke apa pun. Dalam kasus
+  <i>fallback ke backup</i> (file utama rusak, tapi <span class="mono">.bak1</span> terbaca) app sebenarnya
+  <i>punya</i> data yang layak ditampilkan — dan di situ halaman penuh jadi berlebihan. Jadi jangan pakai
+  satu bentuk untuk dua keadaan yang berbeda. Lihat catatan di bawah.
+</div>
+
+<!-- ══════════════ D ══════════════ -->
+<div class="cap" style="margin-top:44px"><span class="tag">D</span><span class="k">Strip + daftar yang berhenti berbohong</span>
+  <span class="v">untuk keadaan "membaca dari backup"</span></div>
+<div class="win">
+  <div class="lights"><i class="l1"></i><i class="l2"></i><i class="l3"></i></div>
+  <div class="side">
+    <div class="nav"><span class="dot"></span>Home</div>
+    <div class="nav on"><span class="dot"></span>Invoices</div>
+    <div class="nav"><span class="dot"></span>Clients</div>
+    <div class="nav"><span class="dot"></span>Settings</div>
+  </div>
+  <div class="main">
+    <div class="tbar">Invois <span class="chip" style="position:absolute;right:10px">⚠ Read-only</span></div>
+    <div class="ban">
+      <span class="ico"><svg class="i" viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/></svg></span>
+      <div style="min-width:0">
+        <div class="t">Showing a backup from 13 Jul. Your main file couldn't be read.</div>
+        <div class="s">You can read and export everything here. Saving is off until you decide what to keep.</div>
+      </div>
+      <div class="acts">
+        <button class="btn amb">Keep this backup</button>
+        <button class="btn gho">Details</button>
+      </div>
+    </div>
+    <div class="body">
+      <div class="h">Invoices <span class="chip" style="vertical-align:2px">from backup</span></div>
+      <div class="tbl">
+        <div class="tr hd"><span class="c1">No.</span><span class="c2">Client</span><span class="c3">Total</span></div>
+        <div class="tr"><span class="c1 mono">INV-003</span><span class="c2"><b>Kopi Kenangan</b></span><span class="c3">Rp 4.500.000</span></div>
+        <div class="tr"><span class="c1 mono">INV-002</span><span class="c2"><b>Studio Ranting</b></span><span class="c3">Rp 1.200.000</span></div>
+        <div class="tr"><span class="c1 mono">INV-001</span><span class="c2"><b>PT Dua Warna</b></span><span class="c3">Rp 8.750.000</span></div>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="note verdict yes">
+  <b>Keadaan yang berbeda, bentuk yang berbeda.</b> Di sini app <i>punya</i> data (dari
+  <span class="mono">.bak1</span>), jadi menutup layar justru merampas sesuatu yang berguna: pengguna masih
+  bisa membaca dan mengekspor. Strip cocok untuk ini — dan perhatikan bahwa daftarnya <b>tidak lagi
+  berbohong</b>: ia terisi, dan diberi label <i>from backup</i>. Tombolnya pun bermakna: <i>Keep this
+  backup</i> menyelesaikan keadaannya.
+  <br><br>
+  Perbedaan ini sudah ada di kode — <span class="mono">getVaultHealth().source</span> membedakan
+  <span class="mono">"backup"</span> dari kerusakan bentuk. Hari ini keduanya digambar sebagai strip amber
+  yang sama.
+</div>
+
+<!-- ══════════════ isi ══════════════ -->
+<h2>Isi — apa yang ditulis</h2>
+<div class="note">
+  <b>Yang salah dari teks sekarang</b>, sebelum bicara kata:
+  kalimat pertama menerangkan <i>keadaan mesin</i> ("Data file could not be read"), bukan <i>akibat bagi
+  pengguna</i>. Kalimat kedua menerangkan <i>niat baik kami</i> ("on purpose: writing would overwrite…") —
+  itu pembelaan diri, dan pengguna tidak sedang menuntut kami. Yang tidak ada di mana pun: <b>apa yang
+  harus ia lakukan</b>. Dan alasan teknisnya, <span class="mono">invois_history is not a list</span>,
+  dipajang tanpa diminta.
+</div>
+
+<div style="display:grid;gap:12px;margin-top:16px">
+  <div class="ban" style="border:1px solid var(--amber-border);border-radius:10px">
+    <span class="chip" style="flex:none">1</span>
+    <div>
+      <div class="t">Invois can't read your data file, so nothing is being saved.</div>
+      <div class="s">Akibat lebih dulu, sebab belakangan. Satu kalimat, dua fakta yang paling penting:
+        <b>tidak bisa dibaca</b> dan <b>tidak ada yang tersimpan</b>. Pengguna boleh berhenti membaca di sini
+        dan sudah tahu yang perlu ia tahu.</div>
+    </div>
+  </div>
+  <div class="ban" style="border:1px solid var(--amber-border);border-radius:10px">
+    <span class="chip" style="flex:none">2</span>
+    <div>
+      <div class="t">Your file is still there, untouched.</div>
+      <div class="s">Menenangkan tanpa membela diri. Bandingkan dengan versi sekarang, yang menjelaskan
+        <i>kenapa kami memutuskan tidak menulis</i> — itu cerita kami, bukan cerita dia. Yang ia takutkan
+        cuma satu: <b>datanya hilang atau tidak.</b></div>
+    </div>
+  </div>
+  <div class="ban" style="border:1px solid var(--amber-border);border-radius:10px">
+    <span class="chip" style="flex:none">3</span>
+    <div>
+      <div class="t">Restore a backup ← tombol utama</div>
+      <div class="s">Jalan keluar yang sungguhan, dan app sudah menyimpan <span class="mono">.bak1…bak3</span>.
+        Beri tanggal dan jumlahnya (<i>13 Jul, 4 invoices</i>) supaya keputusannya bisa diambil tanpa menebak.
+        "Open folder" turun jadi pilihan kedua: ia memindahkan masalah ke Finder, bukan menyelesaikannya.</div>
+    </div>
+  </div>
+  <div class="ban" style="border:1px solid var(--amber-border);border-radius:10px">
+    <span class="chip" style="flex:none">4</span>
+    <div>
+      <div class="t">Details ▸ <span class="mono" style="font-weight:400">invois_history is an object, expected a list</span></div>
+      <div class="s">Disembunyikan di balik disclosure. Tetap ada — kalau pengguna mengirim laporan bug,
+        baris inilah yang kita butuhkan — tapi tidak menodong orang yang cuma ingin tahu apakah pekerjaannya
+        selamat.</div>
+    </div>
+  </div>
+</div>
+
+<h2>Yang kusarankan</h2>
+<div class="note verdict yes">
+  <b>Pecah satu keadaan jadi dua, karena memang dua.</b>
+  <br><br>
+  <b>1. Vault tak terbaca, tak ada backup yang bisa dipakai</b> → <b>halaman penuh (C)</b>. App tidak punya
+  apa pun untuk ditampilkan; setiap layar di baliknya akan berbohong. Sejajarkan dengan
+  <span class="mono">VaultMissingView</span> yang sudah ada, tapi amber, bukan biru.
+  <br><br>
+  <b>2. Vault tak terbaca, tapi backup terbaca</b> → <b>strip (D)</b>, dengan daftar yang <i>terisi</i> dan
+  diberi label <i>from backup</i>, plus pil <b>Read-only</b> di title bar yang tidak ikut tergulir.
+  <br><br>
+  Di dua-duanya, kalimat pembukanya sama: <b>"Invois can't read your data file, so nothing is being saved."</b>
+  Dan di dua-duanya, hal yang paling penting bukan bannernya — melainkan bahwa <b>app berhenti berpura-pura
+  kosong</b>. Selama layar masih berkata "No invoices yet — create your first invoice", banner apa pun
+  sedang kalah berdebat.
+</div>
+
+</div>
+</body>
+</html>
