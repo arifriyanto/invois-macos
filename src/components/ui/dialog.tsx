@@ -62,8 +62,18 @@ function DialogContent({
         data-slot="dialog-content"
         className={cn(
           "fixed top-[50%] left-[50%] z-50 grid w-full max-w-[calc(100%-2rem)] translate-x-[-50%] translate-y-[-50%] gap-4 rounded-lg border bg-background p-6 shadow-lg duration-200 outline-none data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=closed]:zoom-out-95 data-[state=open]:animate-in data-[state=open]:fade-in-0 data-[state=open]:zoom-in-95 lg:max-w-lg",
+          // A dialog must never be taller than the window it sits in.
+          //
+          // The height cap and the scrollbar used to live ONLY on `max-lg:` — i.e.
+          // only on a size the desktop app can no longer even be dragged to (see
+          // minWidth in electron/main.js). So above `lg` a dialog had no ceiling and
+          // no scroll: Settings is a fixed h-[560px], and at the 600px minimum
+          // window height it clears the edge by 20px. Twenty pixels is not a design,
+          // it is a coincidence — one more row in Settings and the buttons at the
+          // bottom would sit outside the window, unreachable, with nothing to scroll.
+          "max-h-[calc(100dvh-2rem)] overflow-y-auto",
           // Mobile: dock to bottom as a sheet (desktop stays a centered modal)
-          "max-lg:top-auto max-lg:bottom-0 max-lg:left-0 max-lg:w-full max-lg:max-w-none max-lg:translate-x-0 max-lg:translate-y-0 max-lg:rounded-b-none max-lg:rounded-t-2xl max-lg:max-h-[90dvh] max-lg:overflow-y-auto max-lg:data-[state=open]:slide-in-from-bottom-4 max-lg:data-[state=closed]:slide-out-to-bottom-4",
+          "max-lg:top-auto max-lg:bottom-0 max-lg:left-0 max-lg:w-full max-lg:max-w-none max-lg:translate-x-0 max-lg:translate-y-0 max-lg:rounded-b-none max-lg:rounded-t-2xl max-lg:max-h-[90dvh] max-lg:data-[state=open]:slide-in-from-bottom-4 max-lg:data-[state=closed]:slide-out-to-bottom-4",
           className
         )}
         {...props}

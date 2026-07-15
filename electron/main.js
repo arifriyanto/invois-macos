@@ -58,12 +58,33 @@ protocol.registerSchemesAsPrivileged([
 let mainWindow = null;
 
 // ---------------------------------------------------------------------------
-// Security-scoped bookmarks — the whole reason we're on Electron.
+// Security-scoped bookmarks.
 //
 // Under the App Store sandbox, picking a folder only grants access for THIS
 // session. To keep it across relaunches we must store a "bookmark" macOS gives
 // us, and re-open the door on every launch. Outside the sandbox this is all a
 // no-op (a Developer-ID build can just read the path).
+//
+// This block used to be labelled "the whole reason we're on Electron". That was
+// true when it was written and is misleading now, so: it is NOT the reason, and
+// if the app ever stops letting users pick their own folder, that is NOT a cue
+// to reconsider Tauri. The two things actually holding Electron up are:
+//
+//   1. printToPDF({ printBackground, generateTaggedPDF }) — the exported PDF is
+//      VECTOR and TAGGED: selectable, searchable, screen-readable. WKWebView has
+//      no equivalent; Tauri meant a Rust PDF pipeline, or html2canvas, which
+//      produces a picture of an invoice rather than an invoice.
+//
+//   2. Chromium ships WITH the app. WKWebView is borrowed from whatever macOS
+//      the user happens to run — so the engine that draws an invoice would vary
+//      by their OS version, and we would never see it. For an app whose promise
+//      is "the invoice you send today is the one you sent last month", a
+//      rendering engine outside our control is a debt we cannot pay. (The mild
+//      version of this already bit us: see the hand-rolled month names in
+//      lib/format.ts, forced by JavaScriptCore's incomplete Intl.)
+//
+// Tauri buys ~10 MB against Chromium's ~250 MB. For a tool that produces
+// financial documents, correct outranks small.
 // ---------------------------------------------------------------------------
 
 /** Bookmarks we've been granted, keyed by folder path. Persisted in userData. */
@@ -356,8 +377,27 @@ async function createWindow() {
   mainWindow = new BrowserWindow({
     width: 1180,
     height: 780,
-    minWidth: 900,
-    minHeight: 600,
+    // 1024 is not a taste, it is Tailwind's `lg` breakpoint — and this UI does not
+    // exist below it.
+    //
+    // The sidebar (sidebar-nav.tsx) and the custom title bar (shell.tsx) are both
+    // `max-lg:hidden`, and nothing replaces them: no hamburger, no tab bar. So at
+    // the old minWidth of 900 there was a 124px band, reachable by dragging the
+    // window edge, in which the app kept running but had NO navigation at all —
+    // no way to reach Invoices, Clients, Settings or Upgrade — and the traffic
+    // lights (drawn natively over the page, with `lg:mt-10` gone) landed on top of
+    // the content.
+    //
+    // Those `max-lg:*` branches are inherited from the web build, where a phone
+    // layout is real. On a Mac it is not: no Mac screen is narrower than this. The
+    // honest fix is to stop offering a size the UI cannot survive.
+    minWidth: 1024,
+    // 720, not 600. The floor has to clear the tallest fixed piece of UI with room
+    // to breathe, and that piece is the Settings dialog at h-[560px]. At 600 it
+    // missed the window edge by ~20px — technically "fits", actually cramped, and
+    // one added row from disaster. 720 leaves the 560px dialog a comfortable margin
+    // top and bottom (and still sits well under the 780 default height).
+    minHeight: 720,
     // The app draws its own title bar (brand + Pro pill), so hide the native one
     // but keep the traffic lights, inset.
     titleBarStyle: "hiddenInset",
