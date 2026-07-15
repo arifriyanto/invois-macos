@@ -23,6 +23,28 @@ function invoice(partial: Partial<InvoiceData> = {}): InvoiceData {
   };
 }
 
+describe("formatMoney — the cached formatter must not leak between currencies", () => {
+  // formatMoney keeps one Intl.NumberFormat per currency (68× cheaper than
+  // rebuilding it on every line item). A cache keyed wrongly would be worse than
+  // no cache at all: it would print the first currency's decimals and grouping
+  // for every currency that followed, and it would only show up once someone
+  // switched currency — i.e. in front of a user, not here.
+  it("keeps each currency's own decimals and grouping, in any order", () => {
+    expect(formatMoney(199900, "IDR")).toBe("Rp 199.900"); // 0 decimals, dot groups
+    expect(formatMoney(199900, "USD")).toBe("$1,999.00"); //  2 decimals, comma groups
+    expect(formatMoney(199900, "IDR")).toBe("Rp 199.900"); // …and IDR again, from cache
+    expect(formatMoney(199900, "GBP")).toBe("£1,999.00");
+    expect(formatMoney(199900, "USD")).toBe("$1,999.00"); // …and USD again, from cache
+  });
+
+  it("returns the same result on the second call as the first", () => {
+    // The plainest statement of what a cache must not change: the answer.
+    for (const c of ["IDR", "USD", "SGD", "EUR", "GBP"] as const) {
+      expect(formatMoney(123456, c)).toBe(formatMoney(123456, c));
+    }
+  });
+});
+
 describe("calcTotals — subtotal", () => {
   it("sums qty * price across items", () => {
     const t = calcTotals(

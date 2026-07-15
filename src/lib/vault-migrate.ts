@@ -16,7 +16,7 @@
 //     a genuinely broken vault, and a migration must never be the thing that
 //     destroys one.
 
-import { toMinor } from "./money";
+import { isCurrency, migratedQty, toMinor } from "./money";
 import type { Currency } from "./types";
 
 const SETTINGS_KEY = "invois_settings";
@@ -43,9 +43,10 @@ function vaultCurrency(mem: Map<string, string>): Currency {
     const parsed: unknown = JSON.parse(raw);
     const data = isObj(parsed) && "data" in parsed ? parsed.data : parsed; // envelope or bare
     const c = isObj(data) ? data.currency : undefined;
-    return typeof c === "string" && ["IDR", "USD", "SGD", "EUR", "GBP"].includes(c)
-      ? (c as Currency)
-      : "USD";
+    // isCurrency, not a hand-written list: a currency this guard doesn't know
+    // falls back to USD, and a wrong fallback scales every price in the vault by
+    // the wrong power of ten. The list must never be able to drift.
+    return isCurrency(c) ? c : "USD";
   } catch {
     return "USD";
   }
@@ -66,8 +67,9 @@ function migrateItem(item: Obj, currency: Currency): void {
   delete item.price;
   // Quantities become whole numbers at the same time. A stored 2.5 was always
   // going to be rounded somewhere; better here, once, visibly, than silently on
-  // every render.
-  if (typeof item.qty === "number") item.qty = Math.max(1, Math.round(item.qty));
+  // every render. The rule (and why it rounds where the others truncate) lives in
+  // money.ts, not here — see migratedQty.
+  if (typeof item.qty === "number") item.qty = migratedQty(item.qty);
 }
 
 /** Line items + a flat discount, in place. Returns true if anything changed. */

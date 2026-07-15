@@ -33,6 +33,17 @@ export const MONEY_DECIMALS: Record<Currency, number> = {
   GBP: 2,
 };
 
+/** The supported currency codes, derived from the table above rather than
+ *  retyped. Anything that needs to validate a currency read off disk should use
+ *  this — a second hand-written list is a second place to forget a new currency,
+ *  and a currency that fails validation falls back to USD, which would scale the
+ *  wrong way. */
+export const CURRENCY_CODES = Object.keys(MONEY_DECIMALS) as Currency[];
+
+export function isCurrency(x: unknown): x is Currency {
+  return typeof x === "string" && x in MONEY_DECIMALS;
+}
+
 export function moneyDecimals(currency: Currency): number {
   return MONEY_DECIMALS[currency] ?? 2;
 }
@@ -99,4 +110,28 @@ export function safeQty(n: number): number {
 export function safeMinor(n: number): number {
   if (!Number.isFinite(n)) return 0;
   return Math.max(0, Math.trunc(n));
+}
+
+/**
+ * The qty rule for a ONE-OFF conversion of an old vault — and the only place that
+ * rounds to nearest instead of truncating.
+ *
+ * It is a third rule, so it owes an explanation. `normalizeQty` truncates because
+ * it guards an input: the user is still typing, and "2.5" on the way to "25"
+ * must not jump to 3. `safeQty` truncates and floors at 0 because it guards
+ * arithmetic and must never invent a charge.
+ *
+ * This one guards neither. It converts a quantity that was ALREADY BILLED — an
+ * invoice whose 2.5 was sent to a client and paid — and any conversion changes
+ * the total. Between 2 and 3 the honest choice is the nearer one, so 2.5 becomes
+ * 3, once, at the migration, rather than being silently truncated to 2 and
+ * quietly shrinking an invoice that has already been settled.
+ *
+ * (This lived as a bare `Math.max(1, Math.round(n))` inside vault-migrate. Naming
+ * it is the point: an unexplained fourth rounding rule sitting in a migration is
+ * how two parts of a codebase start disagreeing about what a quantity is.)
+ */
+export function migratedQty(n: number): number {
+  if (!Number.isFinite(n)) return 1;
+  return Math.max(1, Math.round(n));
 }
